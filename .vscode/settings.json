@@ -1,0 +1,43 @@
+{
+    "python.languageServer": "None",
+    "python.defaultInterpreterPath": "./nautilus_test/scripts/uv_python.sh",
+    "python.terminal.executeInFileDir": false,
+    "python.terminal.activateEnvironment": false,
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+    "terminal.integrated.cwd": "${workspaceFolder}/nautilus_test",
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "bash",
+            "args": ["-c", "cd ${workspaceFolder}/nautilus_test && exec bash"]
+        },
+        "uv-python": {
+            "path": "${workspaceFolder}/nautilus_test/scripts/uv_python.sh"
+        }
+    },
+    "python.analysis.extraPaths": [
+        "./nautilus_test"
+    ],
+    "python.analysis.autoSearchPaths": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestPath": "uv run pytest",
+    "python.testing.unittestEnabled": false,
+    "python.linting.enabled": false,
+    "python.formatting.provider": "none",
+    "pylint.enabled": false,
+    "pylint.args": ["--disable=all"],
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/node_modules": true
+    },
+}
