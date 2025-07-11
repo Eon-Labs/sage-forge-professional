@@ -1,0 +1,33 @@
+{
+  "name": "Nautilus Test Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylint", 
+        "ms-python.black-formatter",
+        "ms-toolsai.jupyter",
+        "rust-lang.rust-analyzer",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.terminal.activateEnvironment": false,
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.linting.ruffEnabled": true,
+        "rust-analyzer.cargo.buildScripts.enable": true
+      }
+    }
+  },
+  "postCreateCommand": "cd /workspaces/nt/nautilus_test && uv sync --all-extras",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/nt"
+} 
