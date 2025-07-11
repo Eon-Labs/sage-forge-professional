@@ -1,16 +1,30 @@
 # Complete Workspace Documentation
-**NautilusTrader Development Environment**
+**NautilusTrader Development Environment - Production Ready**
 
 ## 🏗️ Workspace Structure Overview
 
 ```
-/workspaces/nt/
-├── 📁 nautilus_test/           # Your Development Environment
-├── 📁 nt_reference/            # Official NautilusTrader Source Code
-├── 📄 CLAUDE.md               # Project Instructions & Memory
-├── 📄 README.md               # Basic workspace introduction
-├── 📄 WORKSPACE_OVERVIEW.md   # This comprehensive documentation
-└── 🔧 run.sh                  # Workspace startup script
+/workspaces/nt/                     # 🏠 Workspace Root
+├── 📁 .vscode/                     # 🔧 VS Code workspace configuration
+│   ├── settings.json               # Python interpreter & extension settings
+│   ├── tasks.json                  # Development task automation
+│   ├── extensions.json             # Recommended extensions
+│   └── keybindings.json           # Custom keyboard shortcuts
+├── 📁 .claude/                     # 🤖 Claude Code configuration
+│   ├── settings.json               # Bypass permissions for streamlined workflow
+│   └── README.md                   # Configuration documentation
+├── 📄 pyrightconfig.json           # 🐍 Python type checking configuration
+├── 📄 SETUP.md                     # 🚀 Comprehensive setup guide
+├── 📄 CLAUDE.md                    # 📋 Project instructions & memory
+├── 📄 README.md                    # 🏠 Basic workspace introduction
+├── 📄 WORKSPACE_OVERVIEW.md        # 📖 This comprehensive documentation
+├── 📁 session_logs/                # 📝 Development session tracking
+│   ├── LATEST.md -> current        # Auto-discovery symlink
+│   ├── INDEX.md                    # Session registry
+│   └── 2025/07/                    # Organized by date
+├── 📁 nautilus_test/               # 🎯 Your Development Environment
+├── 📁 nt_reference/                # 📚 Official NautilusTrader Source
+└── 🔧 run.sh                       # 🚀 Workspace startup script
 ```
 
 ---
@@ -18,17 +32,17 @@
 ## 📦 Binary Builds & Installation Details
 
 ### Where NautilusTrader is Installed
-**Location**: `/home/vscode/.local/lib/python3.12/site-packages/nautilus_trader/`
-- **Installation Method**: Standard Python package via `uv` package manager
-- **Version**: 1.219.0 (production release)
-- **Total Size**: 246MB installed
-- **Binary Extensions**: 140 compiled `.so` files (Cython/PyO3 extensions)
+**Location**: `/workspaces/nt/nautilus_test/.venv/lib/python3.12/site-packages/nautilus_trader/`
+- **Installation Method**: UV virtual environment (isolated & reproducible)
+- **Version**: 1.219.0+ (latest available)
+- **Total Size**: ~300MB installed (including dependencies)
+- **Binary Extensions**: 140+ compiled `.so` files (Cython/PyO3 extensions)
 
-### Binary Architecture
+### Binary Architecture  
 - **Platform**: `aarch64-linux-gnu` (ARM64 Linux)
-- **Python Version**: CPython 3.12
-- **Core Engine**: Largest binary is `engine.cpython-312-aarch64-linux-gnu.so` (65MB)
-- **Performance**: Rust-powered core with Python bindings for maximum speed
+- **Python Version**: CPython 3.12.11
+- **Core Engine**: Rust-powered with Python bindings for maximum performance
+- **Dependencies**: pandas 2.0+, Rich 14.0+, requests 2.32+
 
 ### Key Compiled Components
 ```
@@ -45,11 +59,13 @@ exchange.so         - 351KB (Exchange simulation)
 
 ### Project Structure
 ```
-nautilus_test/
+nautilus_test/                     # 🎯 Production-Ready Development Environment
+├── 📁 .venv/                      # 🐍 UV-managed virtual environment
 ├── 🔧 Makefile                    # Development commands (make help, test, format, etc.)
-├── ⚙️ pyproject.toml              # Project configuration & dependencies
-├── 🔒 uv.lock                     # Dependency lock file
+├── ⚙️ pyproject.toml              # Project configuration & dependencies (Python 3.12)
+├── 🔒 uv.lock                     # Dependency lock file (all versions pinned)
 ├── 📖 README.md                   # Project documentation
+├── 📍 .python-version             # Python version pinning (3.12.11)
 │
 ├── 📁 src/nautilus_test/          # Main Python package
 │   ├── __init__.py
@@ -57,49 +73,63 @@ nautilus_test/
 │   ├── 📁 adapters/               # Custom exchange adapters  
 │   └── 📁 utils/                  # Utility functions
 │
-├── 📁 tests/                      # Test files
+├── 📁 tests/                      # Comprehensive test suite
 │   ├── __init__.py
-│   └── test_basic.py              # Basic functionality tests
+│   ├── test_basic.py              # Basic functionality tests
+│   └── test_bars_functionality.py # OHLC bars testing (pytest)
 │
-├── 📁 examples/                   # Example scripts
+├── 📁 examples/                   # Example scripts & demonstrations
 │   ├── README.md
 │   ├── 📁 backtest/               # Historical testing examples
 │   ├── 📁 live/                   # Live trading examples  
-│   └── 📁 sandbox/                # Safe testing environment
-│       └── basic_test.py          # Working basic example
+│   └── 📁 sandbox/                # 🧪 Safe testing environment
+│       └── simple_bars_test.py    # Comprehensive OHLC bars demo (Rich UI)
 │
-├── 📁 learning_notes/             # Your learning documentation
-│   ├── README.md                  # Navigation guide
-│   ├── 01_project_overview.md     # What is NautilusTrader
-│   ├── 02_testing_and_commands.md # Testing results & commands
-│   ├── 03_strategies_and_adapters.md # Available tools
-│   └── 04_next_steps_and_learning_path.md # Learning roadmap
+├── 📁 docs/                       # Documentation & learning materials
+│   ├── README_BAR_TESTS.md        # OHLC bars testing guide
+│   └── 📁 learning_notes/         # Learning documentation
+│       ├── README.md              # Navigation guide
+│       ├── 01_project_overview.md # What is NautilusTrader
+│       ├── 02_testing_and_commands.md # Testing results & commands
+│       ├── 03_strategies_and_adapters.md # Available tools
+│       └── 04_next_steps_and_learning_path.md # Learning roadmap
 │
-├── 📁 docs/                       # Future documentation
-└── 📁 scripts/                    # Utility scripts
+└── 📁 scripts/                    # Utility & setup scripts
+    ├── uv_python.sh               # UV Python wrapper
+    └── setup_dev_env.sh           # 🚀 Automated environment setup
 ```
 
 ### Development Tools & Commands
 ```bash
-make help           # Show all available commands
-make install        # Install dependencies with uv
-make test          # Run pytest tests
-make format        # Format code with black/ruff  
-make lint          # Lint code with ruff
-make typecheck     # Type check with mypy
-make run-example   # Run basic sandbox example
-make clean         # Clean build artifacts
+# Quick setup (run once)
+./scripts/setup_dev_env.sh       # 🚀 Automated environment setup
+
+# Daily development workflow
+make help                        # Show all available commands
+make install                     # Install dependencies with uv
+make test                        # Run pytest tests
+make format                      # Format code with black/ruff  
+make lint                        # Lint code with ruff
+make typecheck                   # Type check with mypy
+make dev-workflow               # Complete development check
+make clean                      # Clean build artifacts
+
+# Direct script execution
+uv run python examples/sandbox/simple_bars_test.py  # Rich OHLC bars demo
+uv run pytest tests/                                # Run test suite
 ```
 
-### Dependencies (32 packages total)
+### Key Dependencies
 ```
-Core:
-├── nautilus-trader v1.219.0    # Main trading platform
-├── numpy v2.3.1                # Numerical computing
-├── pandas v2.3.1               # Data analysis
-└── pyarrow v20.0.0             # Columnar data
+Core Trading:
+├── nautilus-trader >=1.219.0   # Main trading platform
+├── pandas >=2.0.0              # Data manipulation
+├── numpy                       # Numerical computing (via nautilus)
+└── pyarrow                     # Columnar data (via nautilus)
 
-Development:
+Enhanced Development:
+├── rich >=14.0.0               # Beautiful terminal output
+├── requests >=2.32.4           # HTTP operations
 ├── black v25.1.0               # Code formatting
 ├── ruff v0.12.2                # Fast linting
 ├── mypy v1.16.1                # Type checking
@@ -223,58 +253,104 @@ Cache:         /home/vscode/.cache/uv/
 /workspaces/nt/nt_reference/pyproject.toml     # Reference config
 ```
 
-### Development Standards
-- **Line Length**: 100 characters
-- **Python Version**: 3.11+ required
-- **Code Style**: black formatter
-- **Linting**: ruff
-- **Type Checking**: mypy with strict settings
-- **Testing**: pytest
+### Development Standards & Configuration
+- **Line Length**: 100 characters (black, ruff, pyproject.toml)
+- **Python Version**: 3.12+ required (pinned to 3.12.11)
+- **Virtual Environment**: UV-managed `.venv/` (isolated dependencies)
+- **Code Style**: black formatter + ruff linting
+- **Type Checking**: mypy + Pyright (VS Code integration)
+- **Testing**: pytest with coverage
+- **IDE**: VS Code with robust Python path resolution
 
 ---
 
-## 🎯 Workflow Recommendations
+## 🚀 Quick Start Guide
 
-### Daily Development Flow
-1. **Navigate**: `cd /workspaces/nt/nautilus_test/`
-2. **Check**: `make lint && make typecheck`
-3. **Test**: `make test`
-4. **Develop**: Work in `src/nautilus_test/strategies/`
-5. **Reference**: Study examples in `/workspaces/nt/nt_reference/examples/`
-
-### Learning Path
-1. **Start**: Review `/workspaces/nt/nautilus_test/learning_notes/`
-2. **Practice**: Modify `/workspaces/nt/nautilus_test/examples/sandbox/basic_test.py`
-3. **Study**: Explore `/workspaces/nt/nt_reference/examples/backtest/`
-4. **Build**: Create strategies in `/workspaces/nt/nautilus_test/src/nautilus_test/strategies/`
-
----
-
-## 🚀 Getting Started Commands
-
+### First Time Setup (Run Once)
 ```bash
-# Navigate to your development environment
+# Navigate to development environment
 cd /workspaces/nt/nautilus_test/
 
-# Install dependencies
-make install
+# Run automated setup
+./scripts/setup_dev_env.sh
 
-# Run basic tests
-make test
-
-# Check code quality
-make format && make lint && make typecheck
-
-# Run example
-make run-example
-
-# Explore learning materials
-ls learning_notes/
+# Reload VS Code window
+# Ctrl+Shift+P → "Developer: Reload Window"
 ```
+
+### Daily Development Flow
+```bash
+cd /workspaces/nt/nautilus_test/
+
+# Quick development check
+make dev-workflow
+
+# Run OHLC bars demo
+uv run python examples/sandbox/simple_bars_test.py
+
+# Develop strategies
+# Edit: src/nautilus_test/strategies/
+# Test: uv run pytest tests/
+```
+
+### Learning Path
+1. **📚 Study**: Read `docs/learning_notes/` and `docs/README_BAR_TESTS.md`
+2. **🧪 Experiment**: Run and modify `examples/sandbox/simple_bars_test.py`
+3. **📖 Reference**: Explore `/workspaces/nt/nt_reference/examples/backtest/`
+4. **🔨 Build**: Create strategies in `src/nautilus_test/strategies/`
+
+### VS Code Integration
+- **Python Interpreter**: Auto-configured to `.venv/bin/python`
+- **Import Resolution**: No more missing import errors
+- **Testing**: Integrated pytest discovery
+- **Linting**: Real-time ruff + mypy checking
+
+---
+
+## ✅ Current Achievements
+
+### 🏗️ **Infrastructure Complete**
+- ✅ Robust VS Code configuration with zero import errors
+- ✅ UV virtual environment with pinned dependencies
+- ✅ Automated setup script for consistent environment
+- ✅ Comprehensive OHLC bars testing framework
+
+### 🧪 **Testing Framework Ready**
+- ✅ `simple_bars_test.py` - Rich UI OHLC bars demonstration
+- ✅ `test_bars_functionality.py` - Professional pytest suite
+- ✅ Synthetic + real FXCM data support
+- ✅ Multiple strategies (EMA Cross + Bracket orders)
+
+### 📖 **Documentation Complete**
+- ✅ Session logging system with auto-discovery
+- ✅ Learning notes organized and accessible
+- ✅ Setup guides and troubleshooting documentation
+- ✅ Git workflow with conventional commits
+
+---
+
+## 🔧 Advanced Features
+
+### Session Management
+- **Auto-discovery**: `session_logs/LATEST.md` → current session
+- **Organization**: Date-structured (`2025/07/YYYY-MM-DD-NNN.md`)
+- **Templates**: Standardized session documentation
+
+### Claude Code Integration
+- **Permissions**: `bypassPermissions` for maximum workflow freedom
+- **Task agents**: Full tool access without confirmations
+- **Memory**: Project context persisted in CLAUDE.md
+
+### Development Automation
+- **setup_dev_env.sh**: Validates entire environment
+- **Makefile**: Standardized development commands
+- **pyrightconfig.json**: Workspace-level type checking
 
 ---
 
 **Created**: 2025-07-11  
+**Updated**: 2025-07-11 (Production Ready)  
 **Environment**: NautilusTrader Development Workspace  
 **Purpose**: Complete workspace documentation and reference  
-**Repository**: https://github.com/terrylica/nautilus-trader-workspace
+**Repository**: https://github.com/terrylica/nautilus-trader-workspace  
+**Status**: ✅ Production ready with robust OHLC bars testing framework
