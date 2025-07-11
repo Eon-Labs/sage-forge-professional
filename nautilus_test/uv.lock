@@ -295,6 +295,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "nautilus-trader" },
+    { name = "pandas" },
     { name = "requests" },
     { name = "rich" },
 ]
@@ -313,6 +314,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "nautilus-trader", specifier = ">=1.219.0" },
+    { name = "pandas", specifier = ">=2.0.0" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "requests", specifier = ">=2.32.4" },

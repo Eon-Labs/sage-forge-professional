@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "nautilus-trader>=1.219.0",
+    "pandas>=2.0.0",
     "requests>=2.32.4",
     "rich>=14.0.0",
 ]
