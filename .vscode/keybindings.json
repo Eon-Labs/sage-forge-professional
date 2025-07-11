@@ -1,0 +1,26 @@
+[
+    {
+        "key": "ctrl+f5",
+        "command": "workbench.action.tasks.runTask",
+        "args": "UV: Run Current Python File",
+        "when": "editorTextFocus && editorLangId == 'python'"
+    },
+    {
+        "key": "ctrl+shift+f5", 
+        "command": "workbench.action.tasks.runTask",
+        "args": "UV: Run Tests",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "ctrl+alt+f",
+        "command": "workbench.action.tasks.runTask", 
+        "args": "UV: Format Current File",
+        "when": "editorTextFocus && editorLangId == 'python'"
+    },
+    {
+        "key": "ctrl+alt+l",
+        "command": "workbench.action.tasks.runTask",
+        "args": "UV: Lint Current File", 
+        "when": "editorTextFocus && editorLangId == 'python'"
+    }
+]

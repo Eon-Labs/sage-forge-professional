@@ -1,0 +1,110 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "UV: Run Current Python File",
+            "type": "shell",
+            "command": "uv",
+            "args": [
+                "run", 
+                "python", 
+                "${command:extension.commandvariable.file.relativeFile}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/nautilus_test"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "UV: Run Python Module",
+            "type": "shell",
+            "command": "uv",
+            "args": [
+                "run", 
+                "python", 
+                "-m", 
+                "${command:extension.commandvariable.file.relativeFileDotsNoExtension}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/nautilus_test"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "UV: Run Tests",
+            "type": "shell",
+            "command": "uv",
+            "args": ["run", "pytest", "-v"],
+            "options": {
+                "cwd": "${workspaceFolder}/nautilus_test"
+            },
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "UV: Format Current File",
+            "type": "shell", 
+            "command": "uv",
+            "args": [
+                "run", 
+                "ruff", 
+                "format", 
+                "${command:extension.commandvariable.file.relativeFile}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/nautilus_test"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false
+            }
+        },
+        {
+            "label": "UV: Lint Current File",
+            "type": "shell",
+            "command": "uv", 
+            "args": [
+                "run",
+                "ruff",
+                "check",
+                "${command:extension.commandvariable.file.relativeFile}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/nautilus_test"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false
+            }
+        }
+    ]
+}
