@@ -1,9 +1,82 @@
 {
+  "defaultMode": "bypassPermissions",
   "permissions": {
+    "rules": [
+      {
+        "description": "Allow all bash commands for development workflow",
+        "pattern": "Bash",
+        "action": "allow"
+      },
+      {
+        "description": "Allow all file operations",
+        "pattern": "Read",
+        "action": "allow"
+      },
+      {
+        "description": "Allow all file edits", 
+        "pattern": "Edit",
+        "action": "allow"
+      },
+      {
+        "description": "Allow all multi-edits",
+        "pattern": "MultiEdit", 
+        "action": "allow"
+      },
+      {
+        "description": "Allow all file writes",
+        "pattern": "Write",
+        "action": "allow"
+      },
+      {
+        "description": "Allow all glob searches",
+        "pattern": "Glob",
+        "action": "allow"
+      },
+      {
+        "description": "Allow all grep searches", 
+        "pattern": "Grep",
+        "action": "allow"
+      },
+      {
+        "description": "Allow directory listings",
+        "pattern": "LS",
+        "action": "allow"
+      },
+      {
+        "description": "Allow task agents",
+        "pattern": "Task",
+        "action": "allow"
+      },
+      {
+        "description": "Allow notebook operations",
+        "pattern": "NotebookRead",
+        "action": "allow"
+      },
+      {
+        "description": "Allow notebook edits",
+        "pattern": "NotebookEdit", 
+        "action": "allow"
+      },
+      {
+        "description": "Allow web fetching",
+        "pattern": "WebFetch",
+        "action": "allow"
+      },
+      {
+        "description": "Allow web search",
+        "pattern": "WebSearch",
+        "action": "allow"
+      },
+      {
+        "description": "Allow todo management",
+        "pattern": "TodoWrite",
+        "action": "allow"
+      }
+    ],
     "allow": [
       "Bash(uv venv:*)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:github.com)"
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
