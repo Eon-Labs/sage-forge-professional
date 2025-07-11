@@ -2,9 +2,10 @@
 
 ## 🎯 Repository Setup
 
-**GitHub Repository**: https://github.com/terrylica/nautilus-trader-learning  
+**GitHub Repository**: https://github.com/terrylica/nautilus-trader-workspace  
 **Type**: Public repository  
-**Description**: Learning algorithmic trading with NautilusTrader - strategies, backtests, and development notes
+**Description**: Complete NautilusTrader development workspace with strategies, backtesting, learning notes, and reference implementation
+**Scope**: Entire workspace (not just nautilus_test subdirectory)
 
 ### Authentication Status ✅
 - **GitHub CLI**: Authenticated as `terrylica`

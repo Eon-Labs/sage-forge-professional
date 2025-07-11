@@ -58,11 +58,12 @@ run-example: ## Run basic sandbox example
 .PHONY: git-status
 git-status: ## Show git status and branch information
 	@echo "$(BLUE)Git Repository Status$(RESET)"
-	@echo "$(YELLOW)Current branch:$(RESET) $$(git branch --show-current)"
-	@echo "$(YELLOW)Remote:$(RESET) $$(git remote get-url origin 2>/dev/null || echo 'No remote configured')"
-	@git status --short
+	@echo "$(YELLOW)Current branch:$(RESET) $$(cd /workspaces/nt && git branch --show-current)"
+	@echo "$(YELLOW)Remote:$(RESET) $$(cd /workspaces/nt && git remote get-url origin 2>/dev/null || echo 'No remote configured')"
+	@echo "$(YELLOW)Scope:$(RESET) Entire workspace (/workspaces/nt/)"
+	@cd /workspaces/nt && git status --short
 	@echo ""
-	@if [ -n "$$(git status --porcelain)" ]; then \
+	@if [ -n "$$(cd /workspaces/nt && git status --porcelain)" ]; then \
 		echo "$(YELLOW)Uncommitted changes detected$(RESET)"; \
 	else \
 		echo "$(GREEN)Working tree clean$(RESET)"; \
@@ -85,7 +86,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 .PHONY: git-push
 git-push: ## Push changes to remote repository
 	@echo "$(BLUE)Pushing to remote repository...$(RESET)"
-	@git push origin $$(git branch --show-current)
+	@cd /workspaces/nt && git push origin $$(git branch --show-current)
 	@echo "$(GREEN)Pushed successfully$(RESET)"
 
 .PHONY: dev-workflow
