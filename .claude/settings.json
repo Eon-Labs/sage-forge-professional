@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": {
+          "tool_name": ["Edit", "MultiEdit", "Write"],
+          "file_paths": ["*.py"]
+        },
+        "command": "cd /workspaces/nt/nautilus_test && echo '🎨 Auto-formatting Python files...' && uv run ruff check --fix $CLAUDE_FILE_PATHS && uv run ruff format $CLAUDE_FILE_PATHS && echo '✅ Formatting complete'"
+      }
+    ]
+  }
+}
