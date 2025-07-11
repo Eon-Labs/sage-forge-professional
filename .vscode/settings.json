@@ -1,8 +1,7 @@
 {
-    "python.languageServer": "None",
-    "python.defaultInterpreterPath": "./nautilus_test/scripts/uv_python.sh",
+    "python.defaultInterpreterPath": "./nautilus_test/.venv/bin/python",
     "python.terminal.executeInFileDir": false,
-    "python.terminal.activateEnvironment": false,
+    "python.terminal.activateEnvironment": true,
     "editor.formatOnSave": true,
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
@@ -23,11 +22,20 @@
         }
     },
     "python.analysis.extraPaths": [
-        "./nautilus_test"
+        "./nautilus_test/src",
+        "./nautilus_test/.venv/lib/python3.12/site-packages"
     ],
     "python.analysis.autoSearchPaths": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.packageIndexDepths": [
+        {
+            "name": "nautilus_trader",
+            "depth": 10
+        }
+    ],
     "python.testing.pytestEnabled": true,
-    "python.testing.pytestPath": "uv run pytest",
+    "python.testing.pytestPath": "cd nautilus_test && uv run pytest",
+    "python.testing.cwd": "${workspaceFolder}/nautilus_test",
     "python.testing.unittestEnabled": false,
     "python.linting.enabled": false,
     "python.formatting.provider": "none",
@@ -35,9 +43,23 @@
     "pylint.args": ["--disable=all"],
     "ruff.enable": true,
     "ruff.lint.enable": true,
+    "ruff.interpreter": ["./nautilus_test/.venv/bin/python"],
     "files.exclude": {
         "**/__pycache__": true,
         "**/.pytest_cache": true,
-        "**/node_modules": true
+        "**/node_modules": true,
+        "nt_reference/**": true,
+        "**/.venv": false
     },
+    "files.watcherExclude": {
+        "**/.venv/**": true,
+        "nt_reference/**": true
+    },
+    "files.associations": {
+        "*.toml": "toml"
+    },
+    "workbench.colorCustomizations": {
+        "statusBar.background": "#1e3a8a",
+        "statusBar.foreground": "#ffffff"
+    }
 }

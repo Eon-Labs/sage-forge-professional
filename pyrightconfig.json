@@ -1,0 +1,39 @@
+{
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Linux",
+  "executionEnvironments": [
+    {
+      "root": "./nautilus_test",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "./nautilus_test/src",
+        "./nautilus_test/.venv/lib/python3.12/site-packages"
+      ]
+    }
+  ],
+  "include": [
+    "./nautilus_test/src",
+    "./nautilus_test/tests",
+    "./nautilus_test/examples"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.mypy_cache", 
+    "**/.ruff_cache",
+    "**/node_modules",
+    "**/nt_reference/**",
+    "./nautilus_test/.venv"
+  ],
+  "venvPath": "./nautilus_test",
+  "venv": ".venv",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "autoSearchPaths": true,
+  "autoImportCompletions": true,
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": "none",
+  "reportUnusedImport": "warning",
+  "reportUnusedVariable": "warning"
+}

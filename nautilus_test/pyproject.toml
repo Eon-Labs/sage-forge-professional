@@ -7,7 +7,7 @@ name = "nautilus-test"
 version = "0.1.0"
 description = "NautilusTrader test environment following project conventions"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "nautilus-trader>=1.219.0",
     "pandas>=2.0.0",
@@ -29,11 +29,11 @@ where = ["src"]
 
 [tool.black]
 line-length = 100
-target-version = ['py311']
+target-version = ['py312']
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 src = ["src"]
 
 [tool.ruff.lint]
@@ -48,7 +48,7 @@ select = [
 ]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
