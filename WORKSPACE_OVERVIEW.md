@@ -276,4 +276,5 @@ ls learning_notes/
 
 **Created**: 2025-07-11  
 **Environment**: NautilusTrader Development Workspace  
-**Purpose**: Complete workspace documentation and reference
+**Purpose**: Complete workspace documentation and reference  
+**Repository**: https://github.com/terrylica/nautilus-trader-workspace
