@@ -8,6 +8,7 @@ Enhanced with Rich library for beautiful terminal output.
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+import finplot as fplt
 import pandas as pd
 from nautilus_trader.backtest.engine import BacktestEngine, BacktestEngineConfig
 from nautilus_trader.backtest.models import FillModel
@@ -33,6 +34,122 @@ from rich.text import Text
 
 # Initialize Rich console
 console = Console()
+
+
+# Visualization functions
+def prepare_bars_dataframe(bars: list[Bar]) -> pd.DataFrame:
+    """Convert NautilusTrader Bar objects to DataFrame for visualization."""
+    data = []
+    for bar in bars:
+        # Convert nanosecond timestamp to datetime
+        timestamp = pd.Timestamp(bar.ts_event, unit="ns")
+        data.append(
+            {
+                "time": timestamp,
+                "open": float(bar.open),
+                "high": float(bar.high),
+                "low": float(bar.low),
+                "close": float(bar.close),
+                "volume": float(bar.volume),
+            }
+        )
+
+    df = pd.DataFrame(data)
+    df.set_index("time", inplace=True)
+    return df
+
+
+def create_candlestick_chart(df: pd.DataFrame, title: str = "OHLC Chart"):
+    """Create a candlestick chart with volume."""
+    # Create figure with 2 rows (price and volume)
+    ax, ax2 = fplt.create_plot(title, rows=2)
+
+    # Plot candlesticks on main chart
+    fplt.candlestick_ochl(df[["open", "close", "high", "low"]], ax=ax)
+
+    # Plot volume on second chart
+    fplt.volume_ocv(df[["open", "close", "volume"]], ax=ax2)
+
+    # Link x-axes
+    ax2.set_visible(xgrid=True, ygrid=True)
+
+    return ax, ax2
+
+
+def add_ema_indicators(df: pd.DataFrame, ax, fast_period: int = 10, slow_period: int = 20):
+    """Add EMA indicators to the chart."""
+    # Calculate EMAs
+    df["ema_fast"] = df["close"].ewm(span=fast_period, adjust=False).mean()
+    df["ema_slow"] = df["close"].ewm(span=slow_period, adjust=False).mean()
+
+    # Plot EMAs
+    fplt.plot(df["ema_fast"], ax=ax, color="#3388ff", width=2, legend=f"EMA {fast_period}")
+    fplt.plot(df["ema_slow"], ax=ax, color="#ff3388", width=2, legend=f"EMA {slow_period}")
+
+    return df
+
+
+def add_trade_markers(df: pd.DataFrame, fills_report: pd.DataFrame, ax):
+    """Add trade execution markers to the chart."""
+    if fills_report.empty:
+        return
+
+    # Process fills data
+    buy_times = []
+    buy_prices = []
+    sell_times = []
+    sell_prices = []
+
+    for _, fill in fills_report.iterrows():
+        # Convert timestamp to datetime - handle potential series or value
+        timestamp_val = fill["ts_init"]
+        if isinstance(timestamp_val, pd.Series):
+            timestamp_val = timestamp_val.iloc[0] if not timestamp_val.empty else None
+        if timestamp_val is not None:
+            timestamp = pd.Timestamp(timestamp_val)
+            price = float(fill["avg_px"])
+
+            if fill["side"] == "BUY":
+                buy_times.append(timestamp)
+                buy_prices.append(price)
+            else:
+                sell_times.append(timestamp)
+                sell_prices.append(price)
+
+    # Create scatter plots for trades
+    if buy_times:
+        buy_df = pd.DataFrame({"price": buy_prices}, index=pd.Index(buy_times))
+        fplt.plot(buy_df, ax=ax, style="^", color="#00ff00", width=3, legend="Buy")
+
+    if sell_times:
+        sell_df = pd.DataFrame({"price": sell_prices}, index=pd.Index(sell_times))
+        fplt.plot(sell_df, ax=ax, style="v", color="#ff0000", width=3, legend="Sell")
+
+
+def display_chart_with_trades(
+    bars: list[Bar],
+    fills_report: pd.DataFrame,
+    instrument_id: str,
+    fast_ema: int = 10,
+    slow_ema: int = 20,
+):
+    """Display complete chart with OHLC, volume, indicators, and trades."""
+    # Convert bars to DataFrame
+    df = prepare_bars_dataframe(bars)
+
+    # Create candlestick chart
+    ax, ax2 = create_candlestick_chart(df, f"{instrument_id} - Backtest Results")
+
+    # Add EMA indicators
+    add_ema_indicators(df, ax, fast_ema, slow_ema)
+
+    # Add trade markers
+    add_trade_markers(df, fills_report, ax)
+
+    # Show the plot
+    fplt.show()
+
+    return df
 
 
 def create_sample_bars(
@@ -289,6 +406,7 @@ def main():
     USE_REAL_DATA = False  # Set to True to try loading FXCM data
     USE_BRACKET_STRATEGY = False  # Set to True to use EMACrossBracket
     STARTING_CAPITAL = 10_000  # Can be changed to 100_000 for higher capital
+    ENABLE_CHART_VISUALIZATION = True  # Set to False to disable finplot charts
 
     # Configure backtest engine
     config = BacktestEngineConfig(
@@ -409,6 +527,18 @@ def main():
         display_performance_summary(account_report, fills_report, STARTING_CAPITAL)
         display_recent_trades(fills_report)
 
+        # Display interactive chart visualization
+        if ENABLE_CHART_VISUALIZATION and bars:
+            console.print(
+                "\n[bold cyan]📊 Launching interactive chart visualization...[/bold cyan]"
+            )
+            try:
+                display_chart_with_trades(
+                    bars, fills_report, str(instrument.id), fast_ema=10, slow_ema=20
+                )
+            except Exception as chart_error:
+                console.print(f"[yellow]⚠️ Chart visualization error: {chart_error}[/yellow]")
+
     except Exception as e:
         console.print(f"[red]❌ Error generating reports: {e}[/red]")
 
@@ -420,6 +550,7 @@ def main():
         "✅ Configurable starting capital",
         "✅ Enhanced error handling & commission tracking",
         "✅ Beautiful Rich output with progress indicators 🎨",
+        "✅ Interactive finplot charts with candlesticks, EMAs & trade markers 📈",
     ]
 
     console.print(
