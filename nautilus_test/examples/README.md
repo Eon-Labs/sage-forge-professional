@@ -23,4 +23,9 @@ uv run python examples/sandbox/basic_test.py
 ## Example Scripts
 
 ### Sandbox
-- `basic_test.py`: Basic NautilusTrader functionality test
+- **dsm_integration_demo.py**: Complete real market data integration using Data Source Manager
+  - Real Binance data via Failover Control Protocol (FCP)
+  - Modern Polars/Arrow data pipeline
+  - Interactive charting with trade visualization
+  - Production-ready backtesting workflow
+- `simple_bars_test.py`: Basic NautilusTrader functionality test

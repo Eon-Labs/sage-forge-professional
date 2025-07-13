@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Enhanced version of simple_bars_test.py using modern data pipeline.
-Integrates the latest Polars/Arrow ecosystem with NautilusTrader for optimal performance.
+Data Source Manager (DSM) Integration Demo
 
-This version demonstrates:
-- Modern data processing with Polars 1.31.0+
-- Arrow-native interoperability
-- Clean separation of data generation and trading logic
-- Latest Python best practices
+Demonstrates real market data integration using the Data Source Manager
+with NautilusTrader backtesting framework.
+
+Features:
+- Real Binance market data via DSM Failover Control Protocol (FCP)
+- Modern data processing with Polars 1.31.0+ and PyArrow 20.0.0+
+- Interactive charting with finplot
+- Clean separation between data fetching and trading logic
+- Production-ready error handling without synthetic fallbacks
 """
 
 import sys
