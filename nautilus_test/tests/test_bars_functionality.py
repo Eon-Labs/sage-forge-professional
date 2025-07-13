@@ -1,6 +1,8 @@
 """
-Pytest tests for NautilusTrader OHLC bars functionality.
-Tests the core bar creation, strategy execution, and backtesting workflow.
+Unit tests for NautilusTrader OHLC bars functionality.
+
+NOTE: These tests use synthetic data for deterministic, repeatable testing.
+For real market data examples, see examples/sandbox/dsm_integration_demo.py
 """
 
 from datetime import datetime, timedelta

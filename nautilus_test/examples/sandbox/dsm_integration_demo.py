@@ -29,7 +29,7 @@ from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import AccountType, OmsType
 from nautilus_trader.model.identifiers import InstrumentId, TraderId, Venue
 from nautilus_trader.model.objects import Money, Price, Quantity
-from nautilus_trader.test_kit.providers import TestInstrumentProvider
+from nautilus_trader.test_kit.providers import TestInstrumentProvider  # Only for instrument creation
 from rich import box
 from rich.console import Console
 from rich.panel import Panel

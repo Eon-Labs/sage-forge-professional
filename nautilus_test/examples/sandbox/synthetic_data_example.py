@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-Simple test to explore OHLC bars handling in NautilusTrader.
-This creates synthetic bar data to demonstrate basic concepts.
-Enhanced with Rich library for beautiful terminal output.
+Synthetic Data Example for NautilusTrader
+
+This example demonstrates backtesting with synthetic/simulated data.
+For production use and real market data, use dsm_integration_demo.py instead.
+
+Purpose: Educational example showing basic NautilusTrader concepts with synthetic data.
 """
 
 from datetime import datetime, timedelta

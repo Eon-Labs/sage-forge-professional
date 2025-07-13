@@ -28,4 +28,7 @@ uv run python examples/sandbox/basic_test.py
   - Modern Polars/Arrow data pipeline
   - Interactive charting with trade visualization
   - Production-ready backtesting workflow
-- `simple_bars_test.py`: Basic NautilusTrader functionality test
+- **synthetic_data_example.py**: Educational example with synthetic data
+  - Basic NautilusTrader concepts demonstration
+  - Synthetic data generation for learning purposes
+  - For production use, refer to dsm_integration_demo.py

@@ -15,6 +15,13 @@ dependencies = [
     "rich>=14.0.0",
     "finplot>=1.9.7",
     "polars>=1.30.0",
+    "attrs>=25.3.0",
+    "loguru>=0.7.3",
+    "httpx>=0.28.1",
+    "fsspec>=2025.5.1",
+    "tenacity>=9.1.2",
+    "pendulum>=3.1.0",
+    "platformdirs>=4.3.8",
 ]
 
 [project.optional-dependencies]
