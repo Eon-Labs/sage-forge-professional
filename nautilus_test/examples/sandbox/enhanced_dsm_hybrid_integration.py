@@ -281,11 +281,11 @@ class EnhancedModernBarDataProvider:
                     if hasattr(df, 'null_count'):  # Polars
                         nan_rows = df.null_count().sum_horizontal().sum()
                     elif hasattr(df, 'isna'):  # Pandas
-                        nan_rows = df.isna().any(axis=1).sum()
+                        nan_rows = df.isna().any(axis=1).sum()  # type: ignore[attr-defined]
                     else:
                         nan_rows = 0  # Assume clean data if unknown type
                     completeness = (total_rows - nan_rows) / total_rows if total_rows > 0 else 0
-                except:
+                except Exception:
                     completeness = 1.0  # Assume good quality if check fails
                 console.print(f"[green]✅ DSM data quality: {completeness:.1%} complete[/green]")
                 
@@ -428,17 +428,24 @@ class EnhancedModernBarDataProvider:
                 
                 # Convert to nanoseconds safely
                 try:
-                    # Validate timestamp is not NaT
-                    if timestamp is None or (hasattr(timestamp, '__class__') and 'NaT' in str(timestamp.__class__)):
+                    # Validate timestamp is not NaT/None and has timestamp method
+                    is_nat = False
+                    try:
+                        is_nat = pd.isna(timestamp) if hasattr(pd, 'isna') else False
+                    except (ValueError, TypeError):
+                        pass
+                    
+                    if timestamp is None or bool(is_nat) or not hasattr(timestamp, 'timestamp'):
                         base_time = datetime.now() - timedelta(minutes=len(df_pandas)-i)
                         timestamp = pd.Timestamp(base_time)
                     
-                    ts_ns = int(timestamp.timestamp() * 1_000_000_000)
+                    # Safe timestamp conversion
+                    ts_ns = int(timestamp.timestamp() * 1_000_000_000)  # type: ignore[attr-defined]
                         
                 except (ValueError, TypeError, AttributeError, OSError):
                     # Final fallback - create synthetic timestamp
                     base_time = datetime.now() - timedelta(minutes=len(df_pandas)-i)
-                    ts_ns = int(pd.Timestamp(base_time).timestamp() * 1_000_000_000)
+                    ts_ns = int(base_time.timestamp() * 1_000_000_000)
                 
                 # Create price and quantity objects with exact precision
                 bar = Bar(
@@ -592,7 +599,7 @@ def add_realistic_trade_markers(df: pd.DataFrame, fills_report: pd.DataFrame, ax
                 if hasattr(timestamp_val, 'timestamp') and hasattr(timestamp_val, 'floor'):
                     timestamp = timestamp_val
                 else:
-                    timestamp = pd.Timestamp(timestamp_val)
+                    timestamp = pd.Timestamp(timestamp_val)  # type: ignore[arg-type]
             except (ValueError, TypeError):
                 continue  # Skip invalid timestamps
             
