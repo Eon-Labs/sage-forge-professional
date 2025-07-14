@@ -22,6 +22,7 @@ dependencies = [
     "tenacity>=9.1.2",
     "pendulum>=3.1.0",
     "platformdirs>=4.3.8",
+    "python-binance>=1.0.29",
 ]
 
 [project.optional-dependencies]

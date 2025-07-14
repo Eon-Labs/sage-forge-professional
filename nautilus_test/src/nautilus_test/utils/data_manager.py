@@ -52,8 +52,9 @@ class ArrowDataManager:
             from core.sync.data_source_manager import DataSourceManager
             from utils.market_constraints import DataProvider, MarketType, Interval
             
-            # Create manager for Binance spot market
-            manager = DataSourceManager.create(DataProvider.BINANCE, MarketType.SPOT)
+            # Create manager for Binance USDT-margined futures (perpetual futures)
+            # BTCUSDT perpetual futures use FUTURES_USDT market type
+            manager = DataSourceManager.create(DataProvider.BINANCE, MarketType.FUTURES_USDT)
             
             # Calculate time range for recent data
             end_time = datetime.now()
@@ -69,9 +70,11 @@ class ArrowDataManager:
             }
             interval = interval_map.get(timeframe, Interval.MINUTE_1)
             
-            console.print(f"[blue]📊 Fetching {symbol} from {start_time} to {end_time}...[/blue]")
+            console.print(f"[blue]📊 Fetching {symbol} PERPETUAL FUTURES from {start_time} to {end_time}...[/blue]")
+            console.print(f"[cyan]🎯 Market Type: FUTURES_USDT (USDT-margined perpetual futures)[/cyan]")
+            console.print(f"[cyan]🔗 API Endpoint: fapi.binance.com (Binance USDT-margined futures)[/cyan]")
             
-            # Fetch real data using DSM
+            # Fetch real perpetual futures data using DSM
             df_pandas = manager.get_data(
                 symbol=symbol,
                 start_time=start_time,
@@ -82,7 +85,19 @@ class ArrowDataManager:
             if df_pandas is None or df_pandas.empty:
                 raise Exception("No data returned from DSM")
             
-            console.print(f"[green]✅ DSM returned {len(df_pandas)} real market data points[/green]")
+            console.print(f"[green]✅ DSM returned {len(df_pandas)} PERPETUAL FUTURES data points[/green]")
+            
+            # Validate data quality for futures
+            valid_rows = df_pandas.dropna().shape[0]
+            total_rows = df_pandas.shape[0]
+            completeness = valid_rows / total_rows if total_rows > 0 else 0
+            
+            console.print(f"[blue]📊 Data Quality: {valid_rows}/{total_rows} valid rows ({completeness:.1%} complete)[/blue]")
+            
+            if completeness < 0.8:
+                console.print(f"[yellow]⚠️ Low data completeness ({completeness:.1%}) - may indicate API issues[/yellow]")
+            else:
+                console.print(f"[green]✅ High data completeness ({completeness:.1%}) - futures data quality good[/green]")
             
             # Convert pandas to polars and rename columns to our format
             df_polars = pl.from_pandas(df_pandas)
@@ -130,7 +145,12 @@ class ArrowDataManager:
                 pl.col("timestamp").cast(pl.Datetime)
             )
             
-            console.print(f"[magenta]📈 Real data price range: ${df_polars['close'].min():.2f} - ${df_polars['close'].max():.2f}[/magenta]")
+            # Display perpetual futures price information
+            min_price = df_polars['close'].min()
+            max_price = df_polars['close'].max()
+            price_range = max_price - min_price
+            console.print(f"[magenta]📈 PERPETUAL FUTURES price range: ${min_price:.2f} - ${max_price:.2f}[/magenta]")
+            console.print(f"[blue]💰 Futures volatility: ${price_range:.2f} range ({price_range/min_price*100:.2f}% swing)[/blue]")
             
             return df_polars
                 
