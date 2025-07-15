@@ -7,11 +7,9 @@ native data infrastructure.
 
 from typing import Any, Dict, List, Optional
 import polars as pl
-import pyarrow as pa
 from pathlib import Path
 from rich.console import Console
 
-from nautilus_trader.core.data import Data
 from nautilus_trader.model.data import Bar, BarType, BarSpecification
 from nautilus_trader.model.enums import BarAggregation, PriceType
 from nautilus_trader.model.identifiers import InstrumentId
@@ -193,7 +191,7 @@ class ArrowDataManager:
         for batch in arrow_table.to_batches():
             batch_df = pl.from_arrow(batch)
             
-            for row in batch_df.iter_rows(named=True):
+            for row in batch_df.to_dicts():
                 # Skip rows with missing data
                 if (row['open'] is None or row['high'] is None or 
                     row['low'] is None or row['close'] is None or row['volume'] is None):
@@ -250,9 +248,9 @@ class ArrowDataManager:
             "price_stats": {
                 "mean": df["close"].mean(),
                 "std": df["close"].std(),
-                "min": df["close"].min(),
-                "max": df["close"].max(),
-                "range": df["close"].max() - df["close"].min()
+                "min": df["close"].min() or 0,
+                "max": df["close"].max() or 0,
+                "range": (df["close"].max() or 0) - (df["close"].min() or 0)
             },
             "volume_stats": {
                 "total": df["volume"].sum(),

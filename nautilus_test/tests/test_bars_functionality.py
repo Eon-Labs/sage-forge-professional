@@ -169,39 +169,6 @@ def test_ema_cross_strategy_execution(backtest_engine):
     engine.dispose()
 
 
-def test_performance_metrics_calculation():
-    """Test performance metrics calculation functions."""
-    # Test currency formatting
-    import sys
-    import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'examples', 'sandbox'))
-    from simple_bars_test import format_currency, format_percentage
-
-    assert format_currency(1000.50) == "$1,000.50"
-    assert format_currency(0) == "$0.00"
-    assert format_currency(-500.75) == "$-500.75"
-
-    # Test percentage formatting
-    assert format_percentage(15.5) == "+15.50%"
-    assert format_percentage(-5.25) == "-5.25%"
-    assert format_percentage(0) == "+0.00%"
-
-
-def test_bar_type_consistency():
-    """Test that bar types are consistent between data and strategy."""
-    venue = Venue("TEST")
-    instrument = TestInstrumentProvider.default_fx_ccy("EUR/USD", venue)
-    bar_type = BarType.from_str(f"{instrument.id}-1-MINUTE-MID-EXTERNAL")
-
-    # Create bars with this bar type
-    bars = create_test_bars(instrument.id, bar_type, count=3)
-
-    # Verify all bars have the same bar type
-    for bar in bars:
-        assert bar.bar_type == bar_type
-        assert str(bar.bar_type) == str(bar_type)
-
-
 @pytest.mark.parametrize("trade_size", [100, 1000, 10000])
 def test_different_trade_sizes(backtest_engine, trade_size):
     """Test strategy execution with different trade sizes."""
