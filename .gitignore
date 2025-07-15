@@ -101,6 +101,24 @@ logs/
 backtest_results/
 results/
 
+# Data cache directories (all cache types)
+data_cache/
+nautilus_test/data_cache/
+*/data_cache/
+
+# Funding integration cache
+funding_integration/
+production_funding/
+dsm_cache/
+*/dsm_cache/
+
+# Binance API cache files
+*_funding_*.json
+cache_metadata.json
+BTCUSDT_*.json
+*FUTURES-usdt-*.arrow
+*.arrow
+
 # Trading data and configs (add specific ones you want to ignore)
 # config/live_trading.json
 # config/secrets.yaml

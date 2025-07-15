@@ -32,6 +32,23 @@ logs/
 # Data
 *.parquet
 
+# Cache directories (funding integration)
+data_cache/
+funding_integration/
+production_funding/
+dsm_cache/
+
+# Funding API cache files
+*_funding_*.json
+cache_metadata.json
+BTCUSDT_*.json
+*FUTURES-usdt-*.arrow
+*.arrow
+
+# Market data cache files
+*_market_data.parquet
+*_validated_market_data.parquet
+
 # IntelliJ and VSCode project
 *.iml
 .idea/
