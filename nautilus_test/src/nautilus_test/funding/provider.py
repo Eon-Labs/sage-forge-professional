@@ -18,6 +18,7 @@ from nautilus_trader.model.identifiers import InstrumentId
 from rich.console import Console
 
 from nautilus_test.funding.data import FundingRateUpdate
+from nautilus_test.utils.cache_config import get_funding_cache_dir, get_dsm_cache_dir
 
 console = Console()
 
@@ -41,12 +42,17 @@ class FundingRateProvider:
         enable_direct_api: bool = True,
     ) -> None:
         """
-        Initialize enhanced funding rate provider.
+        Initialize enhanced funding rate provider with platform-standard cache.
+        
+        Uses platformdirs for cross-platform cache directory following 2024-2025 best practices:
+        - Linux: ~/.cache/nautilus-test/funding/
+        - macOS: ~/Library/Caches/nautilus-test/funding/
+        - Windows: %LOCALAPPDATA%/nautilus-test/Cache/funding/
         
         Parameters
         ----------
         cache_dir : Path, optional
-            Directory for caching funding rate data.
+            Directory for caching funding rate data. Uses platformdirs if None.
         use_cache : bool
             Whether to use local caching.
         dsm_available : bool
@@ -54,8 +60,8 @@ class FundingRateProvider:
         enable_direct_api : bool
             Whether to enable direct Binance API access.
         """
-        self.cache_dir = cache_dir or Path("data_cache/funding_rates")
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_dir = cache_dir or get_funding_cache_dir()
+        console.print(f"[blue]📁 Funding cache directory: {self.cache_dir}[/blue]")
         self.use_cache = use_cache
         self.dsm_available = dsm_available
         self.enable_direct_api = enable_direct_api
@@ -82,7 +88,7 @@ class FundingRateProvider:
             self._dsm_client = BinanceFundingRateClient(
                 symbol="BTCUSDT",
                 market_type=MarketType.FUTURES_USDT,
-                cache_dir=self.cache_dir / "dsm_cache",
+                cache_dir=get_dsm_cache_dir(),
                 use_cache=self.use_cache
             )
             self._interval = Interval.HOUR_8

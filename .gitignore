@@ -106,18 +106,24 @@ data_cache/
 nautilus_test/data_cache/
 */data_cache/
 
-# Funding integration cache
+# Legacy workspace cache (pre-platformdirs)
 funding_integration/
 production_funding/
 dsm_cache/
 */dsm_cache/
 
-# Binance API cache files
+# Binance API cache files (legacy workspace)
 *_funding_*.json
 cache_metadata.json
 BTCUSDT_*.json
 *FUTURES-usdt-*.arrow
 *.arrow
+
+# Note: With platformdirs (2024-2025 best practices), cache files are stored in:
+# - macOS: ~/Library/Caches/nautilus-test/
+# - Linux: ~/.cache/nautilus-test/
+# - Windows: %LOCALAPPDATA%/nautilus-test/Cache/
+# These are automatically outside the workspace and don't need .gitignore rules
 
 # Trading data and configs (add specific ones you want to ignore)
 # config/live_trading.json

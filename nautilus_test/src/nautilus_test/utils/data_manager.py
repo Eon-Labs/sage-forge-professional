@@ -16,16 +16,25 @@ from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.objects import Price, Quantity
 from nautilus_trader.core.datetime import dt_to_unix_nanos
 
+from nautilus_test.utils.cache_config import get_market_data_cache_dir
+
 console = Console()
 
 
 class ArrowDataManager:
-    """High-performance data manager using Arrow ecosystem."""
+    """High-performance data manager using Arrow ecosystem with platformdirs cache."""
     
     def __init__(self, cache_dir: Optional[Path] = None) -> None:
-        """Initialize data manager with optional cache directory."""
-        self.cache_dir = cache_dir or Path("data_cache")
-        self.cache_dir.mkdir(exist_ok=True)
+        """
+        Initialize data manager with platform-standard cache directory.
+        
+        Uses platformdirs for cross-platform cache directory following 2024-2025 best practices:
+        - Linux: ~/.cache/nautilus-test/market_data/
+        - macOS: ~/Library/Caches/nautilus-test/market_data/
+        - Windows: %LOCALAPPDATA%/nautilus-test/Cache/market_data/
+        """
+        self.cache_dir = cache_dir or get_market_data_cache_dir()
+        console.print(f"[blue]📁 Using cache directory: {self.cache_dir}[/blue]")
     
     def fetch_real_market_data(
         self,

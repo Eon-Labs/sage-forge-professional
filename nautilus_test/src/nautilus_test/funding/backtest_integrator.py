@@ -22,6 +22,7 @@ from rich.panel import Panel
 from nautilus_test.funding.data import FundingRateUpdate, FundingPaymentEvent
 from nautilus_test.funding.provider import FundingRateProvider
 from nautilus_test.funding.calculator import FundingPaymentCalculator
+from nautilus_test.utils.cache_config import get_funding_cache_dir
 
 console = Console()
 
@@ -45,7 +46,12 @@ class BacktestFundingIntegrator:
         cache_dir: Optional[Path] = None,
     ):
         """
-        Initialize production-ready funding integrator.
+        Initialize production-ready funding integrator with platform-standard cache.
+        
+        Uses platformdirs for cross-platform cache directory following 2024-2025 best practices:
+        - Linux: ~/.cache/nautilus-test/funding/
+        - macOS: ~/Library/Caches/nautilus-test/funding/
+        - Windows: %LOCALAPPDATA%/nautilus-test/Cache/funding/
         
         Parameters
         ----------
@@ -54,10 +60,10 @@ class BacktestFundingIntegrator:
         funding_calculator : FundingPaymentCalculator, optional
             Funding payment calculator (creates default if None).
         cache_dir : Path, optional
-            Cache directory for funding data.
+            Cache directory for funding data. Uses platformdirs if None.
         """
-        self.cache_dir = cache_dir or Path("data_cache/funding_integration")
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_dir = cache_dir or get_funding_cache_dir()
+        console.print(f"[blue]📁 Backtest funding cache: {self.cache_dir}[/blue]")
         
         # Initialize components with enhanced provider
         self.funding_provider = funding_provider or FundingRateProvider(
