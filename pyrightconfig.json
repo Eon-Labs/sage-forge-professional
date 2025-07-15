@@ -8,7 +8,9 @@
       "pythonPlatform": "Linux",
       "extraPaths": [
         "./nautilus_test/src",
-        "./nautilus_test/.venv/lib/python3.12/site-packages"
+        "./nautilus_test/.venv/lib/python3.12/site-packages",
+        "/Users/terryli/eon/data-source-manager",
+        "./nautilus_test/examples/sandbox"
       ]
     }
   ],
@@ -30,7 +32,6 @@
   "venv": ".venv",
   "typeCheckingMode": "basic",
   "useLibraryCodeForTypes": true,
-  "autoSearchPaths": true,
   "autoImportCompletions": true,
   "reportMissingImports": "warning",
   "reportMissingTypeStubs": "none",
