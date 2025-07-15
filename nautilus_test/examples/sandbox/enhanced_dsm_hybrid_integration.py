@@ -1099,6 +1099,11 @@ async def main():
     console.print("\n" + "="*80)
     console.print("[bold red]🎯 STEP 6: Realistic Strategy Configuration[/bold red]")
     
+    # First add the bars data to the engine
+    console.print(f"[cyan]📊 Adding {len(bars)} bars to engine BEFORE strategy configuration[/cyan]")
+    engine.add_data(bars)
+    
+    # Now configure and add strategy after bars are available
     strategy_config = EMACrossConfig(
         instrument_id=instrument.id,
         bar_type=bar_type,
@@ -1110,10 +1115,6 @@ async def main():
     console.print(f"[cyan]🔧 Strategy instrument_id: {instrument.id}[/cyan]")
     strategy = EMACross(config=strategy_config)
     engine.add_strategy(strategy=strategy)
-    
-    # Now add the bars data after strategy is configured
-    console.print(f"[cyan]📊 Adding {len(bars)} bars to engine AFTER strategy configuration[/cyan]")
-    engine.add_data(bars)
 
     # Step 6.5: Add Native FundingActor for proper funding handling
     console.print("\n" + "="*80)

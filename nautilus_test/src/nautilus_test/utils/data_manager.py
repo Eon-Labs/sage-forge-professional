@@ -191,7 +191,7 @@ class ArrowDataManager:
         for batch in arrow_table.to_batches():
             batch_df = pl.from_arrow(batch)
             
-            for row in batch_df.to_dicts():
+            for row in batch_df.iter_rows(named=True):
                 # Skip rows with missing data
                 if (row['open'] is None or row['high'] is None or 
                     row['low'] is None or row['close'] is None or row['volume'] is None):

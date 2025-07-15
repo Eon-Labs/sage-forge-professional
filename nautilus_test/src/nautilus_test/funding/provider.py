@@ -202,7 +202,7 @@ class FundingRateProvider:
             
             # Convert to FundingRateUpdate objects
             funding_rates = []
-            for row in df.to_dicts():
+            for row in df.iter_rows(named=True):
                 funding_time_ns = dt_to_unix_nanos(pd.Timestamp(row['funding_time']))
                 ts_event = dt_to_unix_nanos(pd.Timestamp(row['open_time'])) if 'open_time' in row else funding_time_ns
                 
