@@ -17,7 +17,7 @@ from nautilus_trader.model.objects import Money
 from rich.console import Console
 from rich.panel import Panel
 
-from nautilus_test.funding.data import FundingRateUpdate, FundingPaymentEvent
+from nautilus_test.funding.data import FundingPaymentEvent, FundingRateUpdate
 
 console = Console()
 
@@ -38,7 +38,7 @@ class FundingActor(Actor):
     - "Cache for queries" - position data from cache, not direct calls
     - "Publish don't push" - emit events, don't call methods
     """
-    
+
     def __init__(self, config=None):
         """
         Initialize the funding actor.
@@ -49,13 +49,13 @@ class FundingActor(Actor):
             Actor configuration (can be None for simple setup).
         """
         super().__init__(config)
-        
+
         # Track funding state
         self._funding_events_count = 0
         self._total_funding_impact = Decimal("0")
-        
+
         console.print("[green]✅ Native FundingActor initialized[/green]")
-    
+
     def on_start(self) -> None:
         """
         Called when the actor starts.
@@ -64,19 +64,19 @@ class FundingActor(Actor):
         """
         self.log.info("FundingActor started - ready to process funding events")
         console.print("[blue]🚀 FundingActor started and ready for funding events[/blue]")
-    
+
     def on_stop(self) -> None:
         """Called when the actor stops."""
         self.log.info(f"FundingActor stopped - processed {self._funding_events_count} funding events")
         console.print(f"[yellow]⏹️ FundingActor stopped - {self._funding_events_count} events processed[/yellow]")
-    
+
     def on_reset(self) -> None:
         """Called when the actor resets."""
         self._funding_events_count = 0
         self._total_funding_impact = Decimal("0")
         self.log.info("FundingActor reset")
         console.print("[blue]🔄 FundingActor reset[/blue]")
-    
+
     def on_funding_rate_update(self, update: FundingRateUpdate) -> None:
         """
         Handle funding rate update using native patterns.
@@ -93,28 +93,28 @@ class FundingActor(Actor):
         """
         # Query position from cache (NATIVE PATTERN)
         position = self.cache.position_for_instrument(update.instrument_id)
-        
+
         if position is None or position.is_closed or position.quantity == 0:
             # No position or closed position - no funding impact
             self.log.debug(f"No open position for {update.instrument_id} - skipping funding")
             return
-        
+
         # Calculate funding payment using the verified formula:
         # Payment = Position Size × Mark Price × Funding Rate
         position_size = float(position.quantity)
         mark_price = float(update.mark_price) if update.mark_price else self._get_mark_price_from_cache(update.instrument_id)
-        
+
         if mark_price is None or mark_price <= 0:
             self.log.warning(f"Invalid mark price for {update.instrument_id} - cannot calculate funding")
             return
-        
+
         # Calculate funding payment
         funding_payment_usd = position_size * mark_price * update.funding_rate
-        
+
         # Determine if payment or receipt
         is_payment = funding_payment_usd > 0
         payment_amount = Money(abs(funding_payment_usd), USDT)
-        
+
         # Create funding payment event (NATIVE PATTERN)
         funding_event = FundingPaymentEvent(
             event_id=UUID4(),
@@ -127,27 +127,27 @@ class FundingActor(Actor):
             ts_event=update.ts_event,
             ts_init=self.clock.timestamp_ns(),
         )
-        
+
         # Publish the event through message bus (NATIVE PATTERN)
         self.publish_data(funding_event)
-        
+
         # Update tracking
         self._funding_events_count += 1
         self._total_funding_impact += Decimal(str(funding_payment_usd))
-        
+
         # Log the funding event
         direction = "pays" if is_payment else "receives"
         self.log.info(
             f"Funding event: {position.instrument_id} position {position_size:.3f} "
             f"{direction} ${abs(funding_payment_usd):.2f} "
-            f"(rate: {update.funding_rate:.6f}, price: ${mark_price:.2f})"
+            f"(rate: {update.funding_rate:.6f}, price: ${mark_price:.2f})",
         )
-        
+
         console.print(
             f"[cyan]💰 Funding: {position.instrument_id} {direction} "
-            f"${abs(funding_payment_usd):.2f}[/cyan]"
+            f"${abs(funding_payment_usd):.2f}[/cyan]",
         )
-    
+
     def _get_mark_price_from_cache(self, instrument_id: InstrumentId) -> Optional[float]:
         """
         Get mark price from cache using native patterns.
@@ -167,19 +167,19 @@ class FundingActor(Actor):
         if quote_tick:
             # Use mid price as mark price approximation
             return float(quote_tick.mid_price())
-        
+
         # Try to get latest trade tick
         trade_tick = self.cache.trade_tick(instrument_id)
         if trade_tick:
             return float(trade_tick.price)
-        
+
         # Try to get latest bar
         bars = self.cache.bars(instrument_id)
         if bars:
             return float(bars[-1].close)
-        
+
         return None
-    
+
     def get_funding_summary(self) -> dict:
         """
         Get summary of funding activity.
@@ -205,7 +205,7 @@ class FundingActorConfig:
     
     This follows NautilusTrader's configuration pattern.
     """
-    
+
     def __init__(
         self,
         component_id: str = "FundingActor",
@@ -233,19 +233,18 @@ def add_funding_actor_to_engine(engine, config: Optional[FundingActorConfig] = N
     """
     if config is None:
         config = FundingActorConfig()
-    
+
     if config.enabled:
         # Create actor with simple config dict or None
         funding_actor = FundingActor(config=None)
         # NATIVE PATTERN: Use engine.add_actor()
         engine.add_actor(funding_actor)
-        
+
         console.print("[green]✅ Native FundingActor added to BacktestEngine[/green]")
-        
+
         return funding_actor
-    else:
-        console.print("[yellow]⚠️ FundingActor disabled in config[/yellow]")
-        return None
+    console.print("[yellow]⚠️ FundingActor disabled in config[/yellow]")
+    return None
 
 
 # Mathematical validation function for the native actor
@@ -253,7 +252,7 @@ def validate_funding_calculation_native(
     position_quantity: Decimal,
     mark_price: float,
     funding_rate: float,
-    expected_direction: str  # "pays" or "receives"
+    expected_direction: str,  # "pays" or "receives"
 ) -> bool:
     """
     Validate funding calculation using the same logic as the native actor.
@@ -279,7 +278,7 @@ def validate_funding_calculation_native(
     # Use the same calculation as the native actor
     position_size = float(position_quantity)
     funding_payment_usd = position_size * mark_price * funding_rate
-    
+
     # Determine direction
     if funding_payment_usd > 0:
         actual_direction = "pays"
@@ -287,7 +286,7 @@ def validate_funding_calculation_native(
         actual_direction = "receives"
     else:
         actual_direction = "neutral"
-    
+
     return actual_direction == expected_direction
 
 
@@ -296,19 +295,19 @@ if __name__ == "__main__":
     console.print(Panel.fit(
         "[bold cyan]🎭 Native FundingActor Demo[/bold cyan]\n"
         "Demonstrating NautilusTrader-native funding rate handling",
-        title="NATIVE ACTOR DEMO"
+        title="NATIVE ACTOR DEMO",
     ))
-    
+
     # Test mathematical validation
     console.print("\n[bold blue]🧮 Testing Native Actor Mathematics[/bold blue]")
-    
+
     test_cases = [
         (Decimal("1.0"), 50000.0, 0.0001, "pays"),      # Long + positive rate
         (Decimal("-1.0"), 50000.0, 0.0001, "receives"), # Short + positive rate
         (Decimal("1.0"), 50000.0, -0.0001, "receives"), # Long + negative rate
         (Decimal("-1.0"), 50000.0, -0.0001, "pays"),    # Short + negative rate
     ]
-    
+
     all_passed = True
     for pos, price, rate, expected in test_cases:
         is_valid = validate_funding_calculation_native(pos, price, rate, expected)
@@ -316,10 +315,10 @@ if __name__ == "__main__":
         console.print(f"  {status}: {pos} BTC @ ${price} with {rate:.6f} rate → {expected}")
         if not is_valid:
             all_passed = False
-    
+
     if all_passed:
         console.print("[bold green]🎉 All native actor calculations verified![/bold green]")
     else:
         console.print("[bold red]⚠️ Native actor calculation errors detected![/bold red]")
-    
+
     console.print("\n[bold green]✅ Native FundingActor ready for integration![/bold green]")

@@ -13,23 +13,23 @@ perpetual futures contracts with enhanced features:
 Designed following NautilusTrader's native architecture with zero redundancy.
 """
 
-from nautilus_test.funding.data import FundingRateUpdate, FundingPaymentEvent
-from nautilus_test.funding.provider import FundingRateProvider
-from nautilus_test.funding.calculator import FundingPaymentCalculator
-from nautilus_test.funding.manager import FundingRateManager
+from nautilus_test.funding.actor import (
+    FundingActor,
+    FundingActorConfig,
+    add_funding_actor_to_engine,
+)
 from nautilus_test.funding.backtest_integrator import BacktestFundingIntegrator
-from nautilus_test.funding.validator import FundingValidator
-from nautilus_test.funding.actor import FundingActor, FundingActorConfig, add_funding_actor_to_engine
+from nautilus_test.funding.calculator import FundingPaymentCalculator
+from nautilus_test.funding.data import FundingPaymentEvent, FundingRateUpdate
+from nautilus_test.funding.provider import FundingRateProvider
 
 __all__ = [
-    "FundingRateUpdate",
-    "FundingPaymentEvent", 
-    "FundingRateProvider",
-    "FundingPaymentCalculator",
-    "FundingRateManager",
     "BacktestFundingIntegrator",
-    "FundingValidator",
     "FundingActor",
     "FundingActorConfig",
+    "FundingPaymentCalculator",
+    "FundingPaymentEvent",
+    "FundingRateProvider",
+    "FundingRateUpdate",
     "add_funding_actor_to_engine",
 ]

@@ -25,6 +25,7 @@ dependencies = [
     "python-binance>=1.0.29",
     "basedpyright>=1.30.1",
     "redis>=6.2.0",
+    "ruff>=0.12.2",
 ]
 
 [project.optional-dependencies]

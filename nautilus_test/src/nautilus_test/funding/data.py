@@ -6,12 +6,12 @@ adapter and event architecture.
 """
 
 from decimal import Decimal
-from typing import Dict, Any
+from typing import Any
 
 from nautilus_trader.core.data import Data
+from nautilus_trader.core.uuid import UUID4
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.objects import Money
-from nautilus_trader.core.uuid import UUID4
 
 
 class FundingRateUpdate(Data):
@@ -20,7 +20,7 @@ class FundingRateUpdate(Data):
     
     Follows NautilusTrader's data model pattern similar to BinanceFuturesMarkPriceUpdate.
     """
-    
+
     def __init__(
         self,
         instrument_id: InstrumentId,
@@ -53,21 +53,21 @@ class FundingRateUpdate(Data):
         self.funding_rate = funding_rate
         self.funding_time = funding_time
         self.mark_price = mark_price
-        
+
         # Set timestamps with underscores (following BinanceFuturesMarkPriceUpdate pattern)
         self._ts_event = ts_event
         self._ts_init = ts_init
-    
+
     @property
     def ts_event(self) -> int:
         """The event timestamp in nanoseconds."""
         return self._ts_event
-    
+
     @property
     def ts_init(self) -> int:
         """The initialization timestamp in nanoseconds."""
         return self._ts_init
-    
+
     def __repr__(self) -> str:
         return (
             f"{type(self).__name__}("
@@ -78,21 +78,21 @@ class FundingRateUpdate(Data):
             f"ts_event={self.ts_event}, "
             f"ts_init={self.ts_init})"
         )
-    
+
     @staticmethod
-    def from_dict(values: Dict[str, Any]) -> "FundingRateUpdate":
+    def from_dict(values: dict[str, Any]) -> "FundingRateUpdate":
         """Create from dictionary representation."""
         return FundingRateUpdate(
             instrument_id=InstrumentId.from_str(values["instrument_id"]),
             funding_rate=values["funding_rate"],
-            funding_time=values["funding_time"], 
+            funding_time=values["funding_time"],
             mark_price=values.get("mark_price"),
             ts_event=values["ts_event"],
             ts_init=values["ts_init"],
         )
-    
+
     @staticmethod
-    def to_dict(obj: "FundingRateUpdate") -> Dict[str, Any]:
+    def to_dict(obj: "FundingRateUpdate") -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "type": type(obj).__name__,
@@ -111,7 +111,7 @@ class FundingPaymentEvent(Data):
     
     Integrates with NautilusTrader's event system for account balance updates.
     """
-    
+
     def __init__(
         self,
         event_id: UUID4,
@@ -155,9 +155,9 @@ class FundingPaymentEvent(Data):
         self.position_size = position_size
         self.mark_price = mark_price
         self.is_payment = is_payment
-        
+
         super().__init__(ts_event, ts_init)
-    
+
     def __repr__(self) -> str:
         direction = "payment" if self.is_payment else "receipt"
         return (
@@ -170,9 +170,9 @@ class FundingPaymentEvent(Data):
             f"direction={direction}, "
             f"ts_event={self.ts_event})"
         )
-    
+
     @staticmethod
-    def from_dict(values: Dict[str, Any]) -> "FundingPaymentEvent":
+    def from_dict(values: dict[str, Any]) -> "FundingPaymentEvent":
         """Create from dictionary representation."""
         return FundingPaymentEvent(
             event_id=UUID4(values["event_id"]),
@@ -185,9 +185,9 @@ class FundingPaymentEvent(Data):
             ts_event=values["ts_event"],
             ts_init=values["ts_init"],
         )
-    
+
     @staticmethod
-    def to_dict(obj: "FundingPaymentEvent") -> Dict[str, Any]:
+    def to_dict(obj: "FundingPaymentEvent") -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "type": type(obj).__name__,
