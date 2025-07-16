@@ -3,6 +3,30 @@
   "pythonPlatform": "Linux",
   "executionEnvironments": [
     {
+      "root": "./nautilus_test/src/nautilus_test/funding",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "./nautilus_test/src",
+        "./nautilus_test/.venv/lib/python3.12/site-packages",
+        "/Users/terryli/eon/data-source-manager"
+      ],
+      "reportUnusedVariable": "none"
+    },
+    {
+      "root": "./nautilus_test/src/nautilus_test/utils",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux", 
+      "extraPaths": [
+        "./nautilus_test/src",
+        "./nautilus_test/.venv/lib/python3.12/site-packages",
+        "/Users/terryli/eon/data-source-manager"
+      ],
+      "reportOperatorIssue": "none",
+      "reportUnusedVariable": "none",
+      "reportCallIssue": "none"
+    },
+    {
       "root": "./nautilus_test",
       "pythonVersion": "3.12",
       "pythonPlatform": "Linux",
