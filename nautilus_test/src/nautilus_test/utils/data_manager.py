@@ -34,6 +34,7 @@ class ArrowDataManager:
         timeframe: str = "1m",
         limit: int = 1000,
         start_time: Optional[datetime] = None,  # New param
+        end_time: Optional[datetime] = None,    # New param
     ) -> pl.DataFrame:
         """Fetch real market data using Data Source Manager."""
         import sys
@@ -57,10 +58,12 @@ class ArrowDataManager:
             manager = DataSourceManager.create(DataProvider.BINANCE, MarketType.FUTURES_USDT)
 
             # Calculate time range for recent data
-            end_time = datetime.now()
+            if end_time is None:
+                end_time = datetime.now()
             if start_time is None:
                 start_time = end_time - timedelta(hours=limit // 60)
             assert isinstance(start_time, datetime), "start_time must be datetime"
+            assert isinstance(end_time, datetime), "end_time must be datetime"
 
             # Map timeframe to DSM interval
             interval_map = {
@@ -72,6 +75,10 @@ class ArrowDataManager:
             }
             interval = interval_map.get(timeframe, Interval.MINUTE_1)
 
+            # TIME SPAN VERIFICATION LOGGING
+            console.print(f"[bold green]🔍 TIME SPAN VERIFICATION: Using start_time={start_time}[/bold green]")
+            console.print(f"[bold green]🔍 TIME SPAN VERIFICATION: Using end_time={end_time}[/bold green]")
+            console.print(f"[bold green]🔍 TIME SPAN VERIFICATION: Duration={(end_time-start_time).total_seconds()/3600:.1f} hours[/bold green]")
             console.print(f"[blue]📊 Fetching {symbol} PERPETUAL FUTURES from {start_time} to {end_time}...[/blue]")
             console.print("[cyan]🎯 Market Type: FUTURES_USDT (USDT-margined perpetual futures)[/cyan]")
             console.print("[cyan]🔗 API Endpoint: fapi.binance.com (Binance USDT-margined futures)[/cyan]")
@@ -88,6 +95,30 @@ class ArrowDataManager:
                 raise Exception("No data returned from DSM")
 
             console.print(f"[green]✅ DSM returned {len(df_pandas)} PERPETUAL FUTURES data points[/green]")
+            
+            # TIME SPAN VERIFICATION: Check actual data timestamps
+            if not df_pandas.empty and 'timestamp' in df_pandas.columns:
+                first_timestamp = df_pandas['timestamp'].iloc[0]
+                last_timestamp = df_pandas['timestamp'].iloc[-1]
+                console.print(f"[bold yellow]🔍 DATA VERIFICATION: First timestamp={first_timestamp}[/bold yellow]")
+                console.print(f"[bold yellow]🔍 DATA VERIFICATION: Last timestamp={last_timestamp}[/bold yellow]")
+                
+                # Check if data matches expected time span
+                if hasattr(first_timestamp, 'strftime'):
+                    actual_start = first_timestamp.strftime('%Y-%m-%d %H:%M')
+                    actual_end = last_timestamp.strftime('%Y-%m-%d %H:%M')
+                    expected_start = start_time.strftime('%Y-%m-%d %H:%M')
+                    expected_end = end_time.strftime('%Y-%m-%d %H:%M')
+                    
+                    console.print(f"[bold cyan]🎯 EXPECTED: {expected_start} to {expected_end}[/bold cyan]")
+                    console.print(f"[bold cyan]🎯 ACTUAL: {actual_start} to {actual_end}[/bold cyan]")
+                    
+                    if actual_start == expected_start and actual_end == expected_end:
+                        console.print(f"[bold green]✅ TIME SPAN MATCH: Data matches expected time period![/bold green]")
+                    else:
+                        console.print(f"[bold red]❌ TIME SPAN MISMATCH: Data doesn't match expected time period![/bold red]")
+                else:
+                    console.print(f"[yellow]⚠️ Unable to verify timestamps - format issue[/yellow]")
 
             # Validate data quality for futures
             valid_rows = df_pandas.dropna().shape[0]
@@ -106,6 +137,15 @@ class ArrowDataManager:
 
             # Debug: Check what columns we actually have
             console.print(f"[blue]Available columns: {list(df_polars.columns)}[/blue]")
+            
+            # Additional timestamp verification with polars
+            if 'timestamp' in df_polars.columns:
+                console.print(f"[bold green]🕰️ POLARS DATA: {len(df_polars)} rows with timestamp column[/bold green]")
+                first_ts = df_polars['timestamp'][0]
+                last_ts = df_polars['timestamp'][-1]
+                console.print(f"[bold green]🕰️ POLARS RANGE: {first_ts} to {last_ts}[/bold green]")
+            else:
+                console.print(f"[yellow]⚠️ No timestamp column found in polars data[/yellow]")
 
             # Map DSM columns to our expected format
             column_mapping = {}

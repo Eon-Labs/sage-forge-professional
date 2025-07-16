@@ -1,0 +1,52 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "./nautilus_test/.venv/bin/python",
+    "python.analysis.extraPaths": [
+      "./nautilus_test/src",
+      "./nautilus_test/.venv/lib/python3.12/site-packages"
+    ],
+    "basedpyright.analysis.typeCheckingMode": "off",
+    "python.analysis.typeCheckingMode": "off",
+    "python.linting.enabled": false,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.diagnosticSeverityOverrides": {
+      "reportUnusedVariable": "none",
+      "reportUnusedImport": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none",
+      "reportUntypedBaseClass": "none",
+      "reportMissingTypeStubs": "none",
+      "reportAttributeAccessIssue": "none",
+      "reportGeneralTypeIssues": "none",
+      "reportCallIssue": "none",
+      "reportArgumentType": "none",
+      "reportUnboundVariable": "none",
+      "reportPossiblyUnboundVariable": "none"
+    },
+    "basedpyright.analysis.diagnosticSeverityOverrides": {
+      "reportUnusedVariable": "none",
+      "reportUnusedImport": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none",
+      "reportUntypedBaseClass": "none",
+      "reportMissingTypeStubs": "none",
+      "reportAttributeAccessIssue": "none",
+      "reportGeneralTypeIssues": "none",
+      "reportCallIssue": "none",
+      "reportArgumentType": "none",
+      "reportUnboundVariable": "none",
+      "reportPossiblyUnboundVariable": "none"
+    }
+  }
+}
