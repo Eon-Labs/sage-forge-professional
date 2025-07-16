@@ -60,6 +60,25 @@ select = [
     "UP",  # pyupgrade
 ]
 
+# Ignore trivial issues - focus on critical errors only
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+    "W293",  # Blank line contains whitespace
+    "W291",  # Trailing whitespace
+    "E203",  # Whitespace before ':' (conflicts with black)
+    "E402",  # Module level import not at top of file (common in scripts)
+    "B008",  # Do not perform function calls in argument defaults
+    "UP007", # Use X | Y for union types (not critical)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Sandbox files are experimental - ignore most style issues
+"examples/sandbox/**" = ["E", "W", "B", "C4", "UP"]
+# Test files can be more relaxed
+"tests/**" = ["E501", "B008"]
+# Scripts can have relaxed imports
+"scripts/**" = ["E402"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
@@ -68,15 +87,32 @@ disallow_untyped_defs = true
 mypy_path = "src"
 
 [tool.basedpyright]
-include = ["src"]
+include = ["src", "examples", "tests"]
 exclude = [
-    "examples/sandbox/**",  # Experimental code - acceptable errors
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    "**/node_modules",
+    ".venv",
 ]
 typeCheckingMode = "standard"
-reportUnusedVariable = "warning"  # Keep as warnings, not errors
-reportUnusedImport = "warning"
-reportAttributeAccessIssue = "warning"  # For experimental pandas/polars code
-reportGeneralTypeIssues = "warning"     # For experimental data libraries
+# Critical errors only - ignore trivial issues
+reportUnusedVariable = "none"           # Not critical
+reportUnusedImport = "none"             # Not critical  
+reportAttributeAccessIssue = "error"    # Critical for runtime
+reportGeneralTypeIssues = "error"       # Critical for runtime
+reportCallIssue = "error"               # Critical for runtime
+reportArgumentType = "error"            # Critical for runtime
+reportUnboundVariable = "error"         # Critical for runtime
+# Ignore type annotation issues for experimental code
+reportUnknownVariableType = "none"
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownParameterType = "none"
+reportMissingParameterType = "none"
+reportUntypedBaseClass = "none"
+reportMissingTypeStubs = "none"
 
 [dependency-groups]
 dev = [

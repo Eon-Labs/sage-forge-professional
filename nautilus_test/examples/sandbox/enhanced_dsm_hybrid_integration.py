@@ -88,11 +88,11 @@ except ImportError:
 class FinplotActor(Actor):
     """
     Native NautilusTrader Actor for experimental finplot chart integration.
-    
+
     ⚠️ EXPERIMENTAL USE ONLY - Updated finplot integration guidelines recommend
     decoupled external processes for production. This embedded approach is kept
     for experimental/development purposes only.
-    
+
     For production: Use publish_signal() to Redis + external live_plotter.py
     For development: This embedded FinplotActor (may block event loop)
     """
@@ -137,7 +137,7 @@ class FinplotActor(Actor):
     def on_start(self) -> None:
         """
         Called when the actor starts.
-        
+
         ⚠️ EXPERIMENTAL: In backtest mode, this creates charts but doesn't show them
         to avoid conflicts with post-backtest visualization.
         For live trading, this would display real-time charts.
@@ -150,7 +150,10 @@ class FinplotActor(Actor):
         # self._timer.start(100)  # 100ms refresh rate for smooth updates
 
         self.log.info("FinplotActor started (backtest mode - chart creation skipped)")
-        console.print("[blue]🚀 FinplotActor started - backtest mode (post-backtest chart will be shown)[/blue]")
+        console.print(
+            "[blue]🚀 FinplotActor started - backtest mode "
+            "(post-backtest chart will be shown)[/blue]"
+        )
 
     def on_stop(self) -> None:
         """Called when the actor stops."""
@@ -170,7 +173,7 @@ class FinplotActor(Actor):
     def on_data(self, data) -> None:
         """
         Handle incoming data using native patterns.
-        
+
         This method receives all data types through MessageBus.
         Following NautilusTrader_FINPLOT_INTEGRATION.md guidelines.
         """
@@ -213,7 +216,7 @@ class FinplotActor(Actor):
     def _refresh_chart(self):
         """
         Refresh chart with buffered data.
-        
+
         Called by Qt timer every 100ms to update charts smoothly.
         Following finplot maintainer's recommended timer-based pattern.
         """
@@ -279,7 +282,10 @@ class BinanceSpecificationManager:
         try:
             from binance import Client
 
-            console.print("[bold blue]🔍 Fetching Real Binance BTCUSDT-PERP Specifications...[/bold blue]")
+            console.print(
+                "[bold blue]🔍 Fetching Real Binance BTCUSDT-PERP "
+                "Specifications...[/bold blue]"
+            )
 
             client = Client()
             exchange_info = client.futures_exchange_info()
@@ -320,7 +326,10 @@ class BinanceSpecificationManager:
         if not self.specs:
             raise ValueError("Must fetch specifications first")
 
-        console.print("[bold green]🔧 Creating NautilusTrader Instrument with REAL Specs...[/bold green]")
+        console.print(
+            "[bold green]🔧 Creating NautilusTrader Instrument "
+            "with REAL Specs...[/bold green]"
+        )
 
         # 🔥 DISPLAY SPECIFICATION COMPARISON
         comparison_table = Table(title="⚔️ Specification Correction")
@@ -431,31 +440,72 @@ class RealisticPositionSizer:
 
         dangerous_1btc_value = 1.0 * self.specs["current_price"]
         console.print(f"[blue]📊 DEBUG: Dangerous 1 BTC value: ${dangerous_1btc_value:,.2f}[/blue]")
-        console.print(f"[blue]📊 DEBUG: Realistic position value: ${calc['notional_value']:.2f}[/blue]")
+        console.print(
+            f"[blue]📊 DEBUG: Realistic position value: "
+            f"${calc['notional_value']:.2f}[/blue]"
+        )
 
         # Calculate consistent safety factors
         position_size_ratio = 1.0 / calc["position_size_btc"]  # How many times larger 1 BTC is
-        value_safety_factor = dangerous_1btc_value / calc["notional_value"]  # How many times safer realistic position is
+        # How many times safer realistic position is
+        value_safety_factor = dangerous_1btc_value / calc["notional_value"]
 
-        console.print(f"[cyan]🔍 DEBUG: Position size ratio: {position_size_ratio:.1f}x (1 BTC is {position_size_ratio:.1f}x larger)[/cyan]")
-        console.print(f"[cyan]🔍 DEBUG: Value safety factor: {value_safety_factor:.1f}x (realistic position is {value_safety_factor:.1f}x safer)[/cyan]")
+        console.print(
+            f"[cyan]🔍 DEBUG: Position size ratio: {position_size_ratio:.1f}x "
+            f"(1 BTC is {position_size_ratio:.1f}x larger)[/cyan]"
+        )
+        console.print(
+            f"[cyan]🔍 DEBUG: Value safety factor: {value_safety_factor:.1f}x "
+            f"(realistic position is {value_safety_factor:.1f}x safer)[/cyan]"
+        )
 
         # 🚨 MATHEMATICAL VALIDATION: These should be approximately equal!
         ratio_difference = abs(position_size_ratio - value_safety_factor)
-        console.print(f"[cyan]🧮 DEBUG: Safety factor consistency check: {ratio_difference:.1f} difference[/cyan]")
+        console.print(
+            f"[cyan]🧮 DEBUG: Safety factor consistency check: "
+            f"{ratio_difference:.1f} difference[/cyan]"
+        )
 
         if ratio_difference > 1.0:  # Allow for small rounding differences
             console.print("[red]🚨 WARNING: Inconsistent safety factors detected![/red]")
-            console.print(f"[red]📊 Position ratio: {position_size_ratio:.1f}x vs Value safety: {value_safety_factor:.1f}x[/red]")
+            console.print(
+                f"[red]📊 Position ratio: {position_size_ratio:.1f}x vs "
+                f"Value safety: {value_safety_factor:.1f}x[/red]"
+            )
             console.print("[red]🔍 This indicates mathematical errors in position sizing[/red]")
 
         # Use consistent terminology and validated calculations
         metrics = [
-            ("Account Balance", f"${self.account_balance:,.0f}", f"${self.account_balance:,.0f}", "Same"),
-            ("Position Size", f"{calc['position_size_btc']:.3f} BTC", "1.000 BTC", f"{position_size_ratio:.0f}x smaller (safer)"),
-            ("Trade Value", f"${calc['notional_value']:.2f}", f"${dangerous_1btc_value:,.0f}", f"{value_safety_factor:.0f}x smaller (safer)"),
-            ("Account Risk", f"{calc['risk_percentage']:.1f}%", f"{(dangerous_1btc_value/self.account_balance)*100:.0f}%", "Controlled vs Reckless"),
-            ("Blow-up Risk", "Protected via small size", "Extreme via large size", f"{value_safety_factor:.0f}x risk reduction"),
+            (
+                "Account Balance",
+                f"${self.account_balance:,.0f}",
+                f"${self.account_balance:,.0f}",
+                "Same"
+            ),
+            (
+                "Position Size",
+                f"{calc['position_size_btc']:.3f} BTC",
+                "1.000 BTC",
+                f"{position_size_ratio:.0f}x smaller (safer)"
+            ),
+            (
+                "Trade Value",
+                f"${calc['notional_value']:.2f}",
+                f"${dangerous_1btc_value:,.0f}",
+                f"{value_safety_factor:.0f}x smaller (safer)"
+            ),
+            (
+                "Account Risk",
+                f"{calc['risk_percentage']:.1f}%",
+                f"{(dangerous_1btc_value/self.account_balance)*100:.0f}%",
+                "Controlled vs Reckless"
+            ),
+            (
+                "Blow-up Risk",
+                "Protected via small size",
+                "Extreme via large size",
+                f"{value_safety_factor:.0f}x risk reduction"
+            ),
         ]
 
         console.print("[green]✅ DEBUG: Position sizing mathematics validated[/green]")
@@ -504,20 +554,32 @@ class EnhancedModernBarDataProvider:
             console=console,
             transient=True,
         ) as progress:
-            task = progress.add_task(f"Fetching real {symbol} market data with REAL specs...", total=limit)
+            task = progress.add_task(
+                f"Fetching real {symbol} market data with REAL specs...",
+                total=limit
+            )
 
-            console.print(f"[cyan]🌐 Fetching PERPETUAL FUTURES data for {symbol} with validated specifications...[/cyan]")
+            console.print(
+                f"[cyan]🌐 Fetching PERPETUAL FUTURES data for {symbol} "
+                f"with validated specifications...[/cyan]"
+            )
             console.print("[green]✅ Using FIXED DSM with MarketType.FUTURES_USDT[/green]")
 
             # 🔍 CRITICAL FIX #5: Data source authentication and verification with audit trail
             if self.data_manager:
-                console.print(f"[yellow]🔍 DEBUG: Authenticating data source for {symbol}...[/yellow]")
+                console.print(
+                    f"[yellow]🔍 DEBUG: Authenticating data source "
+                    f"for {symbol}...[/yellow]"
+                )
 
                 # Adjust date calculations for historical data
                 start_time = datetime.now() - timedelta(days=2)  # Use historical start
                 end_time = start_time + timedelta(minutes=limit)
 
-                console.print(f"[blue]📅 DEBUG: Data fetch period: {start_time} to {end_time}[/blue]")
+                console.print(
+                    f"[blue]📅 DEBUG: Data fetch period: {start_time} "
+                    f"to {end_time}[/blue]"
+                )
                 console.print(f"[blue]🎯 DEBUG: Requesting {limit} data points for {symbol}[/blue]")
 
                 # Track data source authenticity
@@ -531,10 +593,14 @@ class EnhancedModernBarDataProvider:
                     "authentication_status": "ATTEMPTING",
                 }
 
-                console.print(f"[cyan]🔍 DEBUG: Data source metadata: {data_source_metadata}[/cyan]")
+                console.print(
+                    f"[cyan]🔍 DEBUG: Data source metadata: "
+                    f"{data_source_metadata}[/cyan]"
+                )
 
                 # Fetch data with source verification
-                df = self.data_manager.fetch_real_market_data(symbol, limit=limit)  # TODO: Modify data_manager.py to accept start_time for historical data
+                # TODO: Modify data_manager.py to accept start_time for historical data
+                df = self.data_manager.fetch_real_market_data(symbol, limit=limit)
 
                 # 🚨 CRITICAL: Verify data source authenticity
                 console.print("[yellow]🔍 DEBUG: Verifying data source authenticity...[/yellow]")
@@ -542,13 +608,26 @@ class EnhancedModernBarDataProvider:
                 # Check if data has source attribution
                 if hasattr(df, "attrs") and "data_source" in df.attrs:
                     data_source = df.attrs["data_source"]
-                    console.print(f"[green]✅ DEBUG: Data source authenticated: {data_source}[/green]")
+                    console.print(
+                        f"[green]✅ DEBUG: Data source authenticated: "
+                        f"{data_source}[/green]"
+                    )
                 elif hasattr(df, "columns") and "_data_source" in df.columns:
-                    unique_sources = df["_data_source"].unique() if hasattr(df, "unique") else ["Unknown"]
-                    console.print(f"[green]✅ DEBUG: Data sources in dataset: {list(unique_sources)}[/green]")
+                    unique_sources = (
+                        df["_data_source"].unique()
+                        if hasattr(df, "unique")
+                        else ["Unknown"]
+                    )
+                    console.print(
+                        f"[green]✅ DEBUG: Data sources in dataset: "
+                        f"{list(unique_sources)}[/green]"
+                    )
                 else:
                     console.print("[red]🚨 WARNING: No data source attribution found![/red]")
-                    console.print("[red]📊 Cannot verify if data came from real API or cache/synthetic[/red]")
+                    console.print(
+                        "[red]📊 Cannot verify if data came from real API "
+                        "or cache/synthetic[/red]"
+                    )
                     console.print("[red]🔍 This compromises data authenticity validation[/red]")
 
                 # Update metadata with authentication results
@@ -1118,7 +1197,6 @@ def display_ultimate_performance_summary(
 
         # Use production funding data
         total_funding_cost = funding_summary.get("total_funding_cost", 0)
-        funding_color = "green" if total_funding_cost <= 0 else "red"  # Negative = received (good)
         impact_pct = funding_summary.get("account_impact_pct", 0)
 
         funding_impact = total_funding_cost * -1  # Negative if cost
