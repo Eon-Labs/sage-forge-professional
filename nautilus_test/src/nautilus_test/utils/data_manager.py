@@ -148,9 +148,9 @@ class ArrowDataManager:
             # Display perpetual futures price information
             min_price = df_polars["close"].min()
             max_price = df_polars["close"].max()
-            price_range = max_price - min_price
+            price_range = max_price - min_price  # type: ignore[operator]
             console.print(f"[magenta]📈 PERPETUAL FUTURES price range: ${min_price:.2f} - ${max_price:.2f}[/magenta]")
-            console.print(f"[blue]💰 Futures volatility: ${price_range:.2f} range ({price_range/min_price*100:.2f}% swing)[/blue]")
+            console.print(f"[blue]💰 Futures volatility: ${price_range:.2f} range ({price_range/min_price*100:.2f}% swing)[/blue]")  # type: ignore[operator]
 
             return df_polars
 
@@ -254,7 +254,7 @@ class ArrowDataManager:
                 "std": df["close"].std(),
                 "min": df["close"].min() or 0,
                 "max": df["close"].max() or 0,
-                "range": (df["close"].max() or 0) - (df["close"].min() or 0),
+                "range": (df["close"].max() or 0) - (df["close"].min() or 0),  # type: ignore[operator]
             },
             "volume_stats": {
                 "total": df["volume"].sum(),
