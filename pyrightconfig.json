@@ -11,7 +11,14 @@
         "./nautilus_test/.venv/lib/python3.12/site-packages",
         "/Users/terryli/eon/data-source-manager"
       ],
-      "reportUnusedVariable": "none"
+      "reportUnusedVariable": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none",
+      "reportUntypedBaseClass": "none",
+      "reportMissingTypeStubs": "none"
     },
     {
       "root": "./nautilus_test/src/nautilus_test/utils",
@@ -24,7 +31,32 @@
       ],
       "reportOperatorIssue": "none",
       "reportUnusedVariable": "none",
-      "reportCallIssue": "none"
+      "reportCallIssue": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none",
+      "reportUntypedBaseClass": "none",
+      "reportMissingTypeStubs": "none"
+    },
+    {
+      "root": "./nautilus_test/tests",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "./nautilus_test/src",
+        "./nautilus_test/.venv/lib/python3.12/site-packages",
+        "/Users/terryli/eon/data-source-manager"
+      ],
+      "reportUnusedVariable": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none",
+      "reportUntypedBaseClass": "none",
+      "reportMissingTypeStubs": "none"
     },
     {
       "root": "./nautilus_test",
@@ -66,5 +98,11 @@
   "reportArgumentType": "error",
   "reportCallIssue": "error",
   "reportOperatorIssue": "warning",
-  "reportUnboundVariable": "warning"
+  "reportUnboundVariable": "warning",
+  "reportUnknownVariableType": "warning",
+  "reportUnknownMemberType": "warning",
+  "reportUnknownArgumentType": "warning",
+  "reportUnknownParameterType": "warning",
+  "reportMissingParameterType": "warning",
+  "reportUntypedBaseClass": "warning"
 }
