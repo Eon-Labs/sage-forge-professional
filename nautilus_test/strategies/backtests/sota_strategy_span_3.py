@@ -41,6 +41,7 @@ from pathlib import Path
 
 # Add parent directories to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import finplot as fplt
 import pandas as pd
