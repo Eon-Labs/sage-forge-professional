@@ -39,6 +39,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
+# Add parent directories to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
 import finplot as fplt
 import pandas as pd
 import pyqtgraph as pg
@@ -52,7 +55,7 @@ from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.trading.config import StrategyConfig
 
 # Import SOTA strategy components
-from enhanced_profitable_strategy_v2 import (
+from strategies.sota.enhanced_profitable_strategy_v2 import (
     SOTAProfitableStrategy,
     create_sota_strategy_config,
     MomentumPersistenceDetector,
@@ -1009,9 +1012,9 @@ class EnhancedModernBarDataProvider:
                     f"for {symbol}...[/yellow]"
                 )
 
-                # TIME SPAN 2: Mid December 2024 (Holiday Season)
-                start_time = datetime(2024, 12, 15, 10, 0, 0)
-                end_time = datetime(2024, 12, 17, 10, 0, 0)
+                # TIME SPAN 3: Late November 2024 (Autumn Period)
+                start_time = datetime(2024, 11, 20, 10, 0, 0)
+                end_time = datetime(2024, 11, 22, 10, 0, 0)
 
                 console.print(
                     f"[blue]📅 DEBUG: Data fetch period: {start_time} "
@@ -1035,8 +1038,8 @@ class EnhancedModernBarDataProvider:
                     f"{data_source_metadata}[/cyan]"
                 )
 
-                # Fetch data with source verification - TIME SPAN 2
-                console.print(f"[bold yellow]🎯 TIME SPAN 2: Fetching data from {start_time} to {end_time}[/bold yellow]")
+                # Fetch data with source verification - TIME SPAN 3
+                console.print(f"[bold yellow]🎯 TIME SPAN 3: Fetching data from {start_time} to {end_time}[/bold yellow]")
                 console.print(f"[blue]📅 Expected period: {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}[/blue]")
                 df = self.data_manager.fetch_real_market_data(symbol, limit=limit, start_time=start_time, end_time=end_time)
 
@@ -1310,8 +1313,8 @@ class EnhancedModernBarDataProvider:
 
                 # Fallback if no valid timestamp - use historical date range
                 if timestamp is None:
-                    # Use the actual historical date range from TIME_SPAN_2 (Dec 15-17, 2024)
-                    historical_start = datetime(2024, 12, 15, 10, 0, 0)  # Dec 15, 2024 10:00 AM
+                    # Use the actual historical date range from TIME_SPAN_3 (Nov 20-22, 2024)
+                    historical_start = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
                     base_time = historical_start + timedelta(minutes=i)
                     timestamp = pd.Timestamp(base_time)
 
@@ -1325,8 +1328,8 @@ class EnhancedModernBarDataProvider:
                         pass
 
                     if timestamp is None or bool(is_nat) or not hasattr(timestamp, "timestamp"):
-                        # Use the actual historical date range from TIME_SPAN_2 (Dec 15-17, 2024)
-                        historical_start = datetime(2024, 12, 15, 10, 0, 0)  # Dec 15, 2024 10:00 AM
+                        # Use the actual historical date range from TIME_SPAN_3 (Nov 20-22, 2024)
+                        historical_start = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
                         base_time = historical_start + timedelta(minutes=i)
                         timestamp = pd.Timestamp(base_time)
 
@@ -1335,7 +1338,7 @@ class EnhancedModernBarDataProvider:
 
                 except (ValueError, TypeError, AttributeError, OSError):
                     # Final fallback - create synthetic timestamp using historical date range
-                    historical_start = datetime(2024, 12, 15, 10, 0, 0)  # Dec 15, 2024 10:00 AM
+                    historical_start = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
                     base_time = historical_start + timedelta(minutes=i)
                     ts_ns = int(base_time.timestamp() * 1_000_000_000)
 
@@ -1369,8 +1372,8 @@ class EnhancedModernBarDataProvider:
         if not self.specs_manager.specs:
             raise ValueError("Specifications not available")
         current_price = self.specs_manager.specs["current_price"]
-        # Use historical date range for TIME_SPAN_2 (Dec 15-17, 2024)
-        base_time = datetime(2024, 12, 15, 10, 0, 0)  # Dec 15, 2024 10:00 AM
+        # Use historical date range for TIME_SPAN_3 (Nov 20-22, 2024)
+        base_time = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
 
         for i in range(count):
             # Simple random walk

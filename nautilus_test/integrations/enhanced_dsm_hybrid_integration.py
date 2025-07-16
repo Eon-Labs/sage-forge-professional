@@ -39,32 +39,17 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
+# Add parent directories to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 import finplot as fplt
 import pandas as pd
 import pyqtgraph as pg
-import numpy as np
 from nautilus_trader.backtest.engine import BacktestEngine, BacktestEngineConfig
 from nautilus_trader.backtest.models import FillModel, MakerTakerFeeModel
 from nautilus_trader.common.actor import Actor
 from nautilus_trader.config import LoggingConfig, RiskEngineConfig
 from nautilus_trader.examples.strategies.ema_cross import EMACross, EMACrossConfig
-from nautilus_trader.trading.strategy import Strategy
-from nautilus_trader.trading.config import StrategyConfig
-
-# Import SOTA strategy components
-from enhanced_profitable_strategy_v2 import (
-    SOTAProfitableStrategy,
-    create_sota_strategy_config,
-    MomentumPersistenceDetector,
-    VolatilityBreakoutDetector,
-    MultiTimeframeConfluence,
-    AdaptivePositionSizer,
-    MarketMicrostructureEdge,
-    MarketState
-)
-from nautilus_trader.model.enums import OrderSide, TimeInForce
-from nautilus_trader.model.orders import MarketOrder
-from nautilus_trader.core.datetime import dt_to_unix_nanos
 from nautilus_trader.model.currencies import BTC, USDT
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import AccountType, OmsType
@@ -286,425 +271,6 @@ class FinplotActor(Actor):
                 )
 
             self._funding_events.clear()
-
-
-class AdaptiveProfitableStrategy(Strategy):
-    """
-    Enhanced profitable strategy that adapts to market conditions.
-    Integrates seamlessly with existing DSM hybrid integration system.
-    """
-
-    def __init__(self, config):
-        super().__init__(config)
-        
-        # Core data for regime detection
-        self.prices = []
-        self.volumes = []
-        self.returns = []
-        self.volatilities = []
-        
-        # Market regime state
-        self.current_regime = "UNKNOWN"
-        self.regime_confidence = 0.0
-        self.last_regime_change = 0
-        
-        # Trading state
-        self.position_hold_bars = 0
-        self.last_trade_bar = 0
-        self.cooldown_period = 5  # Bars between trades (more responsive)
-        
-        # Performance tracking
-        self.total_signals = 0
-        self.traded_signals = 0
-        self.regime_performance = {"TRENDING": [], "RANGING": [], "VOLATILE": []}
-        
-        # Risk management
-        self.consecutive_losses = 0
-        self.consecutive_wins = 0
-        self.dynamic_risk_multiplier = 1.0
-        
-        console.print("[green]✅ AdaptiveProfitableStrategy initialized[/green]")
-        print("🚀 STRATEGY INIT: AdaptiveProfitableStrategy ready for bars")
-        print(f"📊 CONFIG: bar_type={config.bar_type}, instrument={config.instrument_id}")
-
-    def on_start(self):
-        """Initialize strategy."""
-        self.log.info("AdaptiveProfitableStrategy started")
-        console.print("[blue]🚀 AdaptiveProfitableStrategy started[/blue]")
-        print("🚀 STRATEGY START: Ready to receive bars")
-        
-        # CRITICAL: Subscribe to bars - this was missing!
-        self.subscribe_bars(self.config.bar_type)
-        print(f"📊 SUBSCRIBED to bar_type: {self.config.bar_type}")
-        print(f"🎯 INSTRUMENT: {self.config.instrument_id}")
-
-    def on_bar(self, bar: Bar):
-        """Enhanced bar processing with regime detection and quality filtering."""
-        current_bar = len(self.prices)
-        
-        # Simple debug - just print every bar
-        print(f"📊 BAR #{current_bar}: {bar.close} vol={bar.volume}")
-        
-        # Log first few bars for debugging
-        if current_bar < 5:
-            console.print(f"[green]📊 Received BAR #{current_bar}: {bar.close} vol={bar.volume}[/green]")
-        
-        # Update data
-        self._update_data(bar)
-        
-        # Need minimum data for regime detection
-        if len(self.prices) < 50:
-            return
-            
-        # Detect market regime
-        self._detect_regime(current_bar)
-        
-        # Process trading signals
-        self._process_enhanced_signals(bar, current_bar)
-        
-        # Manage position
-        self._manage_position()
-
-    def _update_data(self, bar: Bar):
-        """Update price and volume data."""
-        price = float(bar.close)
-        volume = float(bar.volume)
-        
-        self.prices.append(price)
-        self.volumes.append(volume)
-        
-        # Calculate returns
-        if len(self.prices) >= 2:
-            ret = (price - self.prices[-2]) / self.prices[-2]
-            self.returns.append(ret)
-            
-        # Calculate volatility
-        if len(self.returns) >= 20:
-            recent_returns = self.returns[-20:]
-            volatility = np.std(recent_returns)
-            self.volatilities.append(volatility)
-            
-        # Keep recent data only
-        if len(self.prices) > 500:
-            self.prices = self.prices[-500:]
-            self.volumes = self.volumes[-500:]
-            self.returns = self.returns[-500:]
-            self.volatilities = self.volatilities[-500:]
-
-    def _detect_regime(self, current_bar: int):
-        """Detect market regime without magic numbers."""
-        if len(self.returns) < 30 or len(self.volatilities) < 10:
-            return
-            
-        # Self-calibrating thresholds (highly responsive)
-        recent_returns = self.returns[-50:]
-        recent_volatilities = self.volatilities[-20:]
-        recent_volumes = self.volumes[-50:]
-        
-        trend_threshold = np.percentile(np.abs(recent_returns), 40)  # Much more responsive
-        volatility_threshold = np.percentile(recent_volatilities, 85)  # Very lenient
-        volume_threshold = np.percentile(recent_volumes, 30)  # Very responsive
-        
-        # Current conditions
-        current_return = abs(self.returns[-1])
-        current_volatility = self.volatilities[-1]
-        current_volume = self.volumes[-1]
-        
-        # Regime logic (more balanced)
-        if current_volatility > volatility_threshold * 1.5:  # Less restrictive
-            new_regime = "VOLATILE"
-            confidence = min(current_volatility / volatility_threshold, 2.0)
-        elif current_return > trend_threshold and current_volume > volume_threshold * 0.8:  # More flexible
-            new_regime = "TRENDING"
-            confidence = min(current_return / trend_threshold, 2.0)
-        else:
-            new_regime = "RANGING"
-            confidence = 1.0 - min(current_return / trend_threshold, 1.0)
-            
-        # Update regime
-        if new_regime != self.current_regime:
-            console.print(f"[yellow]📊 Regime change: {self.current_regime} → {new_regime}[/yellow]")
-            self.last_regime_change = current_bar
-            
-        self.current_regime = new_regime
-        self.regime_confidence = confidence
-
-    def _process_enhanced_signals(self, bar: Bar, current_bar: int):
-        """Process trading signals with quality filtering."""
-        # Debug: Track signal processing
-        if current_bar % 100 == 0:  # Every 100 bars
-            console.print(f"[cyan]🔍 DEBUG Bar {current_bar}: Regime={self.current_regime}, Total signals={self.total_signals}, Traded={self.traded_signals}[/cyan]")
-            print(f"🔍 PROGRESS: Bar {current_bar}/1980 processed")
-        
-        # Adaptive cooldown period (self-calibrating)
-        adaptive_cooldown = max(3, self.cooldown_period - self.consecutive_wins)  # Reduce cooldown with wins
-        if current_bar - self.last_trade_bar < adaptive_cooldown:
-            return
-            
-        # Don't trade immediately after regime change (reduced restriction)
-        if current_bar - self.last_regime_change < 3:
-            return
-            
-        # Don't trade in volatile markets
-        if self.current_regime == "VOLATILE":
-            if current_bar % 200 == 0:  # Debug volatile regime
-                console.print(f"[red]⚠️ DEBUG: Skipping trade - VOLATILE regime[/red]")
-            return
-            
-        # Generate signal based on regime
-        signal_direction, signal_strength = self._generate_regime_signal()
-        
-        if signal_direction == "NONE":
-            if current_bar % 200 == 0:  # Debug no signal
-                console.print(f"[yellow]⚠️ DEBUG: No signal generated - Regime={self.current_regime}[/yellow]")
-            return
-            
-        self.total_signals += 1
-        console.print(f"[green]📊 Signal generated: {signal_direction} strength={signal_strength:.3f} (regime: {self.current_regime}) @ {bar.close}[/green]")
-        
-        # Quality filtering
-        if not self._is_high_quality_signal(signal_direction, signal_strength):
-            console.print(f"[red]❌ Signal rejected: Low quality[/red]")
-            return
-            
-        # Risk management check
-        if not self._risk_management_check():
-            console.print(f"[red]❌ Signal rejected: Risk management[/red]")
-            return
-            
-        # Execute trade
-        console.print(f"[green]💰 Executing trade: {signal_direction} @ {bar.close}[/green]")
-        self._execute_enhanced_trade(signal_direction, bar)
-        self.traded_signals += 1
-        self.last_trade_bar = current_bar
-
-    def _generate_regime_signal(self):
-        """Generate signal based on current regime."""
-        if self.current_regime == "TRENDING":
-            return self._trending_signal()
-        elif self.current_regime == "RANGING":
-            return self._ranging_signal()
-        else:
-            return "NONE", 0.0
-
-    def _trending_signal(self):
-        """Momentum-based signal for trending markets."""
-        if len(self.returns) < 20:
-            return "NONE", 0.0
-            
-        # Multi-timeframe momentum
-        short_momentum = np.mean(self.returns[-5:])
-        medium_momentum = np.mean(self.returns[-12:])
-        long_momentum = np.mean(self.returns[-20:])
-        
-        # Require consistent momentum (much more responsive)
-        if (short_momentum > 0 and medium_momentum > 0 and 
-            short_momentum > medium_momentum * 1.05):  # Very lenient
-            strength = min(abs(short_momentum) * 50, 1.0)  # Very sensitive
-            return "BUY", strength
-            
-        elif (short_momentum < 0 and medium_momentum < 0 and 
-              short_momentum < medium_momentum * 1.05):  # Very lenient
-            strength = min(abs(short_momentum) * 50, 1.0)  # Very sensitive
-            return "SELL", strength
-            
-        return "NONE", 0.0
-
-    def _ranging_signal(self):
-        """Mean reversion signal for ranging markets."""
-        if len(self.prices) < 40:
-            return "NONE", 0.0
-            
-        # Adaptive bollinger-like bands
-        recent_prices = self.prices[-40:]
-        mean_price = np.mean(recent_prices)
-        std_price = np.std(recent_prices)
-        
-        if std_price == 0:
-            return "NONE", 0.0
-            
-        current_price = self.prices[-1]
-        z_score = (current_price - mean_price) / std_price
-        
-        # Mean reversion at extremes (very responsive)
-        if z_score > 0.2:  # Very low threshold for realistic trading
-            strength = min(abs(z_score) / 1.0, 1.0)
-            return "SELL", strength
-        elif z_score < -0.2:  # Very low threshold for realistic trading
-            strength = min(abs(z_score) / 1.0, 1.0)
-            return "BUY", strength
-            
-        return "NONE", 0.0
-
-    def _is_high_quality_signal(self, direction: str, strength: float) -> bool:
-        """Filter for high-quality signals only."""
-        # Minimum strength threshold (very lenient)
-        if strength < 0.1:  # Much lower threshold
-            return False
-            
-        # Volume confirmation (more flexible)
-        if len(self.volumes) >= 20:
-            recent_avg_volume = np.mean(self.volumes[-20:])
-            current_volume = self.volumes[-1]
-            if current_volume < recent_avg_volume * 0.6:  # More lenient
-                return False
-                
-        # Trend consistency for trending signals (more flexible)
-        if self.current_regime == "TRENDING":
-            if len(self.returns) >= 10:
-                recent_returns = self.returns[-10:]
-                if direction == "BUY":
-                    positive_returns = sum(1 for r in recent_returns if r > 0)
-                    if positive_returns < 5:  # At least 50% positive (more lenient)
-                        return False
-                else:  # SELL
-                    negative_returns = sum(1 for r in recent_returns if r < 0)
-                    if negative_returns < 5:  # At least 50% negative (more lenient)
-                        return False
-                        
-        return True
-
-    def _risk_management_check(self) -> bool:
-        """Enhanced risk management checks."""
-        # Don't trade if too many consecutive losses (more flexible)
-        if self.consecutive_losses >= 6:  # Allow more attempts
-            return False
-            
-        # Reduce trading frequency after losses (self-calibrating)
-        if self.consecutive_losses >= 3:
-            self.cooldown_period = 10  # Moderate cooldown
-        else:
-            self.cooldown_period = 5   # Shorter normal cooldown
-            
-        return True
-
-    def _execute_enhanced_trade(self, direction: str, bar: Bar):
-        """Execute trade with enhanced risk management."""
-        # Close opposite position first
-        if not self.portfolio.is_flat(self.config.instrument_id):
-            if ((direction == "BUY" and self.portfolio.is_net_short(self.config.instrument_id)) or
-                (direction == "SELL" and self.portfolio.is_net_long(self.config.instrument_id))):
-                self._close_position()
-                return
-                
-        # Don't add to existing position
-        if not self.portfolio.is_flat(self.config.instrument_id):
-            return
-            
-        # Calculate position size with risk adjustment
-        base_size = float(self.config.trade_size)
-        risk_adjusted_size = base_size * self.dynamic_risk_multiplier
-        
-        # Apply bounds
-        min_size = base_size * 0.5
-        max_size = base_size * 1.5
-        actual_size = max(min_size, min(risk_adjusted_size, max_size))
-        
-        # Submit order using order factory (like EMA Cross)
-        side = OrderSide.BUY if direction == "BUY" else OrderSide.SELL
-        quantity = Quantity.from_str(f"{actual_size:.3f}")
-        
-        order = self.order_factory.market(
-            instrument_id=self.config.instrument_id,
-            order_side=side,
-            quantity=quantity,
-            time_in_force=TimeInForce.FOK,
-        )
-        
-        self.submit_order(order)
-        self.position_hold_bars = 0
-        
-        console.print(f"[green]💰 Trade: {direction} {actual_size:.3f} BTC @ {bar.close} (regime: {self.current_regime})[/green]")
-
-    def _close_position(self):
-        """Close current position using built-in method."""
-        # Use built-in close_all_positions method like EMA Cross
-        self.close_all_positions(self.config.instrument_id)
-
-    def _manage_position(self):
-        """Enhanced position management."""
-        if not self.portfolio.is_flat(self.config.instrument_id):
-            self.position_hold_bars += 1
-            
-            # Max hold time varies by regime
-            max_hold = {
-                "TRENDING": 60,   # 1 hour
-                "RANGING": 30,    # 30 minutes
-                "VOLATILE": 15    # 15 minutes
-            }.get(self.current_regime, 45)
-            
-            # Force close if held too long
-            if self.position_hold_bars >= max_hold:
-                console.print(f"[yellow]⏰ Force closing position after {self.position_hold_bars} bars[/yellow]")
-                self._close_position()
-
-    def on_position_opened(self, position):
-        """Track position opening."""
-        console.print(f"[blue]📈 Position opened: {position.side} {position.quantity} @ {position.avg_px_open}[/blue]")
-
-    def on_position_closed(self, position):
-        """Track position closing and update performance."""
-        realized_pnl = float(position.realized_pnl)
-        
-        # Update consecutive win/loss tracking
-        if realized_pnl > 0:
-            self.consecutive_wins += 1
-            self.consecutive_losses = 0
-            self.dynamic_risk_multiplier = min(self.dynamic_risk_multiplier * 1.1, 1.5)
-            console.print(f"[green]✅ Position closed: +${realized_pnl:.2f} (Win #{self.consecutive_wins})[/green]")
-        else:
-            self.consecutive_losses += 1
-            self.consecutive_wins = 0
-            self.dynamic_risk_multiplier = max(self.dynamic_risk_multiplier * 0.9, 0.5)
-            console.print(f"[red]❌ Position closed: ${realized_pnl:.2f} (Loss #{self.consecutive_losses})[/red]")
-            
-        # Store performance by regime
-        self.regime_performance[self.current_regime].append(realized_pnl)
-
-    def on_stop(self):
-        """Strategy cleanup with performance reporting."""
-        console.print("[yellow]⏹️ AdaptiveProfitableStrategy stopped[/yellow]")
-        
-        # Print final summary
-        print(f"🎯 FINAL SUMMARY: Processed {len(self.prices)} bars")
-        print(f"📊 Generated {self.total_signals} signals, traded {self.traded_signals}")
-        print(f"🏆 Signal efficiency: {(self.traded_signals/max(1,self.total_signals))*100:.1f}%")
-        
-        # Enhanced performance reporting
-        if self.total_signals > 0:
-            efficiency = (self.traded_signals / self.total_signals) * 100
-            console.print(f"[cyan]📊 Signal efficiency: {efficiency:.1f}% ({self.traded_signals}/{self.total_signals})[/cyan]")
-            
-        # Regime performance
-        for regime, pnls in self.regime_performance.items():
-            if pnls:
-                total_pnl = sum(pnls)
-                win_rate = len([p for p in pnls if p > 0]) / len(pnls) * 100
-                console.print(f"[cyan]📈 {regime}: {len(pnls)} trades, ${total_pnl:.2f} PnL, {win_rate:.1f}% win rate[/cyan]")
-                
-        self.log.info(f"Enhanced strategy completed: {self.traded_signals} trades from {self.total_signals} signals")
-
-    def on_reset(self):
-        """Reset strategy state."""
-        self.prices.clear()
-        self.volumes.clear()
-        self.returns.clear()
-        self.volatilities.clear()
-        self.total_signals = 0
-        self.traded_signals = 0
-        self.current_regime = "UNKNOWN"
-        self.last_trade_bar = 0
-        self.last_regime_change = 0
-        print("🔄 RESET: All strategy state cleared")
-        self.current_regime = "UNKNOWN"
-        self.position_hold_bars = 0
-        self.last_trade_bar = 0
-        self.total_signals = 0
-        self.traded_signals = 0
-        self.consecutive_losses = 0
-        self.consecutive_wins = 0
-        self.dynamic_risk_multiplier = 1.0
-        self.regime_performance = {"TRENDING": [], "RANGING": [], "VOLATILE": []}
 
 
 class BinanceSpecificationManager:
@@ -1009,9 +575,9 @@ class EnhancedModernBarDataProvider:
                     f"for {symbol}...[/yellow]"
                 )
 
-                # TIME SPAN 3: Late November 2024 (Autumn Period)
-                start_time = datetime(2024, 11, 20, 10, 0, 0)
-                end_time = datetime(2024, 11, 22, 10, 0, 0)
+                # Adjust date calculations for historical data
+                start_time = datetime.now() - timedelta(days=2)  # Use historical start
+                end_time = start_time + timedelta(minutes=limit)
 
                 console.print(
                     f"[blue]📅 DEBUG: Data fetch period: {start_time} "
@@ -1035,10 +601,9 @@ class EnhancedModernBarDataProvider:
                     f"{data_source_metadata}[/cyan]"
                 )
 
-                # Fetch data with source verification - TIME SPAN 3
-                console.print(f"[bold yellow]🎯 TIME SPAN 3: Fetching data from {start_time} to {end_time}[/bold yellow]")
-                console.print(f"[blue]📅 Expected period: {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}[/blue]")
-                df = self.data_manager.fetch_real_market_data(symbol, limit=limit, start_time=start_time, end_time=end_time)
+                # Fetch data with source verification
+                # TODO: Modify data_manager.py to accept start_time for historical data
+                df = self.data_manager.fetch_real_market_data(symbol, limit=limit)
 
                 # 🚨 CRITICAL: Verify data source authenticity
                 console.print("[yellow]🔍 DEBUG: Verifying data source authenticity...[/yellow]")
@@ -1290,17 +855,11 @@ class EnhancedModernBarDataProvider:
 
         for i, row in df.iterrows():
             try:
-                # Get timestamp with safe handling - FIXED: Use close_time instead of timestamp
+                # Get timestamp with safe handling
                 timestamp = None
                 try:
-                    # Priority 1: Use close_time (correct historical dates)
-                    if "close_time" in row and not pd.isna(row["close_time"]):
-                        timestamp = pd.Timestamp(row["close_time"])
-                    # Priority 2: Use timestamp (fallback, may be wrong dates)
-                    elif "timestamp" in row and not pd.isna(row["timestamp"]):
+                    if "timestamp" in row and not pd.isna(row["timestamp"]):
                         timestamp = pd.Timestamp(row["timestamp"])
-                        console.print(f"[yellow]⚠️ Using timestamp column (may be wrong dates): {timestamp}[/yellow]")
-                    # Priority 3: Use row name/index
                     elif hasattr(row, "name") and row.name is not None:
                         # Check if row.name is not NaT/NaN
                         if not pd.isna(row.name):
@@ -1308,11 +867,9 @@ class EnhancedModernBarDataProvider:
                 except (ValueError, TypeError):
                     timestamp = None
 
-                # Fallback if no valid timestamp - use historical date range
+                # Fallback if no valid timestamp
                 if timestamp is None:
-                    # Use the actual historical date range from TIME_SPAN_3 (Nov 20-22, 2024)
-                    historical_start = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
-                    base_time = historical_start + timedelta(minutes=i)
+                    base_time = datetime.now() - timedelta(minutes=len(df)-i)
                     timestamp = pd.Timestamp(base_time)
 
                 # Convert to nanoseconds safely
@@ -1325,18 +882,15 @@ class EnhancedModernBarDataProvider:
                         pass
 
                     if timestamp is None or bool(is_nat) or not hasattr(timestamp, "timestamp"):
-                        # Use the actual historical date range from TIME_SPAN_3 (Nov 20-22, 2024)
-                        historical_start = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
-                        base_time = historical_start + timedelta(minutes=i)
+                        base_time = datetime.now() - timedelta(minutes=len(df)-i)
                         timestamp = pd.Timestamp(base_time)
 
                     # Safe timestamp conversion
                     ts_ns = int(timestamp.timestamp() * 1_000_000_000)  # type: ignore[attr-defined]
 
                 except (ValueError, TypeError, AttributeError, OSError):
-                    # Final fallback - create synthetic timestamp using historical date range
-                    historical_start = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
-                    base_time = historical_start + timedelta(minutes=i)
+                    # Final fallback - create synthetic timestamp
+                    base_time = datetime.now() - timedelta(minutes=len(df)-i)
                     ts_ns = int(base_time.timestamp() * 1_000_000_000)
 
                 # Create price and quantity objects with exact precision
@@ -1369,8 +923,7 @@ class EnhancedModernBarDataProvider:
         if not self.specs_manager.specs:
             raise ValueError("Specifications not available")
         current_price = self.specs_manager.specs["current_price"]
-        # Use historical date range for TIME_SPAN_3 (Nov 20-22, 2024)
-        base_time = datetime(2024, 11, 20, 10, 0, 0)  # Nov 20, 2024 10:00 AM
+        base_time = datetime.now() - timedelta(minutes=count)
 
         for i in range(count):
             # Simple random walk
@@ -1735,20 +1288,8 @@ async def main():
     data_provider = EnhancedModernBarDataProvider(specs_manager)
     bar_type = BarType.from_str(f"{instrument.id}-1-MINUTE-LAST-EXTERNAL")
     console.print(f"[cyan]🔧 Creating bar_type: {bar_type}[/cyan]")
-    # 🔍 FIX: Calculate correct limit for 48-hour time span (48 hours * 60 minutes = 2880 bars)
-    bars = data_provider.fetch_real_market_bars(instrument, bar_type, "BTCUSDT", limit=2880)
+    bars = data_provider.fetch_real_market_bars(instrument, bar_type, "BTCUSDT", limit=2000)
     console.print(f"[cyan]📊 Created {len(bars)} bars with bar_type: {bars[0].bar_type if bars else 'N/A'}[/cyan]")
-    
-    # 🔍 DIAGNOSTIC: Check bar distribution across time span
-    if bars:
-        first_bar_time = pd.Timestamp(bars[0].ts_event, unit="ns")
-        last_bar_time = pd.Timestamp(bars[-1].ts_event, unit="ns")
-        duration_hours = (last_bar_time - first_bar_time).total_seconds() / 3600
-        console.print(f"[bold yellow]🔍 Bar Time Distribution:[/bold yellow]")
-        console.print(f"[yellow]📅 First bar: {first_bar_time}[/yellow]")
-        console.print(f"[yellow]📅 Last bar: {last_bar_time}[/yellow]")
-        console.print(f"[yellow]⏱️ Duration: {duration_hours:.1f} hours (expected: 48 hours)[/yellow]")
-        console.print(f"[yellow]📊 Bars per hour: {len(bars) / duration_hours:.1f}[/yellow]")
     # NOTE: Hold bars, add them after strategy configuration to avoid "unknown bar type" error
 
     # 🔍 ENHANCED VALIDATION: Proper data validation with realistic BTC price ranges
@@ -1871,27 +1412,28 @@ async def main():
     except Exception as e:
         console.print(f"[yellow]⚠️ DEEP DEBUG: Could not inspect engine cache: {e}[/yellow]")
 
-    # STEP 6B: Now configure ENHANCED PROFITABLE strategy AFTER bars are registered
-    console.print("[blue]🔧 DEBUG: Configuring ENHANCED PROFITABLE strategy AFTER bar registration...[/blue]")
+    # STEP 6B: Now configure strategy AFTER bars are registered
+    console.print("[blue]🔧 DEBUG: Configuring strategy AFTER bar registration...[/blue]")
 
-    # Use SOTA strategy configuration
-    strategy_config = create_sota_strategy_config(
+    strategy_config = EMACrossConfig(
         instrument_id=instrument.id,
         bar_type=bar_type,
+        fast_ema_period=10,
+        slow_ema_period=21,
         trade_size=Decimal(f"{position_calc['position_size_btc']:.3f}"),  # REALISTIC SIZE!
     )
 
-    console.print(f"[cyan]🔧 DEBUG: Enhanced strategy configured for bar_type: {bar_type}[/cyan]")
-    console.print(f"[cyan]🔧 DEBUG: Enhanced strategy instrument_id: {instrument.id}[/cyan]")
-    console.print(f"[cyan]💰 DEBUG: Enhanced strategy trade_size: {position_calc['position_size_btc']:.3f} BTC[/cyan]")
+    console.print(f"[cyan]🔧 DEBUG: Strategy configured for bar_type: {bar_type}[/cyan]")
+    console.print(f"[cyan]🔧 DEBUG: Strategy instrument_id: {instrument.id}[/cyan]")
+    console.print(f"[cyan]💰 DEBUG: Strategy trade_size: {position_calc['position_size_btc']:.3f} BTC[/cyan]")
 
     # Step 4: Verify strategy configuration details
-    console.print(f"[blue]🔍 DEEP DEBUG: Enhanced strategy config bar_type: {strategy_config.bar_type}[/blue]")
-    console.print(f"[blue]🔍 DEEP DEBUG: Enhanced strategy config instrument_id: {strategy_config.instrument_id}[/blue]")
+    console.print(f"[blue]🔍 DEEP DEBUG: Strategy config bar_type: {strategy_config.bar_type}[/blue]")
+    console.print(f"[blue]🔍 DEEP DEBUG: Strategy config instrument_id: {strategy_config.instrument_id}[/blue]")
     console.print(f"[blue]🧪 DEEP DEBUG: Bar type equality check: {strategy_config.bar_type == bar_type}[/blue]")
     console.print(f"[blue]🧪 DEEP DEBUG: Instrument ID equality check: {strategy_config.instrument_id == instrument.id}[/blue]")
 
-    strategy = SOTAProfitableStrategy(config=strategy_config)
+    strategy = EMACross(config=strategy_config)
 
     # Step 5: Add strategy with pre-flight checks
     console.print("[blue]🔧 DEEP DEBUG: Adding strategy to engine...[/blue]")
@@ -2082,10 +1624,6 @@ async def main():
         "✅ Modular funding rate system for enhanced realism (5.8 years data)",
         "✅ Funding cost tracking and P&L impact analysis",
         "✅ Ultimate system combining best of DSM + Hybrid approaches",
-        "🚀 ENHANCED: Adaptive profitable strategy with regime detection",
-        "🚀 ENHANCED: Signal quality filtering reduces overtrading",
-        "🚀 ENHANCED: Dynamic risk management adapts to performance",
-        "🚀 ENHANCED: Parameter-free system requires no manual tuning",
     ]
 
     console.print(Panel(
@@ -2099,9 +1637,9 @@ async def main():
     engine.dispose()
 
     console.print(Panel.fit(
-        "[bold green]🚀 Ultimate DSM + Hybrid Integration with ENHANCED PROFITABLE STRATEGY Complete![/bold green]\n"
-        "Production-ready system with real specs, realistic positions, rich visualization, and profitable adaptive trading",
-        title="🎯 ENHANCED INTEGRATION SUCCESS",
+        "[bold green]🚀 Ultimate DSM + Hybrid Integration Complete![/bold green]\n"
+        "Production-ready system with real specs, realistic positions, and rich visualization",
+        title="🎯 INTEGRATION SUCCESS",
     ))
 
 
