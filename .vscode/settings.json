@@ -1,65 +1,71 @@
 {
-    "python.defaultInterpreterPath": "./nautilus_test/.venv/bin/python",
-    "python.terminal.executeInFileDir": false,
-    "python.terminal.activateEnvironment": true,
-    "editor.formatOnSave": true,
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit",
-            "source.organizeImports": "explicit"
-        }
-    },
-    "terminal.integrated.cwd": "${workspaceFolder}/nautilus_test",
-    "terminal.integrated.defaultProfile.linux": "bash",
-    "terminal.integrated.profiles.linux": {
-        "bash": {
-            "path": "bash",
-            "args": ["-c", "cd ${workspaceFolder}/nautilus_test && exec bash"]
-        },
-        "uv-python": {
-            "path": "${workspaceFolder}/nautilus_test/scripts/uv_python.sh"
-        }
-    },
-    "python.analysis.extraPaths": [
-        "./nautilus_test/src",
-        "./nautilus_test/.venv/lib/python3.12/site-packages"
-    ],
-    "python.analysis.autoSearchPaths": true,
-    "python.analysis.autoImportCompletions": true,
-    "python.analysis.packageIndexDepths": [
-        {
-            "name": "nautilus_trader",
-            "depth": 10
-        }
-    ],
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestPath": "cd nautilus_test && uv run pytest",
-    "python.testing.cwd": "${workspaceFolder}/nautilus_test",
-    "python.testing.unittestEnabled": false,
-    "python.linting.enabled": false,
-    "python.formatting.provider": "none",
-    "pylint.enabled": false,
-    "pylint.args": ["--disable=all"],
-    "ruff.enable": true,
-    "ruff.lint.enable": true,
-    "ruff.interpreter": ["./nautilus_test/.venv/bin/python"],
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/.pytest_cache": true,
-        "**/node_modules": true,
-        "nt_reference/**": true,
-        "**/.venv": false
-    },
-    "files.watcherExclude": {
-        "**/.venv/**": true,
-        "nt_reference/**": true
-    },
-    "files.associations": {
-        "*.toml": "toml"
-    },
-    "workbench.colorCustomizations": {
-        "statusBar.background": "#1e3a8a",
-        "statusBar.foreground": "#ffffff"
+  "python.defaultInterpreterPath": "./nautilus_test/.venv/bin/python",
+  "python.terminal.executeInFileDir": false,
+  "python.terminal.activateEnvironment": true,
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
     }
+  },
+  "terminal.integrated.cwd": "${workspaceFolder}/nautilus_test",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "args": ["-c", "cd ${workspaceFolder}/nautilus_test && exec bash"]
+    },
+    "uv-python": {
+      "path": "${workspaceFolder}/nautilus_test/scripts/uv_python.sh"
+    }
+  },
+  "python.analysis.extraPaths": [
+    "./nautilus_test/src",
+    "./nautilus_test/.venv/lib/python3.12/site-packages"
+  ],
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.packageIndexDepths": [
+    {
+      "name": "nautilus_trader",
+      "depth": 10
+    }
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": "cd nautilus_test && uv run pytest",
+  "python.testing.cwd": "${workspaceFolder}/nautilus_test",
+  "python.testing.unittestEnabled": false,
+  "python.linting.enabled": false,
+  "python.formatting.provider": "none",
+  "pylint.enabled": false,
+  "pylint.args": ["--disable=all"],
+  "ruff.enable": true,
+  "ruff.lint.enable": true,
+  "ruff.interpreter": ["./nautilus_test/.venv/bin/python"],
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true,
+    "nt_reference/**": true,
+    "**/.venv": false
+  },
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "nt_reference/**": true
+  },
+  "files.associations": {
+    "*.toml": "toml"
+  },
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#1e3a8a",
+    "statusBar.foreground": "#ffffff"
+  },
+  "cursorpyright.analysis.autoImportCompletions": true,
+  "cursorpyright.analysis.autoSearchPaths": true,
+  "cursorpyright.analysis.extraPaths": [
+    "./nautilus_test/src",
+    "./nautilus_test/.venv/lib/python3.12/site-packages"
+  ]
 }

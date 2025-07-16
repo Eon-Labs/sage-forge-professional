@@ -118,7 +118,6 @@ class ArrowDataManager:
                 # Use index as timestamp if no timestamp column
                 df_polars = df_polars.with_row_index("timestamp")
                 # Convert row index to actual timestamps
-                from datetime import datetime, timedelta
                 base_time = datetime.now() - timedelta(minutes=df_polars.height)
                 df_polars = df_polars.with_columns([
                     (pl.lit(base_time) + pl.duration(minutes=pl.col("timestamp"))).alias("timestamp"),
@@ -136,7 +135,6 @@ class ArrowDataManager:
             # Ensure timestamp exists and is datetime
             if "timestamp" not in df_polars.columns:
                 # Create timestamp from row index as fallback
-                from datetime import datetime, timedelta
                 base_time = datetime.now() - timedelta(minutes=df_polars.height)
                 df_polars = df_polars.with_row_index().with_columns([
                     (pl.lit(base_time) + pl.duration(minutes=pl.col("index"))).alias("timestamp"),
@@ -195,7 +193,9 @@ class ArrowDataManager:
         for batch in arrow_table.to_batches():
             batch_df = pl.from_arrow(batch)
 
-            for row in batch_df.to_pandas().to_dict(orient="records"):
+            # Convert polars to pandas, then to dict records
+            pandas_df = batch_df.to_pandas()
+            for row in pandas_df.to_dict("records"):  # type: ignore[call-overload]
                 # Skip rows with missing data
                 if (row["open"] is None or row["high"] is None or
                     row["low"] is None or row["close"] is None or row["volume"] is None):
