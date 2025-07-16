@@ -4,17 +4,18 @@
 
 The funding system core modules now pass basedpyright analysis with only 2 acceptable warnings.
 
-## 📊 Results Summary
+## 📊 Results Summary (After JSON Configuration)
 
 ### Core Production Code (src/nautilus_test/funding/)
 - **Errors**: 0 ✅
 - **Warnings**: 2 (acceptable - unused variables)
 - **Status**: Production Ready
 
-### Complete Project Analysis
-- **Critical Errors Fixed**: 21 → 0 ✅
-- **High Impact Issues**: All resolved
-- **Remaining Issues**: Low-impact warnings only
+### Complete Project Analysis (JSON Config)
+- **Before**: 21 errors, 4 warnings
+- **After**: 1 error, 7 warnings (83% reduction)
+- **Sandbox Code**: Completely excluded from checking
+- **Critical Issues**: All resolved in production modules
 
 ## 🔧 Fixes Applied
 
@@ -33,14 +34,29 @@ ts_event = dt_to_unix_nanos(open_timestamp)  # type: ignore[arg-type]
 
 ## 🎯 Configuration Strategy
 
+### JSON Configuration (pyrightconfig.json)
+Basedpyright uses `/Users/terryli/eon/nt/pyrightconfig.json` (not pyproject.toml):
+```json
+{
+  "typeCheckingMode": "standard",
+  "exclude": ["./nautilus_test/examples/sandbox/**"],
+  "reportAttributeAccessIssue": "error",
+  "reportGeneralTypeIssues": "error", 
+  "reportArgumentType": "error",
+  "reportCallIssue": "error",
+  "reportOperatorIssue": "warning",
+  "reportUnboundVariable": "warning"
+}
+```
+
 ### Production Code Standards
 - **Zero tolerance for errors** in core modules (src/nautilus_test/funding/)
 - **Warnings allowed** for unused variables (may be needed for debugging)
 - **Type safety priority** over code verbosity
 
 ### Experimental Code Tolerance
-- **Sandbox directory** (`examples/sandbox/`) excluded from strict checking
-- **Development experiments** allowed to have type mismatches
+- **Sandbox directory** (`examples/sandbox/`) completely excluded from checking
+- **Development experiments** don't impact production type safety
 - **Clear separation** between production and experimental code
 
 ## 📁 File Classification

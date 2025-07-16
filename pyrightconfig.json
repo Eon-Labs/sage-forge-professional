@@ -9,8 +9,7 @@
       "extraPaths": [
         "./nautilus_test/src",
         "./nautilus_test/.venv/lib/python3.12/site-packages",
-        "/Users/terryli/eon/data-source-manager",
-        "./nautilus_test/examples/sandbox"
+        "/Users/terryli/eon/data-source-manager"
       ]
     }
   ],
@@ -26,15 +25,22 @@
     "**/.ruff_cache",
     "**/node_modules",
     "**/nt_reference/**",
-    "./nautilus_test/.venv"
+    "./nautilus_test/.venv",
+    "./nautilus_test/examples/sandbox/**"
   ],
   "venvPath": "./nautilus_test",
   "venv": ".venv",
-  "typeCheckingMode": "basic",
+  "typeCheckingMode": "standard",
   "useLibraryCodeForTypes": true,
   "autoImportCompletions": true,
   "reportMissingImports": "warning",
   "reportMissingTypeStubs": "none",
   "reportUnusedImport": "warning",
-  "reportUnusedVariable": "warning"
+  "reportUnusedVariable": "warning",
+  "reportAttributeAccessIssue": "error",
+  "reportGeneralTypeIssues": "error",
+  "reportArgumentType": "error",
+  "reportCallIssue": "error",
+  "reportOperatorIssue": "warning",
+  "reportUnboundVariable": "warning"
 }
