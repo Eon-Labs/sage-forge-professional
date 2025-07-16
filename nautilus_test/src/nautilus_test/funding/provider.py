@@ -209,8 +209,34 @@ class FundingRateProvider:
             # Convert to FundingRateUpdate objects
             funding_rates = []
             for row in df.iter_rows(named=True):
-                funding_time_ns = dt_to_unix_nanos(pd.Timestamp(row["funding_time"]))
-                ts_event = dt_to_unix_nanos(pd.Timestamp(row["open_time"])) if "open_time" in row else funding_time_ns
+                try:
+                    # Convert to pandas timestamp and verify it's valid
+                    funding_time_raw = row["funding_time"]
+                    if funding_time_raw is None:
+                        continue
+                    
+                    funding_timestamp = pd.Timestamp(funding_time_raw)
+                    if funding_timestamp is pd.NaT or str(funding_timestamp) == 'NaT':
+                        continue  # Skip invalid timestamps
+                    # Type assertion for basedpyright - we know this is not NaT at this point
+                    assert funding_timestamp is not pd.NaT
+                    funding_time_ns = dt_to_unix_nanos(funding_timestamp)  # type: ignore[arg-type]
+                    
+                    # Handle open_time if present
+                    if "open_time" in row and row["open_time"] is not None:
+                        open_time_raw = row["open_time"] 
+                        open_timestamp = pd.Timestamp(open_time_raw)
+                        if open_timestamp is pd.NaT or str(open_timestamp) == 'NaT':
+                            ts_event = funding_time_ns
+                        else:
+                            # Type assertion for basedpyright - we know this is not NaT at this point
+                            assert open_timestamp is not pd.NaT
+                            ts_event = dt_to_unix_nanos(open_timestamp)  # type: ignore[arg-type]
+                    else:
+                        ts_event = funding_time_ns
+                except (ValueError, TypeError, pd.errors.OutOfBoundsDatetime):
+                    # Skip invalid timestamp data
+                    continue
 
                 funding_rate = FundingRateUpdate(
                     instrument_id=instrument_id,
@@ -429,13 +455,20 @@ class FundingRateProvider:
             # Convert back to FundingRateUpdate objects
             funding_rates = []
             for _, row in df_filtered.iterrows():
+                # Extract scalar values from pandas Series
+                mark_price_val = row["mark_price"]
+                try:
+                    mark_price = float(mark_price_val) if mark_price_val is not None and str(mark_price_val) != 'nan' else None
+                except (ValueError, TypeError):
+                    mark_price = None
+                
                 funding_rate = FundingRateUpdate(
-                    instrument_id=InstrumentId.from_str(row["instrument_id"]),
-                    funding_rate=row["funding_rate"],
-                    funding_time=row["funding_time"],
-                    mark_price=row["mark_price"] if pd.notna(row["mark_price"]) else None,
-                    ts_event=row["ts_event"],
-                    ts_init=row["ts_init"],
+                    instrument_id=InstrumentId.from_str(str(row["instrument_id"])),
+                    funding_rate=float(row["funding_rate"]),
+                    funding_time=int(row["funding_time"]),
+                    mark_price=mark_price,
+                    ts_event=int(row["ts_event"]),
+                    ts_init=int(row["ts_init"]),
                 )
                 funding_rates.append(funding_rate)
 

@@ -175,7 +175,7 @@ class FundingPaymentEvent(Data):
     def from_dict(values: dict[str, Any]) -> "FundingPaymentEvent":
         """Create from dictionary representation."""
         return FundingPaymentEvent(
-            event_id=UUID4(values["event_id"]),
+            event_id=UUID4.from_str(values["event_id"]),
             instrument_id=InstrumentId.from_str(values["instrument_id"]),
             payment_amount=Money.from_str(values["payment_amount"]),
             funding_rate=values["funding_rate"],

@@ -353,7 +353,7 @@ class BacktestFundingIntegrator:
 
         return period_events
 
-    def generate_funding_timeline_report(self) -> dict[str, any]:
+    def generate_funding_timeline_report(self) -> dict[str, Any]:
         """Generate detailed funding timeline report for audit."""
         if not self.funding_events:
             return {"error": "No funding events calculated"}

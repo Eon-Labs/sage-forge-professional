@@ -6,7 +6,7 @@ Integrates with NautilusTrader's position and money handling.
 """
 
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
 from nautilus_trader.core.uuid import UUID4
 from nautilus_trader.model.identifiers import InstrumentId
@@ -174,7 +174,7 @@ class FundingPaymentCalculator:
     def get_funding_summary(
         self,
         funding_events: list[FundingPaymentEvent],
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Generate a summary of funding payments.
         

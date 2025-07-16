@@ -67,6 +67,17 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 mypy_path = "src"
 
+[tool.basedpyright]
+include = ["src"]
+exclude = [
+    "examples/sandbox/**",  # Experimental code - acceptable errors
+]
+typeCheckingMode = "standard"
+reportUnusedVariable = "warning"  # Keep as warnings, not errors
+reportUnusedImport = "warning"
+reportAttributeAccessIssue = "warning"  # For experimental pandas/polars code
+reportGeneralTypeIssues = "warning"     # For experimental data libraries
+
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",
