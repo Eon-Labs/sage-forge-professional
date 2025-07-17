@@ -14,29 +14,20 @@ Implements state-of-the-art algorithmic trading concepts for consistent profitab
 All while maintaining parameter-free, self-calibrating design.
 """
 
-import sys
 from collections import deque
 from dataclasses import dataclass
 from decimal import Decimal
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 # NautilusTrader imports
-# Backward compatibility import
-from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import OrderSide, TimeInForce
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.objects import Quantity
 from nautilus_trader.trading.strategy import Strategy, StrategyConfig
-from rich.console import Console
 
-# Add project paths
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-
-console = Console()
 
 # NTPA: Create proper strategy configuration class
 class SOTAProfitableStrategyConfig(StrategyConfig, frozen=True):
@@ -50,11 +41,16 @@ class SOTAProfitableStrategyConfig(StrategyConfig, frozen=True):
     bar_type : BarType  
         The bar type for the strategy.
     trade_size : Decimal
-        The position size per trade.
+        The position size per trade. Must be positive.
     """
     instrument_id: InstrumentId
     bar_type: BarType
     trade_size: Decimal
+    
+    def __post_init__(self):
+        """Validate configuration parameters."""
+        if self.trade_size <= 0:
+            raise ValueError(f"trade_size must be positive, got {self.trade_size}")
 
 @dataclass
 class MarketState:
@@ -109,14 +105,14 @@ class SOTAProfitableStrategy(Strategy):
         self.entry_price = 0.0
         self.unrealized_pnl = 0.0
         
-        console.print("[bold green]🚀 SOTA Profitable Strategy V2 Initialized[/bold green]")
-        console.print("[cyan]📊 Advanced Features: Momentum Persistence, Volatility Breakouts, Multi-TF Confluence[/cyan]")
+        self.log.info("🚀 SOTA Profitable Strategy V2 Initialized")
+        self.log.info("📊 Advanced Features: Momentum Persistence, Volatility Breakouts, Multi-TF Confluence")
         
     def on_start(self):
         """Initialize strategy with advanced features."""
         self.log.info("SOTA Profitable Strategy V2 started")
         self.subscribe_bars(self.config.bar_type)
-        console.print("[green]🎯 SOTA Strategy Started - Ready for profitable trading![/green]")
+        self.log.info("🎯 SOTA Strategy Started - Ready for profitable trading!")
         
     def on_bar(self, bar: Bar):
         """Advanced bar processing with SOTA features."""
@@ -127,7 +123,7 @@ class SOTAProfitableStrategy(Strategy):
         # 🔍 DIAGNOSTIC: Track bar processing throughout time span
         bar_timestamp = pd.Timestamp(bar.ts_event, unit="ns")
         if current_bar % 500 == 0:
-            console.print(f"[bold cyan]🔍 SOTA Bar #{current_bar} at {bar_timestamp}[/bold cyan]")
+            self.log.info(f"🔍 SOTA Bar #{current_bar} at {bar_timestamp}")
         
         # Update market data
         self._update_market_data(bar)
@@ -402,7 +398,7 @@ class SOTAProfitableStrategy(Strategy):
         self.current_position_size = position_size
         
         bar_timestamp = pd.Timestamp(bar.ts_event, unit="ns")
-        console.print(f"[bold green]💰 SOTA Trade: {direction} {position_size:.4f} @ {bar.close} at {bar_timestamp} (strength: {strength:.2f})[/bold green]")
+        self.log.info(f"💰 SOTA Trade: {direction} {position_size:.4f} @ {bar.close} at {bar_timestamp} (strength: {strength:.2f})")
     
     def _manage_advanced_position(self, bar: Bar):
         """Advanced position management with SOTA concepts."""
@@ -427,11 +423,11 @@ class SOTAProfitableStrategy(Strategy):
                 self.profitable_signals += 1
                 self.consecutive_wins += 1
                 self.consecutive_losses = 0
-                console.print(f"[green]✅ Profitable exit: +${self.unrealized_pnl:.2f}[/green]")
+                self.log.info(f"✅ Profitable exit: +${self.unrealized_pnl:.2f}")
             else:
                 self.consecutive_losses += 1
                 self.consecutive_wins = 0
-                console.print(f"[red]❌ Loss exit: ${self.unrealized_pnl:.2f}[/red]")
+                self.log.info(f"❌ Loss exit: ${self.unrealized_pnl:.2f}")
     
     def _should_exit_position(self, current_price: float) -> bool:
         """Determine if position should be exited using SOTA logic."""
@@ -462,7 +458,7 @@ class SOTAProfitableStrategy(Strategy):
         """Log performance metrics."""
         if self.total_signals > 0:
             win_rate = (self.profitable_signals / self.total_signals) * 100
-            console.print(f"[cyan]📊 Bar {current_bar}: {self.profitable_signals}/{self.total_signals} signals profitable ({win_rate:.1f}%)[/cyan]")
+            self.log.info(f"📊 Bar {current_bar}: {self.profitable_signals}/{self.total_signals} signals profitable ({win_rate:.1f}%)")
     
     def on_stop(self):
         """Strategy cleanup with performance reporting."""
@@ -471,12 +467,12 @@ class SOTAProfitableStrategy(Strategy):
         # Final performance summary
         if self.total_signals > 0:
             win_rate = (self.profitable_signals / self.total_signals) * 100
-            console.print("[bold yellow]🏆 FINAL PERFORMANCE:[/bold yellow]")
-            console.print(f"[green]  📊 Total Signals: {self.total_signals}[/green]")
-            console.print(f"[green]  💰 Profitable: {self.profitable_signals} ({win_rate:.1f}%)[/green]")
-            console.print(f"[green]  🔥 Consecutive Wins: {self.consecutive_wins}[/green]")
+            self.log.info("🏆 FINAL PERFORMANCE:")
+            self.log.info(f"  📊 Total Signals: {self.total_signals}")
+            self.log.info(f"  💰 Profitable: {self.profitable_signals} ({win_rate:.1f}%)")
+            self.log.info(f"  🔥 Consecutive Wins: {self.consecutive_wins}")
         
-        console.print("[bold green]🎯 SOTA Strategy V2 Complete![/bold green]")
+        self.log.info("🎯 SOTA Strategy V2 Complete!")
 
 
 # SOTA Component Classes
@@ -640,18 +636,10 @@ def create_sota_strategy_config(instrument_id, bar_type, trade_size: Decimal) ->
         trade_size=trade_size,
     )
 
-def create_sota_strategy_config_legacy(instrument_id: str, bar_type: str, trade_size: Decimal) -> EMACrossConfig:
-    """Create legacy configuration for SOTA strategy (backward compatibility)."""
-    return EMACrossConfig(
-        instrument_id=instrument_id,
-        bar_type=bar_type,
-        trade_size=trade_size,
-        fast_ema_period=10,  # Not used by SOTA strategy
-        slow_ema_period=21,  # Not used by SOTA strategy
-    )
+# Legacy function removed - use create_sota_strategy_config() instead
 
 
 if __name__ == "__main__":
-    console.print("[bold blue]🚀 SOTA Profitable Strategy V2 - Advanced Algorithmic Trading[/bold blue]")
-    console.print("[cyan]Features: Momentum Persistence, Volatility Breakouts, Multi-TF Confluence, Adaptive Sizing[/cyan]")
-    console.print("[yellow]⚠️  This is a standalone strategy module - integrate with main backtesting system[/yellow]")
+    print("🚀 SOTA Profitable Strategy V2 - Advanced Algorithmic Trading")
+    print("Features: Momentum Persistence, Volatility Breakouts, Multi-TF Confluence, Adaptive Sizing")
+    print("⚠️  This is a standalone strategy module - integrate with main backtesting system")

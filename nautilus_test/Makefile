@@ -26,15 +26,24 @@ test: ## Run tests
 	uv run pytest tests/
 
 .PHONY: format
-format: ## Format code with black and ruff
-	@echo "$(BLUE)Formatting code...$(RESET)"
-	uv run black src/ tests/ examples/
-	uv run ruff check --fix src/ tests/ examples/
+format: ## 🚀 Revolutionary formatting (recent files)
+	@echo "$(BLUE)🚀 Revolutionary formatting (recent files)...$(RESET)"
+	@python scripts/format_code.py
+
+.PHONY: format-all
+format-all: ## 🚀 Revolutionary formatting (all files)
+	@echo "$(BLUE)🚀 Revolutionary formatting (all files)...$(RESET)"
+	@python scripts/format_code.py --all
+
+.PHONY: format-recent
+format-recent: ## 🚀 Revolutionary formatting (last 30 minutes)
+	@echo "$(BLUE)🚀 Revolutionary formatting (last 30 minutes)...$(RESET)"
+	@python scripts/format_code.py --recent 30
 
 .PHONY: lint
 lint: ## Lint code with ruff
 	@echo "$(BLUE)Linting code...$(RESET)"
-	uv run ruff check src/ tests/ examples/
+	uv run ruff check src/ tests/ examples/ strategies/
 
 .PHONY: typecheck
 typecheck: ## Run type checking with mypy

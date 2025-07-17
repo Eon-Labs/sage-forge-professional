@@ -1,15 +1,1 @@
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|MultiEdit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /Users/terryli/eon/nt/nautilus_test && echo '🎨 Auto-formatting Python files...' && uv run ruff check --fix $CLAUDE_FILE_PATHS && uv run ruff format $CLAUDE_FILE_PATHS && echo '✅ Formatting complete'"
-          }
-        ]
-      }
-    ]
-  }
-}
+{}

@@ -20,13 +20,17 @@ from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
+# Import finplot for enhanced visualization
+import finplot as fplt
+import pandas as pd
+
 # Add project paths
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Standard NautilusTrader imports
 # Import our NT-native strategy
-from examples.strategies.sota_momentum import SOTAMomentum, create_sota_momentum_config
+# Import finplot for enhanced visualization
 from nautilus_trader.backtest.engine import BacktestEngine, BacktestEngineConfig
 from nautilus_trader.backtest.models import FillModel, MakerTakerFeeModel
 from nautilus_trader.config import LoggingConfig, RiskEngineConfig
@@ -37,6 +41,7 @@ from nautilus_trader.model.identifiers import TraderId, Venue
 from nautilus_trader.model.objects import Money
 from rich.console import Console
 from rich.panel import Panel
+from strategies.sota.sota_momentum import SOTAMomentum, create_sota_momentum_config
 
 from nautilus_test.actors import FinplotActor, FundingActor
 
@@ -54,7 +59,185 @@ try:
 except ImportError:
     FUNDING_AVAILABLE = False
 
-console = Console()
+console = Console()  # Console for rich terminal output
+
+
+# Enhanced Finplot Visualization Functions
+def prepare_bars_dataframe(bars):
+    """Convert NautilusTrader Bar objects to DataFrame for visualization."""
+    data = []
+    for bar in bars:
+        timestamp = pd.Timestamp(bar.ts_event, unit="ns")
+        data.append({
+            "time": timestamp,
+            "open": float(bar.open),
+            "high": float(bar.high),
+            "low": float(bar.low),
+            "close": float(bar.close),
+            "volume": float(bar.volume),
+        })
+
+    df = pd.DataFrame(data)
+    df.set_index("time", inplace=True)
+    return df
+
+
+def create_enhanced_candlestick_chart(df: pd.DataFrame, title: str = "Enhanced OHLC Chart with Real Specs"):
+    """Create candlestick chart with enhanced dark theme for real data."""
+    import pyqtgraph as pg
+
+    # Enhanced dark theme for real data visualization
+    fplt.foreground = "#f0f6fc"
+    fplt.background = "#0d1117"
+
+    pg.setConfigOptions(
+        foreground=fplt.foreground,
+        background=fplt.background,
+        antialias=True,
+    )
+
+    fplt.odd_plot_background = fplt.background
+    fplt.candle_bull_color = "#26d0ce"
+    fplt.candle_bear_color = "#f85149"
+    fplt.candle_bull_body_color = "#238636"
+    fplt.candle_bear_body_color = "#da3633"
+    fplt.volume_bull_color = "#26d0ce40"
+    fplt.volume_bear_color = "#f8514940"
+    fplt.cross_hair_color = "#58a6ff"
+
+    # Create figure with enhanced styling
+    ax, ax2 = fplt.create_plot(title, rows=2)
+
+    # Plot with real data
+    fplt.candlestick_ochl(df[["open", "close", "high", "low"]], ax=ax)
+    fplt.volume_ocv(df[["open", "close", "volume"]], ax=ax2)
+
+    return ax, ax2
+
+
+def add_enhanced_indicators(df: pd.DataFrame, ax, fast_period: int = 10, slow_period: int = 21):
+    """Add enhanced indicators with real specification validation."""
+    # Calculate indicators
+    df["ema_fast"] = df["close"].ewm(span=fast_period, adjust=False).mean()
+    df["ema_slow"] = df["close"].ewm(span=slow_period, adjust=False).mean()
+    df["bb_middle"] = df["close"].rolling(window=20).mean()
+    df["bb_std"] = df["close"].rolling(window=20).std()
+    df["bb_upper"] = df["bb_middle"] + (df["bb_std"] * 2)
+    df["bb_lower"] = df["bb_middle"] - (df["bb_std"] * 2)
+
+    # Plot with enhanced colors
+    fplt.plot(df["ema_fast"], ax=ax, color="#58a6ff", width=2, legend=f"EMA {fast_period}")
+    fplt.plot(df["ema_slow"], ax=ax, color="#ff7b72", width=2, legend=f"EMA {slow_period}")
+    fplt.plot(df["bb_upper"], ax=ax, color="#7c3aed", width=1, style="--", legend="BB Upper")
+    fplt.plot(df["bb_lower"], ax=ax, color="#7c3aed", width=1, style="--", legend="BB Lower")
+
+    return df
+
+
+def add_realistic_trade_markers(df: pd.DataFrame, fills_report: pd.DataFrame, ax):
+    """Add trade markers positioned with realistic position sizes."""
+    if fills_report.empty:
+        return
+
+    
+    buy_times, buy_prices = [], []
+    sell_times, sell_prices = [], []
+
+    for _, fill in fills_report.iterrows():
+        timestamp_val = fill["ts_init"]
+        if isinstance(timestamp_val, pd.Series):
+            timestamp_val = timestamp_val.iloc[0] if not timestamp_val.empty else None
+        if timestamp_val is not None:
+            try:
+                # Safely convert to timestamp
+                if hasattr(timestamp_val, "timestamp") and hasattr(timestamp_val, "floor"):
+                    timestamp = timestamp_val
+                else:
+                    timestamp = pd.Timestamp(timestamp_val)
+            except (ValueError, TypeError):
+                continue  # Skip invalid timestamps
+
+            try:
+                # Ensure we have a proper Timestamp object
+                if not isinstance(timestamp, pd.Timestamp):
+                    timestamp = pd.Timestamp(timestamp)
+                trade_time = timestamp.floor("min")
+
+                if trade_time in df.index:
+                    bar_row = df.loc[trade_time]
+                else:
+                    nearest_idx = df.index.get_indexer([trade_time], method="nearest")[0]
+                    bar_row = df.iloc[nearest_idx]
+
+                bar_high = float(bar_row["high"])
+                bar_low = float(bar_row["low"])
+
+                if fill["order_side"] == "BUY":
+                    buy_times.append(timestamp)
+                    buy_prices.append(bar_low - (bar_high - bar_low) * 0.05)
+                else:
+                    sell_times.append(timestamp)
+                    sell_prices.append(bar_high + (bar_high - bar_low) * 0.05)
+
+            except (IndexError, KeyError, TypeError):
+                # Fallback: use last_px or a reasonable default
+                try:
+                    price = float(fill.get("last_px", 50000))
+                except (ValueError, TypeError):
+                    price = 50000  # Reasonable BTC price fallback
+                price_offset = price * 0.001
+
+                if fill["order_side"] == "BUY":
+                    buy_times.append(timestamp)
+                    buy_prices.append(price - price_offset)
+                else:
+                    sell_times.append(timestamp)
+                    sell_prices.append(price + price_offset)
+
+    # Enhanced trade markers
+    if buy_times:
+        buy_df = pd.DataFrame({"price": buy_prices}, index=pd.Index(buy_times))
+        fplt.plot(buy_df, ax=ax, style="^", color="#26d0ce", width=4, legend="Buy (Realistic Size)")
+
+    if sell_times:
+        sell_df = pd.DataFrame({"price": sell_prices}, index=pd.Index(sell_times))
+        fplt.plot(sell_df, ax=ax, style="v", color="#f85149", width=4, legend="Sell (Realistic Size)")
+
+
+def display_enhanced_chart(bars, fills_report: pd.DataFrame, instrument_id: str, specs: dict, position_calc: dict):
+    """Display ultimate chart with real specs + realistic positions + rich visualization."""
+    # Convert bars to DataFrame
+    df = prepare_bars_dataframe(bars)
+
+    # Create enhanced chart
+    chart_title = f"{instrument_id} - Real Binance Specs + Realistic Positions + Rich Visualization"
+    ax, _ = create_enhanced_candlestick_chart(df, chart_title)
+
+    # Add indicators
+    add_enhanced_indicators(df, ax, fast_period=10, slow_period=21)
+
+    # Add realistic trade markers
+    add_realistic_trade_markers(df, fills_report, ax)
+
+    # Add specification info to chart
+    info_text = (
+        f"Real Specs: {specs['tick_size']} tick, {specs['step_size']} step | "
+        f"Realistic Position: {position_calc['position_size_btc']:.3f} BTC (${position_calc['notional_value']:.0f})"
+    )
+    console.print(f"[cyan]📊 Chart Info: {info_text}[/cyan]")
+
+    # Show enhanced visualization
+    fplt.show()
+
+    return df
+
+
+def create_post_backtest_chart(bars, fills_report, specs, position_calc):
+    """Create post-backtest chart using existing enhanced visualization."""
+    return display_enhanced_chart(
+        bars, fills_report, "BTCUSDT-PERP Holiday Data",
+        specs, position_calc
+    )
 
 
 async def main():
@@ -178,15 +361,19 @@ async def main():
         # STEP 11: Generate Results (preserve custom funding calculations)
         console.print("\\n🎯 STEP 10: Results & Analysis")
         
-        # Get fills report (NT-native)
-        fills_report = engine.trader.generate_account_report(Venue("SIM"))
+        # Get account and fills reports (NT-native)
+        account_report = engine.trader.generate_account_report(Venue("SIM"))
+        fills_report = engine.trader.generate_fills_report()
         
-        # Extract P&L
+        # Extract P&L using proper account balance method
+        starting_balance = 10000.0
         try:
-            original_pnl = float(
-                str(fills_report.total_pnl_raw).replace(" USDT", "")
-            ) if fills_report.total_pnl_raw else 0.0
-        except (ValueError, AttributeError):
+            if not account_report.empty:
+                final_balance = float(account_report.iloc[-1]["total"])
+                original_pnl = final_balance - starting_balance
+            else:
+                original_pnl = 0.0
+        except (ValueError, AttributeError, IndexError):
             original_pnl = 0.0
         
         # Calculate funding-adjusted P&L (preserve custom feature)
@@ -204,8 +391,12 @@ async def main():
         
         # STEP 12: Launch Visualization (preserve custom feature)
         console.print("\\n📊 Launching Enhanced Interactive Chart...")
-        console.print("📊 Chart Info: Real Specs + Realistic Position + Holiday Data")
-        console.print("✅ Enhanced finplot chart displayed successfully")
+        try:
+            create_post_backtest_chart(bars, fills_report, specs_manager.specs, position_calc)
+            console.print("✅ Enhanced finplot chart displayed successfully")
+        except Exception as chart_error:
+            console.print(f"[yellow]⚠️ Chart display failed: {chart_error}[/yellow]")
+            console.print("📊 Chart Info: Real Specs + Realistic Position + Holiday Data")
         
         console.print("\\n[bold green]🎄 NT-Native SOTA Holiday Backtest Complete![/bold green]")
         console.print(f"[yellow]📊 Final P&L: ${funding_adjusted_pnl:+.2f}[/yellow]")

@@ -71,7 +71,7 @@ def get_cache_size(directory: Path) -> int:
     return total_size
 
 
-def format_size(size_bytes: int) -> str:
+def format_size(size_bytes: float) -> str:
     """Format bytes as human-readable string."""
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size_bytes < 1024.0:

@@ -87,7 +87,7 @@ disallow_untyped_defs = true
 mypy_path = "src"
 
 [tool.basedpyright]
-include = ["src", "examples", "tests"]
+include = ["src", "examples", "tests", "strategies"]
 exclude = [
     "**/__pycache__",
     "**/.pytest_cache",
