@@ -1,1 +1,18 @@
-{}
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": {
+          "tools": ["Edit", "MultiEdit", "Write"],
+          "file_paths": ["*.py"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run black {file_path} && uv run ruff check --fix {file_path}"
+          }
+        ]
+      }
+    ]
+  }
+}
