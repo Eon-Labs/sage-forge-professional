@@ -15,24 +15,46 @@ All while maintaining parameter-free, self-calibrating design.
 """
 
 import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-
 from collections import deque
 from dataclasses import dataclass
 from decimal import Decimal
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+# NautilusTrader imports
+# Backward compatibility import
 from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
-from nautilus_trader.model.data import Bar
+from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import OrderSide, TimeInForce
+from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.objects import Quantity
-from nautilus_trader.trading.strategy import Strategy
+from nautilus_trader.trading.strategy import Strategy, StrategyConfig
 from rich.console import Console
 
+# Add project paths
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
 console = Console()
+
+# NTPA: Create proper strategy configuration class
+class SOTAProfitableStrategyConfig(StrategyConfig, frozen=True):
+    """
+    Configuration for ``SOTAProfitableStrategy`` instances.
+    
+    Parameters
+    ----------
+    instrument_id : InstrumentId
+        The instrument ID for the strategy.
+    bar_type : BarType  
+        The bar type for the strategy.
+    trade_size : Decimal
+        The position size per trade.
+    """
+    instrument_id: InstrumentId
+    bar_type: BarType
+    trade_size: Decimal
 
 @dataclass
 class MarketState:
@@ -58,6 +80,7 @@ class SOTAProfitableStrategy(Strategy):
     """
     
     def __init__(self, config):
+        """Initialize strategy with NTPA config support."""
         super().__init__(config)
         
         # Market data storage
@@ -598,8 +621,27 @@ class MarketMicrostructureEdge:
         return 0.0
 
 
-def create_sota_strategy_config(instrument_id: str, bar_type: str, trade_size: Decimal) -> EMACrossConfig:
-    """Create configuration for SOTA strategy."""
+def create_sota_strategy_config(instrument_id, bar_type, trade_size: Decimal) -> SOTAProfitableStrategyConfig:
+    """Create NTPA configuration for SOTA strategy with backward compatibility."""
+    # Handle both string and object inputs for backward compatibility
+    if isinstance(instrument_id, str):
+        instrument_id_obj = InstrumentId.from_str(instrument_id)
+    else:
+        instrument_id_obj = instrument_id
+    
+    if isinstance(bar_type, str):
+        bar_type_obj = BarType.from_str(bar_type)
+    else:
+        bar_type_obj = bar_type
+    
+    return SOTAProfitableStrategyConfig(
+        instrument_id=instrument_id_obj,
+        bar_type=bar_type_obj,
+        trade_size=trade_size,
+    )
+
+def create_sota_strategy_config_legacy(instrument_id: str, bar_type: str, trade_size: Decimal) -> EMACrossConfig:
+    """Create legacy configuration for SOTA strategy (backward compatibility)."""
     return EMACrossConfig(
         instrument_id=instrument_id,
         bar_type=bar_type,
