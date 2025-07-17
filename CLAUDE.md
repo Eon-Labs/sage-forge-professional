@@ -8,7 +8,13 @@
 **Commands**: Use `make` or `uv run` for operations
 
 ## Cache System
-**Uses `platformdirs`** for platform-appropriate cache directories (not workspace dirs)
+**Uses `platformdirs` for platform-appropriate cache directories (not workspace dirs)
+
+## Project Resources
+- NautilusTrader pattern is in the `nt_reference` folder where sync to the remote origin main repo daily for the latest updates.
+
+## NTPA: NautilusTrader Pattern Alignment
+- Proactively conform to the native paradigm of NautilusTrader—including its provided classes, idiomatic patterns, and native conventions.
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

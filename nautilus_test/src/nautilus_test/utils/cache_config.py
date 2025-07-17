@@ -7,7 +7,6 @@ and appropriate platform-specific locations on macOS/Windows.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from platformdirs import user_cache_dir, user_data_dir
 from rich.console import Console
@@ -92,7 +91,7 @@ class CacheDirectoryManager:
         data_dir.mkdir(parents=True, exist_ok=True)
         return data_dir
 
-    def clear_cache(self, subdirectory: Optional[str] = None) -> None:
+    def clear_cache(self, subdirectory: str | None = None) -> None:
         """
         Clear cache directory contents.
         
@@ -114,7 +113,7 @@ class CacheDirectoryManager:
                 self._base_cache_dir.mkdir(parents=True, exist_ok=True)
                 console.print(f"[yellow]🗑️ Cleared all cache: {self._base_cache_dir}[/yellow]")
 
-    def get_cache_size(self, subdirectory: Optional[str] = None) -> int:
+    def get_cache_size(self, subdirectory: str | None = None) -> int:
         """
         Get total size of cache directory in bytes.
         
@@ -142,7 +141,7 @@ class CacheDirectoryManager:
 
         return total_size
 
-    def format_cache_size(self, subdirectory: Optional[str] = None) -> str:
+    def format_cache_size(self, subdirectory: str | None = None) -> str:
         """
         Get formatted cache size string.
         

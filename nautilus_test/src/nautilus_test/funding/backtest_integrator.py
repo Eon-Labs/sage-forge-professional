@@ -9,7 +9,7 @@ Combines the best of robust implementation with native NautilusTrader patterns.
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from nautilus_trader.model.data import Bar
 from nautilus_trader.model.identifiers import InstrumentId
@@ -41,9 +41,9 @@ class BacktestFundingIntegrator:
 
     def __init__(
         self,
-        funding_provider: Optional[FundingRateProvider] = None,
-        funding_calculator: Optional[FundingPaymentCalculator] = None,
-        cache_dir: Optional[Path] = None,
+        funding_provider: FundingRateProvider | None = None,
+        funding_calculator: FundingPaymentCalculator | None = None,
+        cache_dir: Path | None = None,
     ):
         """
         Initialize production-ready funding integrator with platform-standard cache.
@@ -188,7 +188,7 @@ class BacktestFundingIntegrator:
 
         return results
 
-    def _find_mark_price_from_bars(self, bars: list[Bar], target_time: datetime) -> Optional[Price]:
+    def _find_mark_price_from_bars(self, bars: list[Bar], target_time: datetime) -> Price | None:
         """Find the mark price from bars closest to target time."""
         target_timestamp = target_time.timestamp() * 1_000_000_000  # Convert to nanoseconds
 
@@ -296,7 +296,7 @@ class BacktestFundingIntegrator:
         self,
         historical_funding: list[FundingRateUpdate],
         target_time: datetime,
-    ) -> Optional[FundingRateUpdate]:
+    ) -> FundingRateUpdate | None:
         """Find the funding rate closest to target time."""
         best_funding = None
         min_diff = float("inf")

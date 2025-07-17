@@ -6,7 +6,7 @@ Integrates with NautilusTrader's position and money handling.
 """
 
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from nautilus_trader.core.uuid import UUID4
 from nautilus_trader.model.identifiers import InstrumentId
@@ -37,7 +37,7 @@ class FundingPaymentCalculator:
         position: Position,
         funding_rate_update: FundingRateUpdate,
         mark_price: Price,
-    ) -> Optional[FundingPaymentEvent]:
+    ) -> FundingPaymentEvent | None:
         """
         Calculate funding payment for a position.
         

@@ -46,29 +46,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import finplot as fplt
 import pandas as pd
 import pyqtgraph as pg
-import numpy as np
 from nautilus_trader.backtest.engine import BacktestEngine, BacktestEngineConfig
 from nautilus_trader.backtest.models import FillModel, MakerTakerFeeModel
 from nautilus_trader.common.actor import Actor
 from nautilus_trader.config import LoggingConfig, RiskEngineConfig
-from nautilus_trader.examples.strategies.ema_cross import EMACross, EMACrossConfig
-from nautilus_trader.trading.strategy import Strategy
-from nautilus_trader.trading.config import StrategyConfig
-
-# Import SOTA strategy components
-from strategies.sota.enhanced_profitable_strategy_v2 import (
-    SOTAProfitableStrategy,
-    create_sota_strategy_config,
-    MomentumPersistenceDetector,
-    VolatilityBreakoutDetector,
-    MultiTimeframeConfluence,
-    AdaptivePositionSizer,
-    MarketMicrostructureEdge,
-    MarketState
-)
-from nautilus_trader.model.enums import OrderSide, TimeInForce
-from nautilus_trader.model.orders import MarketOrder
-from nautilus_trader.core.datetime import dt_to_unix_nanos
 from nautilus_trader.model.currencies import BTC, USDT
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import AccountType, OmsType
@@ -80,6 +61,12 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
+
+# Import SOTA strategy components
+from strategies.sota.enhanced_profitable_strategy_v2 import (
+    SOTAProfitableStrategy,
+    create_sota_strategy_config,
+)
 
 # from rich.text import Text  # Unused import
 
@@ -643,7 +630,7 @@ class EnhancedModernBarDataProvider:
                 df = self.data_manager.fetch_real_market_data(symbol, limit=limit, start_time=start_time, end_time=end_time)
 
                 # 🔍 DIAGNOSTIC PHASE 1: Check raw DSM data timestamps
-                console.print(f"[bold red]🔍 DIAGNOSTIC 1: Raw DSM Data Timestamps[/bold red]")
+                console.print("[bold red]🔍 DIAGNOSTIC 1: Raw DSM Data Timestamps[/bold red]")
                 console.print(f"[red]📊 DSM Data Type: {type(df)}[/red]")
                 
                 if hasattr(df, 'columns'):
@@ -668,11 +655,11 @@ class EnhancedModernBarDataProvider:
                             except Exception as e:
                                 console.print(f"[red]❌ Error reading {col}: {e}[/red]")
                     else:
-                        console.print(f"[red]❌ No timestamp columns found![/red]")
+                        console.print("[red]❌ No timestamp columns found![/red]")
                 else:
-                    console.print(f"[red]❌ DSM data has no columns attribute![/red]")
+                    console.print("[red]❌ DSM data has no columns attribute![/red]")
                     
-                console.print(f"[red]📅 DSM Expected: Jan 1-3, 2025[/red]")
+                console.print("[red]📅 DSM Expected: Jan 1-3, 2025[/red]")
 
                 # 🚨 CRITICAL: Verify data source authenticity
                 console.print("[yellow]🔍 DEBUG: Verifying data source authenticity...[/yellow]")
@@ -1383,7 +1370,7 @@ async def main():
         first_bar_time = pd.Timestamp(bars[0].ts_event, unit="ns")
         last_bar_time = pd.Timestamp(bars[-1].ts_event, unit="ns")
         duration_hours = (last_bar_time - first_bar_time).total_seconds() / 3600
-        console.print(f"[bold yellow]🔍 Bar Time Distribution:[/bold yellow]")
+        console.print("[bold yellow]🔍 Bar Time Distribution:[/bold yellow]")
         console.print(f"[yellow]📅 First bar: {first_bar_time}[/yellow]")
         console.print(f"[yellow]📅 Last bar: {last_bar_time}[/yellow]")
         console.print(f"[yellow]⏱️ Duration: {duration_hours:.1f} hours (expected: 48 hours)[/yellow]")

@@ -6,11 +6,11 @@ Filters out low-quality trading signals to reduce overtrading and improve win ra
 Uses statistical and machine learning approaches without manual parameters.
 """
 
-import numpy as np
-from typing import Dict, List, Optional, Tuple
 from collections import deque
 from dataclasses import dataclass
 from enum import Enum
+
+import numpy as np
 
 
 class SignalQuality(Enum):
@@ -30,7 +30,7 @@ class TradingSignal:
     confidence: float  # 0.0 to 1.0
     expected_profit: float
     risk_reward_ratio: float
-    market_context: Dict
+    market_context: dict
 
 
 class SignalQualityFilter:
@@ -335,7 +335,7 @@ class SignalQualityFilter:
     
     def _estimate_trade_metrics(self, signal_direction: str, 
                                current_price: float, 
-                               quality_score: float) -> Tuple[float, float]:
+                               quality_score: float) -> tuple[float, float]:
         """Estimate expected profit and risk-reward ratio."""
         if len(self.price_history) < 20:
             return 0.0, 1.0
@@ -397,7 +397,7 @@ class SignalQualityFilter:
             if trade_result == "WIN":
                 self.signal_performance[quality]["wins"] += 1
     
-    def get_performance_stats(self) -> Dict:
+    def get_performance_stats(self) -> dict:
         """Get performance statistics by signal quality."""
         stats = {}
         

@@ -44,42 +44,31 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import finplot as fplt
+import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-import numpy as np
 from nautilus_trader.backtest.engine import BacktestEngine, BacktestEngineConfig
 from nautilus_trader.backtest.models import FillModel, MakerTakerFeeModel
 from nautilus_trader.common.actor import Actor
 from nautilus_trader.config import LoggingConfig, RiskEngineConfig
-from nautilus_trader.examples.strategies.ema_cross import EMACross, EMACrossConfig
-from nautilus_trader.trading.strategy import Strategy
-from nautilus_trader.trading.config import StrategyConfig
-
-# Import SOTA strategy components
-from strategies.sota.enhanced_profitable_strategy_v2 import (
-    SOTAProfitableStrategy,
-    create_sota_strategy_config,
-    MomentumPersistenceDetector,
-    VolatilityBreakoutDetector,
-    MultiTimeframeConfluence,
-    AdaptivePositionSizer,
-    MarketMicrostructureEdge,
-    MarketState
-)
-from nautilus_trader.model.enums import OrderSide, TimeInForce
-from nautilus_trader.model.orders import MarketOrder
-from nautilus_trader.core.datetime import dt_to_unix_nanos
 from nautilus_trader.model.currencies import BTC, USDT
 from nautilus_trader.model.data import Bar, BarType
-from nautilus_trader.model.enums import AccountType, OmsType
+from nautilus_trader.model.enums import AccountType, OmsType, OrderSide, TimeInForce
 from nautilus_trader.model.identifiers import InstrumentId, Symbol, TraderId, Venue
 from nautilus_trader.model.instruments import CryptoPerpetual
 from nautilus_trader.model.objects import Money, Price, Quantity
+from nautilus_trader.trading.strategy import Strategy
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
+
+# Import SOTA strategy components
+from strategies.sota.enhanced_profitable_strategy_v2 import (
+    SOTAProfitableStrategy,
+    create_sota_strategy_config,
+)
 
 # from rich.text import Text  # Unused import
 
@@ -452,7 +441,7 @@ class AdaptiveProfitableStrategy(Strategy):
         # Don't trade in volatile markets
         if self.current_regime == "VOLATILE":
             if current_bar % 200 == 0:  # Debug volatile regime
-                console.print(f"[red]⚠️ DEBUG: Skipping trade - VOLATILE regime[/red]")
+                console.print("[red]⚠️ DEBUG: Skipping trade - VOLATILE regime[/red]")
             return
             
         # Generate signal based on regime
@@ -468,12 +457,12 @@ class AdaptiveProfitableStrategy(Strategy):
         
         # Quality filtering
         if not self._is_high_quality_signal(signal_direction, signal_strength):
-            console.print(f"[red]❌ Signal rejected: Low quality[/red]")
+            console.print("[red]❌ Signal rejected: Low quality[/red]")
             return
             
         # Risk management check
         if not self._risk_management_check():
-            console.print(f"[red]❌ Signal rejected: Risk management[/red]")
+            console.print("[red]❌ Signal rejected: Risk management[/red]")
             return
             
         # Execute trade
@@ -1748,7 +1737,7 @@ async def main():
         first_bar_time = pd.Timestamp(bars[0].ts_event, unit="ns")
         last_bar_time = pd.Timestamp(bars[-1].ts_event, unit="ns")
         duration_hours = (last_bar_time - first_bar_time).total_seconds() / 3600
-        console.print(f"[bold yellow]🔍 Bar Time Distribution:[/bold yellow]")
+        console.print("[bold yellow]🔍 Bar Time Distribution:[/bold yellow]")
         console.print(f"[yellow]📅 First bar: {first_bar_time}[/yellow]")
         console.print(f"[yellow]📅 Last bar: {last_bar_time}[/yellow]")
         console.print(f"[yellow]⏱️ Duration: {duration_hours:.1f} hours (expected: 48 hours)[/yellow]")

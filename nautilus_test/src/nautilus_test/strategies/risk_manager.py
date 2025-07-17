@@ -5,10 +5,6 @@ Advanced Risk Management System
 Parameter-free risk management that adapts to market conditions and performance.
 """
 
-import numpy as np
-from typing import Dict, List, Optional
-from nautilus_trader.model.position import Position
-from nautilus_trader.model.orders import Order
 
 
 class AdaptiveRiskManager:
@@ -22,9 +18,9 @@ class AdaptiveRiskManager:
         self.current_capital = initial_capital
         
         # Performance tracking
-        self.trade_history: List[Dict] = []
-        self.drawdown_history: List[float] = []
-        self.volatility_history: List[float] = []
+        self.trade_history: list[dict] = []
+        self.drawdown_history: list[float] = []
+        self.volatility_history: list[float] = []
         
         # Adaptive parameters
         self.base_risk_per_trade = 0.02  # 2% base risk
@@ -42,7 +38,7 @@ class AdaptiveRiskManager:
         
     def calculate_position_size(self, 
                               entry_price: float, 
-                              stop_loss: Optional[float] = None,
+                              stop_loss: float | None = None,
                               market_regime: str = "UNKNOWN") -> float:
         """
         Calculate optimal position size based on current risk parameters
@@ -174,7 +170,7 @@ class AdaptiveRiskManager:
         else:
             return 5  # Up to 5 positions when performing well
     
-    def get_risk_metrics(self) -> Dict:
+    def get_risk_metrics(self) -> dict:
         """Get current risk metrics for monitoring."""
         return {
             'current_capital': self.current_capital,
@@ -196,7 +192,7 @@ class TransactionCostOptimizer:
     def __init__(self, maker_fee: float = 0.00012, taker_fee: float = 0.00032):
         self.maker_fee = maker_fee
         self.taker_fee = taker_fee
-        self.recent_trades: List[Dict] = []
+        self.recent_trades: list[dict] = []
         
     def should_trade(self, expected_profit: float, position_size: float, 
                     entry_price: float, confidence: float = 1.0) -> bool:

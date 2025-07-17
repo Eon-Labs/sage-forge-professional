@@ -6,16 +6,14 @@ A robust, parameter-free approach that adapts to market conditions automatically
 Uses statistical measures to detect market regimes and adjust behavior accordingly.
 """
 
+
 import numpy as np
-import pandas as pd
-from decimal import Decimal
-from nautilus_trader.trading.strategy import Strategy
+from nautilus_trader.core.datetime import dt_to_unix_nanos
 from nautilus_trader.model.data import Bar
 from nautilus_trader.model.enums import OrderSide, TimeInForce
+from nautilus_trader.model.objects import Quantity
 from nautilus_trader.model.orders import MarketOrder
-from nautilus_trader.model.identifiers import InstrumentId
-from nautilus_trader.core.datetime import dt_to_unix_nanos
-from nautilus_trader.model.objects import Price, Quantity
+from nautilus_trader.trading.strategy import Strategy
 
 
 class AdaptiveRegimeStrategy(Strategy):

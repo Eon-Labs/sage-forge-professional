@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Enhanced Profitable Strategy V2 - SOTA Algorithmic Trading
-==========================================================
+SOTA Momentum Strategy - NautilusTrader Native Implementation
+============================================================
 
-Implements state-of-the-art algorithmic trading concepts for consistent profitability:
+State-of-the-art algorithmic trading strategy implementing:
 - Momentum persistence detection
 - Volatility breakout capture
 - Multi-timeframe confluence
@@ -11,28 +11,49 @@ Implements state-of-the-art algorithmic trading concepts for consistent profitab
 - Market microstructure edge detection
 - Parameter-free self-optimization
 
-All while maintaining parameter-free, self-calibrating design.
+Following NautilusTrader's native paradigm with strategy + config in same file.
 """
 
 import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-
 from collections import deque
 from dataclasses import dataclass
 from decimal import Decimal
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
-from nautilus_trader.model.data import Bar
+
+# NautilusTrader imports
+from nautilus_trader.config import StrategyConfig
+from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import OrderSide, TimeInForce
+from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.objects import Quantity
 from nautilus_trader.trading.strategy import Strategy
 from rich.console import Console
 
+# Add project paths
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
 console = Console()
+
+# NTPA: Create proper strategy configuration class
+class SOTAMomentumConfig(StrategyConfig, frozen=True):
+    """
+    Configuration for ``SOTAMomentum`` instances.
+    
+    Parameters
+    ----------
+    instrument_id : InstrumentId
+        The instrument ID for the strategy.
+    bar_type : BarType
+        The bar type for the strategy.
+    trade_size : Decimal
+        The position size per trade.
+    """
+    instrument_id: InstrumentId
+    bar_type: BarType
+    trade_size: Decimal
 
 @dataclass
 class MarketState:
@@ -44,7 +65,7 @@ class MarketState:
     microstructure_edge: float = 0.0
     regime_confidence: float = 0.0
 
-class SOTAProfitableStrategy(Strategy):
+class SOTAMomentum(Strategy):
     """
     State-of-the-art profitable strategy using advanced algorithmic trading concepts.
     
@@ -57,7 +78,7 @@ class SOTAProfitableStrategy(Strategy):
     6. Dynamic Risk Management - Adapts to market conditions
     """
     
-    def __init__(self, config):
+    def __init__(self, config: SOTAMomentumConfig):
         super().__init__(config)
         
         # Market data storage
@@ -86,12 +107,12 @@ class SOTAProfitableStrategy(Strategy):
         self.entry_price = 0.0
         self.unrealized_pnl = 0.0
         
-        console.print("[bold green]🚀 SOTA Profitable Strategy V2 Initialized[/bold green]")
+        console.print("[bold green]🚀 SOTA Momentum Strategy Initialized[/bold green]")
         console.print("[cyan]📊 Advanced Features: Momentum Persistence, Volatility Breakouts, Multi-TF Confluence[/cyan]")
         
     def on_start(self):
         """Initialize strategy with advanced features."""
-        self.log.info("SOTA Profitable Strategy V2 started")
+        self.log.info("SOTA Momentum Strategy started")
         self.subscribe_bars(self.config.bar_type)
         console.print("[green]🎯 SOTA Strategy Started - Ready for profitable trading![/green]")
         
@@ -443,7 +464,7 @@ class SOTAProfitableStrategy(Strategy):
     
     def on_stop(self):
         """Strategy cleanup with performance reporting."""
-        self.log.info("SOTA Profitable Strategy V2 stopped")
+        self.log.info("SOTA Momentum Strategy stopped")
         
         # Final performance summary
         if self.total_signals > 0:
@@ -598,18 +619,16 @@ class MarketMicrostructureEdge:
         return 0.0
 
 
-def create_sota_strategy_config(instrument_id: str, bar_type: str, trade_size: Decimal) -> EMACrossConfig:
-    """Create configuration for SOTA strategy."""
-    return EMACrossConfig(
+def create_sota_momentum_config(instrument_id, bar_type, trade_size: Decimal) -> SOTAMomentumConfig:
+    """Create configuration for SOTA Momentum strategy - NT compatible."""
+    return SOTAMomentumConfig(
         instrument_id=instrument_id,
         bar_type=bar_type,
         trade_size=trade_size,
-        fast_ema_period=10,  # Not used by SOTA strategy
-        slow_ema_period=21,  # Not used by SOTA strategy
     )
 
 
 if __name__ == "__main__":
-    console.print("[bold blue]🚀 SOTA Profitable Strategy V2 - Advanced Algorithmic Trading[/bold blue]")
+    console.print("[bold blue]🚀 SOTA Momentum Strategy - NautilusTrader Native Implementation[/bold blue]")
     console.print("[cyan]Features: Momentum Persistence, Volatility Breakouts, Multi-TF Confluence, Adaptive Sizing[/cyan]")
-    console.print("[yellow]⚠️  This is a standalone strategy module - integrate with main backtesting system[/yellow]")
+    console.print("[yellow]⚠️  This is a NT-native strategy module - use with NT backtest runners[/yellow]")

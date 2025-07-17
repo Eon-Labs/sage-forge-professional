@@ -7,7 +7,7 @@ native data infrastructure.
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import polars as pl
 from nautilus_trader.core.datetime import dt_to_unix_nanos
@@ -23,7 +23,7 @@ console = Console()
 class ArrowDataManager:
     """High-performance data manager using Arrow ecosystem."""
 
-    def __init__(self, cache_dir: Optional[Path] = None) -> None:
+    def __init__(self, cache_dir: Path | None = None) -> None:
         """Initialize data manager with optional cache directory."""
         self.cache_dir = cache_dir or Path("data_cache")
         self.cache_dir.mkdir(exist_ok=True)
@@ -33,8 +33,8 @@ class ArrowDataManager:
         symbol: str = "BTCUSDT",
         timeframe: str = "1m",
         limit: int = 1000,
-        start_time: Optional[datetime] = None,  # New param
-        end_time: Optional[datetime] = None,    # New param
+        start_time: datetime | None = None,  # New param
+        end_time: datetime | None = None,    # New param
     ) -> pl.DataFrame:
         """Fetch real market data using Data Source Manager."""
         import sys
@@ -114,11 +114,11 @@ class ArrowDataManager:
                     console.print(f"[bold cyan]🎯 ACTUAL: {actual_start} to {actual_end}[/bold cyan]")
                     
                     if actual_start == expected_start and actual_end == expected_end:
-                        console.print(f"[bold green]✅ TIME SPAN MATCH: Data matches expected time period![/bold green]")
+                        console.print("[bold green]✅ TIME SPAN MATCH: Data matches expected time period![/bold green]")
                     else:
-                        console.print(f"[bold red]❌ TIME SPAN MISMATCH: Data doesn't match expected time period![/bold red]")
+                        console.print("[bold red]❌ TIME SPAN MISMATCH: Data doesn't match expected time period![/bold red]")
                 else:
-                    console.print(f"[yellow]⚠️ Unable to verify timestamps - format issue[/yellow]")
+                    console.print("[yellow]⚠️ Unable to verify timestamps - format issue[/yellow]")
 
             # Validate data quality for futures
             valid_rows = df_pandas.dropna().shape[0]
@@ -145,7 +145,7 @@ class ArrowDataManager:
                 last_ts = df_polars['timestamp'][-1]
                 console.print(f"[bold green]🕰️ POLARS RANGE: {first_ts} to {last_ts}[/bold green]")
             else:
-                console.print(f"[yellow]⚠️ No timestamp column found in polars data[/yellow]")
+                console.print("[yellow]⚠️ No timestamp column found in polars data[/yellow]")
 
             # Map DSM columns to our expected format
             column_mapping = {}
@@ -275,7 +275,7 @@ class ArrowDataManager:
         df.write_parquet(file_path, use_pyarrow=True)
         return file_path
 
-    def load_from_parquet(self, filename: str) -> Optional[pl.DataFrame]:
+    def load_from_parquet(self, filename: str) -> pl.DataFrame | None:
         """Load DataFrame from Parquet cache."""
         file_path = self.cache_dir / f"{filename}.parquet"
         if file_path.exists():

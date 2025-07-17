@@ -9,7 +9,7 @@ import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 import pandas as pd
@@ -36,7 +36,7 @@ class FundingRateProvider:
 
     def __init__(
         self,
-        cache_dir: Optional[Path] = None,
+        cache_dir: Path | None = None,
         use_cache: bool = True,
         dsm_available: bool = True,
         enable_direct_api: bool = True,
@@ -118,7 +118,7 @@ class FundingRateProvider:
         instrument_id: InstrumentId,
         start_time: datetime,
         end_time: datetime,
-        max_records: Optional[int] = None,
+        max_records: int | None = None,
     ) -> list[FundingRateUpdate]:
         """
         Get historical funding rates for an instrument.
@@ -434,7 +434,7 @@ class FundingRateProvider:
         instrument_id: InstrumentId,
         start_time: datetime,
         end_time: datetime,
-    ) -> Optional[list[FundingRateUpdate]]:
+    ) -> list[FundingRateUpdate] | None:
         """Load funding rates from cache."""
         cache_file = self.cache_dir / f"{instrument_id}_funding_rates.parquet"
 

@@ -7,7 +7,6 @@ goes through the message bus as proper events.
 """
 
 from decimal import Decimal
-from typing import Optional
 
 from nautilus_trader.common.actor import Actor
 from nautilus_trader.core.uuid import UUID4
@@ -148,7 +147,7 @@ class FundingActor(Actor):
             f"${abs(funding_payment_usd):.2f}[/cyan]",
         )
 
-    def _get_mark_price_from_cache(self, instrument_id: InstrumentId) -> Optional[float]:
+    def _get_mark_price_from_cache(self, instrument_id: InstrumentId) -> float | None:
         """
         Get mark price from cache using native patterns.
         
@@ -218,7 +217,7 @@ class FundingActorConfig:
 
 
 # Example of how to properly integrate with BacktestEngine
-def add_funding_actor_to_engine(engine, config: Optional[FundingActorConfig] = None):
+def add_funding_actor_to_engine(engine, config: FundingActorConfig | None = None):
     """
     Add FundingActor to BacktestEngine using native patterns.
     
