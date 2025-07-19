@@ -29,6 +29,7 @@ dependencies = [
     "optuna>=4.4.0",
     "scipy>=1.16.0",
     "scikit-learn>=1.7.1",
+    "stumpy>=1.13.0",
 ]
 
 [project.optional-dependencies]

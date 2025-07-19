@@ -82,19 +82,46 @@ from rich.table import Table
 # Initialize console early for imports
 console = Console()
 
-# Import SOTA strategy components - ENHANCED 2025 VERSION
+# Import SOTA strategy components - CORRECTED BIAS-FREE 2025 VERSION
 try:
-    from strategies.backtests.enhanced_sota_strategy_2025 import Enhanced2025Strategy
+    from strategies.backtests.corrected_bias_free_strategy_2025 import CorrectedBiasFreeStrategy
     from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
-    ENHANCED_2025_AVAILABLE = True
-    console.print("[green]✅ 2025 Enhanced SOTA Strategy available[/green]")
+    CORRECTED_BIAS_FREE_2025_AVAILABLE = True
+    console.print("[bold green]🔒 2025 CORRECTED Bias-Free Strategy available - TRUE zero look-ahead bias![/bold green]")
 except ImportError:
-    from strategies.sota.enhanced_profitable_strategy_v2 import (
-        SOTAProfitableStrategy,
-        create_sota_strategy_config,
-    )
-    ENHANCED_2025_AVAILABLE = False
-    console.print("[yellow]⚠️ Using fallback strategy - Enhanced 2025 not available[/yellow]")
+    try:
+        from strategies.backtests.truly_bias_free_strategy_2025 import TrulyBiasFreeStrategy
+        from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
+        BIAS_FREE_2025_AVAILABLE = True
+        CORRECTED_BIAS_FREE_2025_AVAILABLE = False
+        console.print("[yellow]⚠️ Using Truly Bias-Free Strategy (subtle feature extraction bias)[/yellow]")
+    except ImportError:
+        try:
+            from strategies.backtests.parameter_free_strategy_2025 import TrulyParameterFreeStrategy
+            from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
+            PARAMETER_FREE_2025_AVAILABLE = True
+            BIAS_FREE_2025_AVAILABLE = False
+            CORRECTED_BIAS_FREE_2025_AVAILABLE = False
+            console.print("[red]⚠️ Using Parameter-Free Strategy (multiple bias issues)[/red]")
+        except ImportError:
+            try:
+                from strategies.backtests.enhanced_sota_strategy_2025 import Enhanced2025Strategy
+                from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
+                ENHANCED_2025_AVAILABLE = True
+                PARAMETER_FREE_2025_AVAILABLE = False
+                BIAS_FREE_2025_AVAILABLE = False
+                CORRECTED_BIAS_FREE_2025_AVAILABLE = False
+                console.print("[red]⚠️ Using Enhanced 2025 Strategy (massive look-ahead bias)[/red]")
+            except ImportError:
+                from strategies.sota.enhanced_profitable_strategy_v2 import (
+                    SOTAProfitableStrategy,
+                    create_sota_strategy_config,
+                )
+                ENHANCED_2025_AVAILABLE = False
+                PARAMETER_FREE_2025_AVAILABLE = False
+                BIAS_FREE_2025_AVAILABLE = False
+                CORRECTED_BIAS_FREE_2025_AVAILABLE = False
+                console.print("[red]⚠️ Using fallback strategy - No bias-free version available[/red]")
 
 # from rich.text import Text  # Unused import
 
@@ -888,12 +915,21 @@ async def main():
     console.print(f"[cyan]🔧 Strategy configured: {position_calc['position_size_btc']:.3f} BTC trade size[/cyan]")
 
     # Create strategy instance
-    if ENHANCED_2025_AVAILABLE:
+    if CORRECTED_BIAS_FREE_2025_AVAILABLE:
+        strategy = CorrectedBiasFreeStrategy(config=strategy_config)
+        console.print("[bold green]🔒 Using CORRECTED Bias-Free 2025 Strategy - TRUE zero look-ahead bias![/bold green]")
+    elif BIAS_FREE_2025_AVAILABLE:
+        strategy = TrulyBiasFreeStrategy(config=strategy_config)
+        console.print("[yellow]⚠️ Using Truly Bias-Free Strategy (subtle feature extraction bias)[/yellow]")
+    elif PARAMETER_FREE_2025_AVAILABLE:
+        strategy = TrulyParameterFreeStrategy(config=strategy_config)
+        console.print("[red]⚠️ Using Parameter-Free Strategy (multiple bias issues)[/red]")
+    elif ENHANCED_2025_AVAILABLE:
         strategy = Enhanced2025Strategy(config=strategy_config)
-        console.print("[green]🚀 Using Enhanced 2025 SOTA Strategy with auto-tuning[/green]")
+        console.print("[red]⚠️ Using Enhanced 2025 Strategy (massive look-ahead bias)[/red]")
     else:
         strategy = SOTAProfitableStrategy(config=strategy_config)
-        console.print("[yellow]📊 Using fallback SOTA strategy[/yellow]")
+        console.print("[red]📊 Using fallback SOTA strategy[/red]")
 
     # Add strategy to engine
     engine.add_strategy(strategy=strategy)
@@ -1079,11 +1115,17 @@ async def main():
     engine.dispose()
 
     # Final message based on strategy used
-    if ENHANCED_2025_AVAILABLE:
-        final_message = (
-            "[bold green]🚀 2025 SOTA Enhanced Strategy Integration Complete![/bold green]\n"
-            "State-of-the-art system with auto-tuning, Bayesian regime detection, ensemble signals, and Kelly optimization"
-        )
+    if CORRECTED_BIAS_FREE_2025_AVAILABLE or BIAS_FREE_2025_AVAILABLE or PARAMETER_FREE_2025_AVAILABLE or ENHANCED_2025_AVAILABLE:
+        if CORRECTED_BIAS_FREE_2025_AVAILABLE:
+            final_message = (
+                "[bold green]🔒 2025 CORRECTED Bias-Free Strategy Integration Complete![/bold green]\n"
+                "TRUE zero look-ahead bias with state-of-the-art rolling windows and mathematical guarantees"
+            )
+        else:
+            final_message = (
+                "[yellow]⚠️ 2025 Strategy Integration Complete (with bias risks)![/yellow]\n"
+                "Consider upgrading to CorrectedBiasFreeStrategy for TRUE zero look-ahead bias"
+            )
         title = "🎯 2025 SOTA SUCCESS"
     else:
         final_message = (
