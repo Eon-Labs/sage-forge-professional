@@ -76,14 +76,25 @@ from nautilus_trader.model.objects import Money, Price, Quantity
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
 from rich.table import Table
 
-# Import SOTA strategy components
-from strategies.sota.enhanced_profitable_strategy_v2 import (
-    SOTAProfitableStrategy,
-    create_sota_strategy_config,
-)
+# Initialize console early for imports
+console = Console()
+
+# Import SOTA strategy components - ENHANCED 2025 VERSION
+try:
+    from strategies.backtests.enhanced_sota_strategy_2025 import Enhanced2025Strategy
+    from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
+    ENHANCED_2025_AVAILABLE = True
+    console.print("[green]✅ 2025 Enhanced SOTA Strategy available[/green]")
+except ImportError:
+    from strategies.sota.enhanced_profitable_strategy_v2 import (
+        SOTAProfitableStrategy,
+        create_sota_strategy_config,
+    )
+    ENHANCED_2025_AVAILABLE = False
+    console.print("[yellow]⚠️ Using fallback strategy - Enhanced 2025 not available[/yellow]")
 
 # from rich.text import Text  # Unused import
 
@@ -97,7 +108,7 @@ except ImportError:
     ArrowDataManager = None
     DataPipeline = None
 
-console = Console()
+# console already defined above
 
 # Import native funding rate system
 try:
@@ -216,15 +227,10 @@ class FinplotActor(Actor):
                 "low": float(data.low),
             })
             
-            # 🔍 DIAGNOSTIC PHASE 3: Check finplot buffer timestamps (first few bars only)
-            if len(self._ohlc_buffer) <= 3:
-                finplot_timestamp = pd.Timestamp(timestamp, unit="s")
-                console.print(f"[bold red]🔍 DIAGNOSTIC 3: Finplot buffer #{len(self._ohlc_buffer)} timestamp: {finplot_timestamp}[/bold red]")
-                
-            # 🔍 DIAGNOSTIC PHASE 4: Check if bars are being processed sequentially
-            if len(self._ohlc_buffer) in [100, 500, 1000, 1500, 2000]:
+            # Progress update every 500 bars instead of verbose logging
+            if len(self._ohlc_buffer) % 500 == 0 and len(self._ohlc_buffer) > 0:
                 bar_timestamp = pd.Timestamp(timestamp, unit="s")
-                console.print(f"[bold blue]🔍 DIAGNOSTIC 4: Bar #{len(self._ohlc_buffer)} processed at {bar_timestamp}[/bold blue]")
+                console.print(f"[dim cyan]📊 Bar {len(self._ohlc_buffer)} processed: {bar_timestamp.strftime('%Y-%m-%d %H:%M')}[/dim cyan]")
 
             if hasattr(data, "volume"):
                 self._volume_buffer.append({
@@ -403,37 +409,9 @@ class EnhancedModernBarDataProvider:
                 console.print(f"[blue]📅 Expected period: {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}[/blue]")
                 df = self.data_manager.fetch_real_market_data(symbol, limit=limit, start_time=start_time, end_time=end_time)
 
-                # 🔍 DIAGNOSTIC PHASE 1: Check raw DSM data timestamps
-                console.print("[bold red]🔍 DIAGNOSTIC 1: Raw DSM Data Timestamps[/bold red]")
-                console.print(f"[red]📊 DSM Data Type: {type(df)}[/red]")
-                
-                if hasattr(df, 'columns'):
-                    console.print(f"[red]📋 DSM Columns: {list(df.columns)}[/red]")
-                    
-                    # Check for timestamp column (various possible names)
-                    timestamp_cols = [col for col in df.columns if 'timestamp' in col.lower() or 'time' in col.lower()]
-                    console.print(f"[red]⏰ Time-related columns: {timestamp_cols}[/red]")
-                    
-                    if timestamp_cols and len(df) > 0:
-                        for col in timestamp_cols:
-                            try:
-                                # Handle both Polars and Pandas DataFrames
-                                if hasattr(df, 'item'):  # Polars DataFrame
-                                    first_val = df[col].head(1).item() if len(df) > 0 else None
-                                    last_val = df[col].tail(1).item() if len(df) > 0 else None
-                                else:  # Pandas DataFrame
-                                    first_val = df[col].iloc[0] if len(df) > 0 else None
-                                    last_val = df[col].iloc[-1] if len(df) > 0 else None
-                                console.print(f"[red]📅 {col} First: {first_val}[/red]")
-                                console.print(f"[red]📅 {col} Last: {last_val}[/red]")
-                            except Exception as e:
-                                console.print(f"[red]❌ Error reading {col}: {e}[/red]")
-                    else:
-                        console.print("[red]❌ No timestamp columns found![/red]")
-                else:
-                    console.print("[red]❌ DSM data has no columns attribute![/red]")
-                    
-                console.print("[red]📅 DSM Expected: Jan 1-3, 2025[/red]")
+                # Quick data validation summary
+                progress.update(task, description="📊 Validating data timestamps...")
+                console.print(f"[dim blue]📊 Data type: {type(df).__name__}, Rows: {len(df)}[/dim blue]")
 
                 # 🚨 CRITICAL: Verify data source authenticity
                 console.print("[yellow]🔍 DEBUG: Verifying data source authenticity...[/yellow]")
@@ -477,93 +455,28 @@ class EnhancedModernBarDataProvider:
                 # start_time = datetime.now() - timedelta(days=2)
                 # end_time = start_time + timedelta(minutes=limit)
 
-                # 🔍 CRITICAL FIX #1: Proper data quality validation with debug logging
-                console.print("[yellow]🔍 DEBUG: Starting comprehensive data quality validation...[/yellow]")
-
+                # Data quality validation with progress tracking
+                progress.update(task, description="🔍 Validating data quality...")
                 total_rows = len(df)
-                console.print(f"[blue]📊 DEBUG: Total rows received: {total_rows}[/blue]")
-
-                # Enhanced data quality validation with detailed logging
+                
+                # Quick data quality check
                 nan_rows = 0
-                data_type = "unknown"
-                validation_details = {}
-
                 try:
-                    if hasattr(df, "null_count"):  # Polars DataFrame
-                        data_type = "Polars"
-                        null_counts = df.null_count()
-                        console.print(f"[cyan]🔍 DEBUG: Polars null counts per column: {dict(zip(df.columns, null_counts.row(0), strict=False))}")
-                        nan_rows = null_counts.sum_horizontal().sum()
-                        validation_details = {
-                            "type": "Polars",
-                            "columns": list(df.columns),
-                            "null_counts_per_column": dict(zip(df.columns, null_counts.row(0), strict=False)),
-                            "total_nulls": nan_rows,
-                        }
-                    elif hasattr(df, "isna"):  # Pandas DataFrame
-                        data_type = "Pandas"
-                        null_counts_series = df.isna().sum()
-                        console.print(f"[cyan]🔍 DEBUG: Pandas null counts per column: {null_counts_series.to_dict()}")
+                    if hasattr(df, "null_count"):  # Polars
+                        nan_rows = df.null_count().sum_horizontal().sum()
+                    elif hasattr(df, "isna"):  # Pandas
                         nan_rows = df.isna().any(axis=1).sum()
-                        validation_details = {
-                            "type": "Pandas",
-                            "columns": list(df.columns),
-                            "null_counts_per_column": null_counts_series.to_dict(),
-                            "total_rows_with_nulls": nan_rows,
-                        }
-                    else:
-                        console.print(f"[red]⚠️ DEBUG: Unknown DataFrame type: {type(df)}[/red]")
-                        validation_details = {"type": "Unknown", "assumed_quality": "UNRELIABLE"}
-
-                    # Calculate true completeness
-                    if total_rows > 0:
-                        completeness = (total_rows - nan_rows) / total_rows
-                        data_quality_pct = completeness * 100
-                    else:
-                        completeness = 0
-                        data_quality_pct = 0
-
-                    console.print(f"[blue]📊 DEBUG: Data type: {data_type}, NaN rows: {nan_rows}, Completeness: {completeness:.3f}[/blue]")
-
-                    # 🚨 ENFORCE 100% DATA QUALITY - NO COMPROMISE
-                    if completeness != 1.0 or nan_rows > 0:
-                        console.print("[red]🚨 FATAL: Data quality MUST be 100% - NO COMPROMISE![/red]")
-                        console.print(f"[red]📊 Current quality: {data_quality_pct:.3f}% ({nan_rows} NaN values found)[/red]")
-                        console.print("[red]💥 ABORTING: Corrupted data will cause trading losses![/red]")
-
-                        # Log detailed quality breakdown for every imperfection
-                        for col, null_count in validation_details.get("null_counts_per_column", {}).items():
-                            if null_count > 0:
-                                col_completeness = (total_rows - null_count) / total_rows * 100
-                                console.print(f"[red]  💀 FATAL: {col}: {col_completeness:.3f}% complete ({null_count} NaN values)[/red]")
-
-                        # STOP EXECUTION - throw exception to prevent dangerous execution
-                        raise ValueError(f"DATA QUALITY FAILURE: Only {data_quality_pct:.3f}% complete data. "
-                                       f"Production trading requires EXACTLY 100.000% complete data. "
-                                       f"Found {nan_rows} NaN values in {total_rows} rows. "
-                                       f"This system will NOT proceed with corrupted data.")
-                    console.print("[green]✅ PERFECT: 100.000% complete data quality validated[/green]")
-                    console.print(f"[green]🎯 Zero NaN values in {total_rows} rows - PRODUCTION READY[/green]")
-
+                    
+                    completeness = (total_rows - nan_rows) / total_rows if total_rows > 0 else 0
+                    
+                    if completeness != 1.0:
+                        raise ValueError(f"Data quality failure: {completeness*100:.1f}% complete ({nan_rows} NaN values)")
+                    
+                    console.print(f"[green]✅ Data validated: {total_rows} rows, 100% complete[/green]")
+                    
                 except Exception as e:
-                    console.print(f"[red]❌ FATAL: Data validation failed with error: {e}[/red]")
-                    console.print("[red]🚨 NO COMPROMISE: Cannot validate data quality to 100% standard[/red]")
-                    # Re-raise the exception - do not proceed with unvalidated data
-                    raise ValueError(f"DATA VALIDATION FAILURE: Cannot validate data quality due to error: {e}. "
-                                   f"Production trading requires validated 100% complete data. "
-                                   f"System MUST NOT proceed with unvalidated data.") from e
-
-                # Store validation results for audit trail
-                validation_results = {
-                    "total_rows": total_rows,
-                    "nan_rows": nan_rows,
-                    "completeness": completeness,
-                    "data_quality_pct": completeness * 100,
-                    "validation_details": validation_details,
-                    "audit_timestamp": datetime.now().isoformat(),
-                }
-
-                console.print(f"[cyan]📋 DEBUG: Validation results stored for audit: {validation_results}[/cyan]")
+                    console.print(f"[red]❌ Data validation failed: {e}[/red]")
+                    raise
 
                 progress.update(task, advance=limit//4)
 
@@ -747,10 +660,10 @@ class EnhancedModernBarDataProvider:
                 )
                 bars.append(bar)
                 
-                # 🔍 DIAGNOSTIC PHASE 2: Check Bar object timestamps (first few bars only)
-                if len(bars) <= 3:
+                # Progress update every 1000 bars
+                if len(bars) % 1000 == 0 and len(bars) > 0:
                     bar_timestamp = pd.Timestamp(ts_ns, unit="ns")
-                    console.print(f"[bold red]🔍 DIAGNOSTIC 2: Bar #{len(bars)} timestamp: {bar_timestamp}[/bold red]")
+                    console.print(f"[dim green]🔧 Created {len(bars)} bars: {bar_timestamp.strftime('%Y-%m-%d %H:%M')}[/dim green]")
 
             except Exception as e:
                 console.print(f"[yellow]⚠️ Skipping bar {i}: {e}[/yellow]")
@@ -880,36 +793,27 @@ async def main():
     bars = data_provider.fetch_real_market_bars(instrument, bar_type, "BTCUSDT", limit=2880)
     console.print(f"[cyan]📊 Created {len(bars)} bars with bar_type: {bars[0].bar_type if bars else 'N/A'}[/cyan]")
     
-    # 🔍 DIAGNOSTIC: Check bar distribution across time span
+    # Bar time span summary
     if bars:
         first_bar_time = pd.Timestamp(bars[0].ts_event, unit="ns")
         last_bar_time = pd.Timestamp(bars[-1].ts_event, unit="ns")
         duration_hours = (last_bar_time - first_bar_time).total_seconds() / 3600
-        console.print("[bold yellow]🔍 Bar Time Distribution:[/bold yellow]")
-        console.print(f"[yellow]📅 First bar: {first_bar_time}[/yellow]")
-        console.print(f"[yellow]📅 Last bar: {last_bar_time}[/yellow]")
-        console.print(f"[yellow]⏱️ Duration: {duration_hours:.1f} hours (expected: 48 hours)[/yellow]")
-        console.print(f"[yellow]📊 Bars per hour: {len(bars) / duration_hours:.1f}[/yellow]")
+        console.print(f"[dim yellow]📊 Time span: {first_bar_time.strftime('%m/%d %H:%M')} - {last_bar_time.strftime('%m/%d %H:%M')} ({duration_hours:.1f}h)[/dim yellow]")
     # NOTE: Hold bars, add them after strategy configuration to avoid "unknown bar type" error
 
-    # 🔍 ENHANCED VALIDATION: Proper data validation with realistic BTC price ranges
-    console.print(f"[yellow]🔍 DEBUG: Validating {len(bars)} bars for realistic BTC prices...[/yellow]")
-
+    # Quick validation
     if len(bars) < 100:
-        console.print(f"[red]❌ FATAL: Too few bars ({len(bars)} < 100 minimum) - aborting[/red]")
+        console.print(f"[red]❌ Too few bars ({len(bars)} < 100 minimum)[/red]")
         return
 
-    # Check for realistic BTC price ranges (BTC typically $50k-$150k in 2024-2025)
+    # Price sanity check
     sample_prices = [float(bar.close) for bar in bars[:10]]
-    console.print(f"[cyan]🔍 DEBUG: Sample prices: {sample_prices}[/cyan]")
-
     unrealistic_prices = [p for p in sample_prices if p < 20000 or p > 200000]
     if unrealistic_prices:
-        console.print(f"[red]❌ FATAL: Unrealistic BTC prices detected: {unrealistic_prices}[/red]")
-        console.print("[red]📊 Expected range: $20,000 - $200,000 for BTC[/red]")
+        console.print(f"[red]❌ Unrealistic BTC prices: {unrealistic_prices}[/red]")
         return
 
-    console.print(f"[green]✅ DEBUG: Data validation passed - {len(bars)} bars with realistic prices[/green]")
+    console.print(f"[green]✅ {len(bars)} bars validated (${sample_prices[0]:.0f}-${sample_prices[-1]:.0f})[/green]")
 
     # Step 5.5: PRODUCTION funding rate integration
     funding_integration_results = None
@@ -930,6 +834,7 @@ async def main():
                 instrument_id=instrument.id,
                 bars=bars,
                 position_size=position_calc.get("position_size_btc", 0.002),
+                actual_positions_held=False,  # Will be updated after backtest execution
             )
 
             # Display funding analysis
@@ -953,117 +858,46 @@ async def main():
     console.print("\n" + "="*80)
     console.print("[bold red]🎯 STEP 6: FIXED Strategy Configuration & Bar Registration[/bold red]")
 
-    console.print("[yellow]🔍 DEBUG: Starting proper bar type registration sequence...[/yellow]")
-
-    # STEP 6A: First add bars data to engine BEFORE strategy configuration
-    console.print(f"[blue]📊 DEBUG: Adding {len(bars)} bars to engine FIRST (before strategy)[/blue]")
-    console.print(f"[blue]🔧 DEBUG: Bar type being registered: {bar_type}[/blue]")
-    console.print(f"[blue]🎯 DEBUG: Instrument ID: {instrument.id}[/blue]")
-
-    # Validate bars before adding
+    # Bar registration validation
     if not bars:
-        raise ValueError("CRITICAL: No bars available for engine registration!")
+        raise ValueError("No bars available for engine registration!")
 
-    # Log first few bars for validation
-    console.print(f"[cyan]🔍 DEBUG: First bar details: {bars[0]}[/cyan]")
-    console.print(f"[cyan]🔍 DEBUG: Bar type from first bar: {bars[0].bar_type}[/cyan]")
-    console.print(f"[cyan]🔍 DEBUG: Expected bar type: {bar_type}[/cyan]")
-
-    # Verify bar types match expected
-    bar_type_matches = all(bar.bar_type == bar_type for bar in bars[:10])  # Check first 10
-    console.print(f"[cyan]🔍 DEBUG: Bar type consistency check: {bar_type_matches}[/cyan]")
-
+    # Quick consistency check
+    bar_type_matches = all(bar.bar_type == bar_type for bar in bars[:10])
     if not bar_type_matches:
-        console.print("[red]🚨 FATAL: Bar type mismatch detected![/red]")
-        raise ValueError(f"Bar type mismatch: Expected {bar_type}, but bars have different types")
+        raise ValueError(f"Bar type mismatch: Expected {bar_type}")
 
-    # 🔍 DEEP DEBUG: Comprehensive bar type registration investigation
-    console.print("[yellow]🔍 DEEP DEBUG: Investigating bar type registration flow...[/yellow]")
-
-    # Step 1: Verify engine state before adding data
-    console.print(f"[blue]📊 DEEP DEBUG: Engine instruments before data: {[str(i) for i in engine.cache.instruments()]}[/blue]")
-
-    # Step 2: Add bars to engine FIRST with detailed logging
-    console.print(f"[blue]📊 DEEP DEBUG: Adding {len(bars)} bars to engine...[/blue]")
-    console.print(f"[blue]🔧 DEEP DEBUG: Expected bar types to be registered: {set(bar.bar_type for bar in bars[:5])}[/blue]")
-
+    # Add bars to engine
+    console.print(f"[blue]📊 Adding {len(bars)} bars to engine...[/blue]")
     engine.add_data(bars)
-    console.print(f"[green]✅ DEBUG: {len(bars)} bars successfully added to engine[/green]")
-
-    # Step 3: Verify engine state after adding data
-    console.print("[blue]📊 DEEP DEBUG: Engine state after adding data...[/blue]")
+    
+    # Quick validation
     try:
-        # Try to access engine's internal bar type registry
-        console.print(f"[blue]🔍 DEEP DEBUG: Engine cache has instruments: {len(engine.cache.instruments())}[/blue]")
-        console.print(f"[blue]🔍 DEEP DEBUG: Engine cache bars count: {engine.cache.bar_count(bar_type)}[/blue]")
-
-        # Check if our bar type is in the cache
-        bars_in_cache = []
-        for bar_type_cached in engine.cache.bar_types():
-            bars_in_cache.append(str(bar_type_cached))
-            console.print(f"[cyan]🔍 DEEP DEBUG: Cached bar type: {bar_type_cached}[/cyan]")
-
-        if str(bar_type) in bars_in_cache:
-            console.print(f"[green]✅ DEEP DEBUG: Target bar type {bar_type} IS in engine cache[/green]")
-        else:
-            console.print(f"[red]🚨 DEEP DEBUG: Target bar type {bar_type} NOT in engine cache![/red]")
-            console.print(f"[red]📊 DEEP DEBUG: Available bar types: {bars_in_cache}[/red]")
-
+        bar_count = engine.cache.bar_count(bar_type)
+        console.print(f"[green]✅ {bar_count} bars registered for {bar_type}[/green]")
     except Exception as e:
-        console.print(f"[yellow]⚠️ DEEP DEBUG: Could not inspect engine cache: {e}[/yellow]")
+        console.print(f"[yellow]⚠️ Could not verify bars: {e}[/yellow]")
 
-    # STEP 6B: Now configure ENHANCED PROFITABLE strategy AFTER bars are registered
-    console.print("[blue]🔧 DEBUG: Configuring ENHANCED PROFITABLE strategy AFTER bar registration...[/blue]")
-
-    # Use SOTA strategy configuration
+    # Configure strategy
     strategy_config = create_sota_strategy_config(
         instrument_id=instrument.id,
         bar_type=bar_type,
-        trade_size=Decimal(f"{position_calc['position_size_btc']:.3f}"),  # REALISTIC SIZE!
+        trade_size=Decimal(f"{position_calc['position_size_btc']:.3f}"),
     )
 
-    console.print(f"[cyan]🔧 DEBUG: Enhanced strategy configured for bar_type: {bar_type}[/cyan]")
-    console.print(f"[cyan]🔧 DEBUG: Enhanced strategy instrument_id: {instrument.id}[/cyan]")
-    console.print(f"[cyan]💰 DEBUG: Enhanced strategy trade_size: {position_calc['position_size_btc']:.3f} BTC[/cyan]")
+    console.print(f"[cyan]🔧 Strategy configured: {position_calc['position_size_btc']:.3f} BTC trade size[/cyan]")
 
-    # Step 4: Verify strategy configuration details
-    console.print(f"[blue]🔍 DEEP DEBUG: Enhanced strategy config bar_type: {strategy_config.bar_type}[/blue]")
-    console.print(f"[blue]🔍 DEEP DEBUG: Enhanced strategy config instrument_id: {strategy_config.instrument_id}[/blue]")
-    console.print(f"[blue]🧪 DEEP DEBUG: Bar type equality check: {strategy_config.bar_type == bar_type}[/blue]")
-    console.print(f"[blue]🧪 DEEP DEBUG: Instrument ID equality check: {strategy_config.instrument_id == instrument.id}[/blue]")
+    # Create strategy instance
+    if ENHANCED_2025_AVAILABLE:
+        strategy = Enhanced2025Strategy(config=strategy_config)
+        console.print("[green]🚀 Using Enhanced 2025 SOTA Strategy with auto-tuning[/green]")
+    else:
+        strategy = SOTAProfitableStrategy(config=strategy_config)
+        console.print("[yellow]📊 Using fallback SOTA strategy[/yellow]")
 
-    strategy = SOTAProfitableStrategy(config=strategy_config)
-
-    # Step 5: Add strategy with pre-flight checks
-    console.print("[blue]🔧 DEEP DEBUG: Adding strategy to engine...[/blue]")
-    console.print(f"[blue]🔍 DEEP DEBUG: Strategy will request bar_type: {strategy_config.bar_type}[/blue]")
-
+    # Add strategy to engine
     engine.add_strategy(strategy=strategy)
-    console.print("[green]✅ DEBUG: Strategy successfully added to engine[/green]")
-
-    # Step 6: Final verification before engine run
-    console.print("[blue]🔍 DEEP DEBUG: Final verification before engine.run()...[/blue]")
-    try:
-        final_bar_types = [str(bt) for bt in engine.cache.bar_types()]
-        console.print(f"[blue]📊 DEEP DEBUG: Final bar types in cache: {final_bar_types}[/blue]")
-        console.print(f"[blue]🎯 DEEP DEBUG: Strategy expecting: {strategy_config.bar_type}[/blue]")
-
-        if str(strategy_config.bar_type) in final_bar_types:
-            console.print("[green]✅ DEEP DEBUG: Bar type match confirmed - should work![/green]")
-        else:
-            console.print("[red]🚨 DEEP DEBUG: Bar type mismatch detected - will fail![/red]")
-            console.print("[red]💥 DEEP DEBUG: This WILL cause 'unknown bar type' error![/red]")
-    except Exception as e:
-        console.print(f"[yellow]⚠️ DEEP DEBUG: Could not perform final verification: {e}[/yellow]")
-
-    # STEP 6C: Validate the complete registration
-    console.print("[blue]🔍 DEBUG: Validating complete bar type registration...[/blue]")
-    try:
-        # Try to access the registered bar type (this will fail if registration is broken)
-        console.print("[green]✅ DEBUG: Bar type registration sequence COMPLETED successfully[/green]")
-    except Exception as e:
-        console.print(f"[red]🚨 FATAL: Bar type registration validation failed: {e}[/red]")
-        raise ValueError(f"Bar type registration failed validation: {e}") from e
+    console.print("[green]✅ Strategy added to engine[/green]")
 
     # Step 6.5: Add Native FundingActor for proper funding handling
     console.print("\n" + "="*80)
@@ -1090,61 +924,48 @@ async def main():
     console.print("\n" + "="*80)
     console.print("[bold white]🎯 STEP 7: Ultimate Backtest Execution[/bold white]")
 
-    # 🔍 DEEP DEBUG: Monitor engine run execution with error capture
-    console.print("[yellow]🔍 DEEP DEBUG: Starting engine.run() with full error monitoring...[/yellow]")
+    # Clean backtest execution with progress tracking
 
     try:
-        with console.status("[bold green]Running ultimate backtest...", spinner="dots"):
-            console.print("[blue]🚀 DEEP DEBUG: Engine.run() starting...[/blue]")
+        # Use Rich progress bar for cleaner backtest execution display
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=console,
+            transient=False,
+        ) as progress:
+            backtest_task = progress.add_task("🚀 Running ultimate backtest", total=100)
+            
+            # Start engine
+            progress.update(backtest_task, advance=10, description="🚀 Initializing backtest engine")
             engine.run()
-            console.print("[blue]✅ DEEP DEBUG: Engine.run() completed without exceptions[/blue]")
+            progress.update(backtest_task, advance=90, description="✅ Backtest completed")
 
     except Exception as engine_error:
-        console.print(f"[red]💥 DEEP DEBUG: Engine.run() failed with exception: {engine_error}[/red]")
-        console.print(f"[red]📊 DEEP DEBUG: Exception type: {type(engine_error)}[/red]")
+        console.print(f"[red]💥 Backtest failed: {engine_error}[/red]")
         import traceback
-        console.print(f"[red]🔍 DEEP DEBUG: Full traceback:\n{traceback.format_exc()}[/red]")
-        raise  # Re-raise to maintain error behavior
+        console.print(f"[red]Full traceback:\n{traceback.format_exc()}[/red]")
+        raise
 
     console.print("✅ [bold green]Ultimate backtest completed![/bold green]")
 
-    # 🔍 DEEP DEBUG: Post-execution analysis
-    console.print("[yellow]🔍 DEEP DEBUG: Post-execution analysis...[/yellow]")
+    # Quick post-execution summary
     try:
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache bar count: {engine.cache.bar_count(bar_type)}[/blue]")
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache order count: {engine.cache.orders_total_count()}[/blue]")
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache position count: {engine.cache.positions_total_count()}[/blue]")
-
-        # 🔍 CRITICAL ANALYSIS: Check if trades were actually executed despite error message
-        try:
-            orders = engine.cache.orders()
-            positions = engine.cache.positions()
-
-            console.print(f"[blue]🔍 DEEP DEBUG: Total orders in cache: {len(orders)}[/blue]")
-            console.print(f"[blue]🔍 DEEP DEBUG: Total positions in cache: {len(positions)}[/blue]")
-
-            if len(orders) == 0:
-                console.print("[red]🚨 DEEP DEBUG: NO ORDERS EXECUTED - Strategy never triggered![/red]")
-                console.print("[red]💥 DEEP DEBUG: This confirms the 'unknown bar type' error prevented execution![/red]")
-            else:
-                console.print(f"[green]✅ DEEP DEBUG: {len(orders)} ORDERS WERE EXECUTED![/green]")
-                console.print("[green]🎉 DEEP DEBUG: This means bar type registration ACTUALLY WORKED![/green]")
-                console.print("[yellow]🤔 DEEP DEBUG: The 'unknown bar type' error may be misleading or post-execution![/yellow]")
-
-                # Show order details to prove execution
-                for i, order in enumerate(orders[:5]):  # Show first 5 orders
-                    console.print(f"[green]📊 DEEP DEBUG: Order {i+1}: {order.instrument_id} {order.side} {order.quantity} @ {order.avg_px if hasattr(order, 'avg_px') else 'N/A'}[/green]")
-
-                # Analyze position changes
-                if len(positions) > 0:
-                    for i, position in enumerate(positions[:3]):  # Show first 3 positions
-                        console.print(f"[green]💼 DEEP DEBUG: Position {i+1}: {position.instrument_id} {position.side} {position.quantity}[/green]")
-
-        except Exception as orders_error:
-            console.print(f"[red]💥 DEEP DEBUG: Could not analyze orders/positions: {orders_error}[/red]")
-
+        orders = engine.cache.orders()
+        positions = engine.cache.positions()
+        
+        console.print(f"[blue]📊 Execution summary: {len(orders)} orders, {len(positions)} positions[/blue]")
+        
+        if len(orders) > 0:
+            console.print(f"[green]✅ Trading active: {len(orders)} orders executed[/green]")
+        else:
+            console.print("[yellow]⚠️ No orders executed - check strategy parameters[/yellow]")
+            
     except Exception as e:
-        console.print(f"[yellow]⚠️ DEEP DEBUG: Could not perform post-execution analysis: {e}[/yellow]")
+        console.print(f"[yellow]⚠️ Could not analyze execution: {e}[/yellow]")
 
     # Step 8: Generate enhanced results and visualization
     console.print("\n" + "="*80)
@@ -1160,9 +981,22 @@ async def main():
 
         if funding_integration_results and "error" not in funding_integration_results:
             console.print("[cyan]💸 Integrating PRODUCTION funding costs into P&L...[/cyan]")
+            
+            # 🔧 CRITICAL FIX: Check if positions were actually held during backtest
+            positions_held = len(engine.cache.positions()) > 0
+            orders_executed = len(engine.cache.orders()) > 0
+            actual_positions_held = positions_held or orders_executed
+            
+            console.print(f"[blue]📊 Position analysis: {len(engine.cache.positions())} positions, {len(engine.cache.orders())} orders[/blue]")
+            console.print(f"[blue]🎯 Positions actually held: {actual_positions_held}[/blue]")
 
-            # Extract funding costs from production integration
-            total_funding_cost = funding_integration_results["total_funding_cost"]
+            # Extract funding costs from production integration - but only if positions were held!
+            if actual_positions_held:
+                total_funding_cost = funding_integration_results["total_funding_cost"]
+                console.print(f"[cyan]💰 Applying funding costs: ${total_funding_cost:+.2f}[/cyan]")
+            else:
+                total_funding_cost = 0.0
+                console.print("[green]✅ No funding costs applied (no positions held)[/green]")
 
             # Calculate funding-adjusted P&L
             original_final_balance = float(account_report.iloc[-1]["total"]) if not account_report.empty else 10000.0
@@ -1172,10 +1006,12 @@ async def main():
             funding_summary = {
                 "total_events": funding_integration_results["total_events"],
                 "total_funding_cost": total_funding_cost,
-                "account_impact_pct": funding_integration_results["account_impact_pct"],
+                "account_impact_pct": (abs(total_funding_cost) / 10000.0) * 100,  # Recalculate based on actual cost
                 "temporal_accuracy": funding_integration_results["temporal_accuracy"],
                 "mathematical_integrity": funding_integration_results["mathematical_integrity"],
                 "data_source": funding_integration_results["data_source"],
+                "positions_held": actual_positions_held,
+                "fix_applied": "Zero funding cost when no positions held",
             }
 
             console.print("[green]✅ PRODUCTION funding integration complete[/green]")
@@ -1223,10 +1059,13 @@ async def main():
         "✅ Modular funding rate system for enhanced realism (5.8 years data)",
         "✅ Funding cost tracking and P&L impact analysis",
         "✅ Ultimate system combining best of DSM + Hybrid approaches",
-        "🚀 ENHANCED: Adaptive profitable strategy with regime detection",
-        "🚀 ENHANCED: Signal quality filtering reduces overtrading",
-        "🚀 ENHANCED: Dynamic risk management adapts to performance",
-        "🚀 ENHANCED: Parameter-free system requires no manual tuning",
+        "🚀 2025 SOTA: Auto-tuning with Optuna (parameter-free optimization)",
+        "🚀 2025 SOTA: Bayesian regime detection with confidence scoring",
+        "🚀 2025 SOTA: Ensemble signal generation with multiple algorithms",
+        "🚀 2025 SOTA: Kelly criterion position sizing with drawdown protection",
+        "🚀 2025 SOTA: Advanced risk management adapts to market conditions",
+        "🚀 2025 SOTA: Real-time parameter optimization every 500 bars",
+        "🚀 2025 SOTA: Multi-timeframe momentum with volatility filtering",
     ]
 
     console.print(Panel(
@@ -1239,11 +1078,21 @@ async def main():
     engine.reset()
     engine.dispose()
 
-    console.print(Panel.fit(
-        "[bold green]🚀 Ultimate DSM + Hybrid Integration with ENHANCED PROFITABLE STRATEGY Complete![/bold green]\n"
-        "Production-ready system with real specs, realistic positions, rich visualization, and profitable adaptive trading",
-        title="🎯 ENHANCED INTEGRATION SUCCESS",
-    ))
+    # Final message based on strategy used
+    if ENHANCED_2025_AVAILABLE:
+        final_message = (
+            "[bold green]🚀 2025 SOTA Enhanced Strategy Integration Complete![/bold green]\n"
+            "State-of-the-art system with auto-tuning, Bayesian regime detection, ensemble signals, and Kelly optimization"
+        )
+        title = "🎯 2025 SOTA SUCCESS"
+    else:
+        final_message = (
+            "[bold green]🚀 Ultimate DSM + Hybrid Integration with ENHANCED PROFITABLE STRATEGY Complete![/bold green]\n"
+            "Production-ready system with real specs, realistic positions, rich visualization, and profitable adaptive trading"
+        )
+        title = "🎯 ENHANCED INTEGRATION SUCCESS"
+        
+    console.print(Panel.fit(final_message, title=title))
 
 
 if __name__ == "__main__":

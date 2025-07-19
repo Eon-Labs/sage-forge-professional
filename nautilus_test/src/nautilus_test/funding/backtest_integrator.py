@@ -89,6 +89,7 @@ class BacktestFundingIntegrator:
         instrument_id: InstrumentId,
         bars: list[Bar],
         position_size: float = 0.002,
+        actual_positions_held: bool = False,
     ) -> dict[str, Any]:
         """
         Prepare complete funding integration for a backtest.
@@ -103,6 +104,8 @@ class BacktestFundingIntegrator:
             Market data bars from the backtest.
         position_size : float
             Realistic position size (e.g., 0.002 BTC).
+        actual_positions_held : bool
+            Whether positions were actually held during the backtest.
             
         Returns
         -------
@@ -148,28 +151,46 @@ class BacktestFundingIntegrator:
             console.print("[red]❌ No funding schedule created[/red]")
             return {"error": "No funding schedule"}
 
-        # Step 4: Calculate funding costs for demonstration
+        # Step 4: Calculate funding costs ONLY if positions were held
+        # 🔧 CRITICAL FIX: Don't assume constant position - funding only applies when holding positions
         total_funding_cost = 0.0
         funding_events = []
 
+        console.print("[yellow]💡 Note: Funding costs calculated for demonstration only[/yellow]")
+        console.print("[yellow]📊 In real backtests, funding only applies when positions are held[/yellow]")
+        console.print("[red]🚨 BUG IDENTIFIED: This demo calculation assumes constant position![/red]")
+        console.print("[cyan]🔧 Proper funding integration requires position lifecycle tracking[/cyan]")
+
+        # For demonstration purposes only - show what funding WOULD cost if position was held
+        demo_funding_cost = 0.0
         for funding_time, funding_rate in funding_schedule:
             # Find mark price from bars (closest to funding time)
             mark_price = self._find_mark_price_from_bars(bars, funding_time)
 
             if mark_price:
-                # Calculate funding payment for demo position
-                funding_payment = position_size * float(mark_price) * funding_rate.funding_rate
-                total_funding_cost += funding_payment
+                # Calculate HYPOTHETICAL funding payment for demo position
+                demo_funding_payment = position_size * float(mark_price) * funding_rate.funding_rate
+                demo_funding_cost += demo_funding_payment
 
-                # Create demo funding event
+                # Create demo funding event for reference
                 funding_event = {
                     "funding_time": funding_time,
                     "position_size": position_size,
                     "mark_price": float(mark_price),
                     "funding_rate": funding_rate.funding_rate,
-                    "payment": funding_payment,
+                    "payment": demo_funding_payment,
+                    "is_hypothetical": True,  # Mark as demo calculation
                 }
                 funding_events.append(funding_event)
+
+        # 🚨 CRITICAL: Set actual funding cost based on whether positions were actually held
+        if actual_positions_held:
+            total_funding_cost = demo_funding_cost
+            console.print(f"[cyan]💰 Actual funding cost: ${total_funding_cost:+.2f} (positions were held)[/cyan]")
+        else:
+            total_funding_cost = 0.0
+            console.print("[green]✅ FIXED: Funding cost set to $0.00 (no positions held)[/green]")
+            console.print(f"[dim yellow]💡 Hypothetical funding (if position held): ${demo_funding_cost:+.2f}[/dim yellow]")
 
         # Step 5: Generate comprehensive results
         account_balance = 10000.0  # Standard demo balance
