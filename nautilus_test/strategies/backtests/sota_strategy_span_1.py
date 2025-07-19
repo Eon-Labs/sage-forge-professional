@@ -82,36 +82,28 @@ from rich.table import Table
 # Initialize console early for imports
 console = Console()
 
-# Import SOTA strategy components - MATHEMATICALLY GUARANTEED BIAS-FREE 2025 VERSION
+# Import SOTA strategy components - NT-NATIVE BIAS-FREE 2025 VERSION
 try:
-    from strategies.backtests.mathematically_guaranteed_bias_free_strategy_2025 import MathematicallyGuaranteedBiasFreeStrategy
+    from strategies.backtests.nt_native_bias_free_strategy_2025 import NTNativeBiasFreeStrategy
+    from strategies.backtests.nt_bias_free_config import create_comprehensive_bias_free_config, get_bias_free_strategy_config
     from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
-    MATHEMATICALLY_GUARANTEED_2025_AVAILABLE = True
-    console.print("[bold green]🔒 2025 MATHEMATICALLY GUARANTEED Bias-Free Strategy available - MATHEMATICAL PROOF of zero look-ahead bias![/bold green]")
+    NT_NATIVE_2025_AVAILABLE = True
+    console.print("[bold green]🔒 2025 NT-NATIVE Bias-Free Strategy available - Using NautilusTrader's built-in bias prevention![/bold green]")
 except ImportError:
     try:
-        from strategies.backtests.final_bias_free_strategy_2025 import FinalBiasFreeStrategy
+        from strategies.backtests.deprecated_biased_implementations.mathematically_guaranteed_bias_free_strategy_2025 import MathematicallyGuaranteedBiasFreeStrategy
         from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
-        FINAL_BIAS_FREE_2025_AVAILABLE = True
-        MATHEMATICALLY_GUARANTEED_2025_AVAILABLE = False
-        console.print("[yellow]⚠️ Using Final Bias-Free Strategy (previous version - has update-and-get bias)[/yellow]")
+        DEPRECATED_BIASED_2025_AVAILABLE = True
+        NT_NATIVE_2025_AVAILABLE = False
+        console.print("[red]⚠️ Using deprecated biased strategy (has multiple look-ahead bias issues)[/red]")
     except ImportError:
-        try:
-            from strategies.backtests.corrected_bias_free_strategy_2025 import CorrectedBiasFreeStrategy
-            from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
-            CORRECTED_BIAS_FREE_2025_AVAILABLE = True
-            FINAL_BIAS_FREE_2025_AVAILABLE = False
-            MATHEMATICALLY_GUARANTEED_2025_AVAILABLE = False
-            console.print("[red]⚠️ Using Corrected Bias-Free Strategy (deprecated - has multiple bias issues)[/red]")
-        except ImportError:
-            from strategies.sota.enhanced_profitable_strategy_v2 import (
-                SOTAProfitableStrategy,
-                create_sota_strategy_config,
-            )
-            CORRECTED_BIAS_FREE_2025_AVAILABLE = False
-            FINAL_BIAS_FREE_2025_AVAILABLE = False
-            MATHEMATICALLY_GUARANTEED_2025_AVAILABLE = False
-            console.print("[red]⚠️ Using fallback strategy - No bias-free version available[/red]")
+        from strategies.sota.enhanced_profitable_strategy_v2 import (
+            SOTAProfitableStrategy,
+            create_sota_strategy_config,
+        )
+        DEPRECATED_BIASED_2025_AVAILABLE = False
+        NT_NATIVE_2025_AVAILABLE = False
+        console.print("[red]⚠️ Using fallback strategy - No bias-free version available[/red]")
 
 # from rich.text import Text  # Unused import
 
@@ -905,15 +897,12 @@ async def main():
     console.print(f"[cyan]🔧 Strategy configured: {position_calc['position_size_btc']:.3f} BTC trade size[/cyan]")
 
     # Create strategy instance
-    if MATHEMATICALLY_GUARANTEED_2025_AVAILABLE:
+    if NT_NATIVE_2025_AVAILABLE:
+        strategy = NTNativeBiasFreeStrategy(config=strategy_config)
+        console.print("[bold green]🔒 Using NT-NATIVE Bias-Free 2025 Strategy - NautilusTrader's built-in bias prevention![/bold green]")
+    elif DEPRECATED_BIASED_2025_AVAILABLE:
         strategy = MathematicallyGuaranteedBiasFreeStrategy(config=strategy_config)
-        console.print("[bold green]🔒 Using MATHEMATICALLY GUARANTEED Bias-Free 2025 Strategy - MATHEMATICAL PROOF of zero look-ahead bias![/bold green]")
-    elif FINAL_BIAS_FREE_2025_AVAILABLE:
-        strategy = FinalBiasFreeStrategy(config=strategy_config)
-        console.print("[yellow]⚠️ Using Final Bias-Free 2025 Strategy (has update-and-get bias)[/yellow]")
-    elif CORRECTED_BIAS_FREE_2025_AVAILABLE:
-        strategy = CorrectedBiasFreeStrategy(config=strategy_config)
-        console.print("[red]⚠️ Using Corrected Bias-Free Strategy (deprecated - multiple bias issues)[/red]")
+        console.print("[red]⚠️ Using deprecated biased strategy (multiple look-ahead bias issues)[/red]")
     else:
         strategy = SOTAProfitableStrategy(config=strategy_config)
         console.print("[red]📊 Using fallback SOTA strategy[/red]")
@@ -1102,21 +1091,16 @@ async def main():
     engine.dispose()
 
     # Final message based on strategy used
-    if MATHEMATICALLY_GUARANTEED_2025_AVAILABLE or FINAL_BIAS_FREE_2025_AVAILABLE or CORRECTED_BIAS_FREE_2025_AVAILABLE:
-        if MATHEMATICALLY_GUARANTEED_2025_AVAILABLE:
+    if NT_NATIVE_2025_AVAILABLE or DEPRECATED_BIASED_2025_AVAILABLE:
+        if NT_NATIVE_2025_AVAILABLE:
             final_message = (
-                "[bold green]🔒 2025 MATHEMATICALLY GUARANTEED Bias-Free Strategy Integration Complete![/bold green]\n"
-                "MATHEMATICAL PROOF of zero look-ahead bias with pure lag-1 separation and rigorous testing"
-            )
-        elif FINAL_BIAS_FREE_2025_AVAILABLE:
-            final_message = (
-                "[yellow]⚠️ 2025 Final Bias-Free Strategy Integration Complete (with update-and-get bias)![/yellow]\n"
-                "Consider upgrading to MathematicallyGuaranteedBiasFreeStrategy for MATHEMATICAL proof"
+                "[bold green]🔒 2025 NT-NATIVE Bias-Free Strategy Integration Complete![/bold green]\n"
+                "Using NautilusTrader's built-in bias prevention with cache-based historical access and event-driven architecture"
             )
         else:
             final_message = (
-                "[red]⚠️ 2025 Strategy Integration Complete (with bias risks)![/red]\n"
-                "Consider upgrading to MathematicallyGuaranteedBiasFreeStrategy for MATHEMATICAL zero look-ahead bias"
+                "[red]⚠️ 2025 Deprecated Biased Strategy Integration Complete![/red]\n"
+                "Consider upgrading to NTNativeBiasFreeStrategy for true bias-free operation"
             )
         title = "🎯 2025 SOTA SUCCESS"
     else:
