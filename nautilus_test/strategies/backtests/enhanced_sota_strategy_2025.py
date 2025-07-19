@@ -337,26 +337,39 @@ class BayesianRegimeDetector:
 
 
 class EnsembleSignalGenerator:
-    """2025 SOTA: Ensemble signal generation with confidence scoring."""
+    """2025 SOTA: Ensemble signal generation with confidence scoring and multi-timeframe confirmation."""
     
     def __init__(self, params: OptimizedParameters):
         self.params = params
         self.signal_history = []
+        # Phase 1.1: Multi-timeframe signal confirmation data
+        self.timeframe_data = {
+            '1m': {'prices': [], 'returns': [], 'signals': []},
+            '5m': {'prices': [], 'returns': [], 'signals': []},
+            '15m': {'prices': [], 'returns': [], 'signals': []}
+        }
         
     def generate_signals(self, prices: List[float], volumes: List[float], 
                         returns: List[float], regime: MarketRegime) -> Tuple[str, float]:
-        """Generate ensemble signals with confidence scoring."""
+        """Generate ensemble signals with confidence scoring and multi-timeframe confirmation."""
         if len(prices) < self.params.momentum_window_long:
             return "NONE", 0.0
-            
+        
+        # Phase 1.1: Update multi-timeframe data
+        self._update_timeframe_data(prices, returns)
+        
         # Multiple signal generators
         momentum_signal = self._momentum_signal(returns, regime)
         mean_reversion_signal = self._mean_reversion_signal(prices, regime)
         volume_signal = self._volume_confirmation_signal(volumes, returns)
         volatility_signal = self._volatility_signal(returns, regime)
         
+        # Phase 1.1: Multi-timeframe confirmation
+        base_signals = [momentum_signal, mean_reversion_signal, volume_signal, volatility_signal]
+        timeframe_confirmed_signals = self._apply_multi_timeframe_confirmation(base_signals)
+        
         # Ensemble aggregation with regime-specific weights
-        signals = [momentum_signal, mean_reversion_signal, volume_signal, volatility_signal]
+        signals = timeframe_confirmed_signals
         weights = self._get_regime_weights(regime)
         
         # Weighted ensemble decision
@@ -486,7 +499,88 @@ class EnsembleSignalGenerator:
             return [0.2, 0.4, 0.2, 0.2]  # Favor mean reversion
         else:  # VOLATILE
             return [0.1, 0.1, 0.1, 0.7]  # Heavily weight volatility filter
+    
+    # Phase 1.1: Multi-timeframe Signal Confirmation (pandas/numpy)
+    def _update_timeframe_data(self, prices: List[float], returns: List[float]):
+        """Update multi-timeframe data for signal confirmation."""
+        import pandas as pd
+        
+        # Update 1m data (current timeframe)
+        self.timeframe_data['1m']['prices'] = prices[-100:]  # Keep last 100 bars
+        self.timeframe_data['1m']['returns'] = returns[-100:]
+        
+        # Create 5m aggregated data (every 5 bars)
+        if len(prices) >= 5:
+            prices_series = pd.Series(prices)
+            returns_series = pd.Series(returns)
             
+            # 5m aggregation (OHLC logic for prices, sum for returns)
+            price_5m = prices_series.iloc[::5].tolist() if len(prices_series) >= 5 else []
+            returns_5m = [sum(returns_series.iloc[i:i+5]) for i in range(0, len(returns_series), 5) if i+4 < len(returns_series)]
+            
+            self.timeframe_data['5m']['prices'] = price_5m[-20:]  # Keep last 20 5m bars
+            self.timeframe_data['5m']['returns'] = returns_5m[-20:]
+        
+        # Create 15m aggregated data (every 15 bars)
+        if len(prices) >= 15:
+            price_15m = prices_series.iloc[::15].tolist() if len(prices_series) >= 15 else []
+            returns_15m = [sum(returns_series.iloc[i:i+15]) for i in range(0, len(returns_series), 15) if i+14 < len(returns_series)]
+            
+            self.timeframe_data['15m']['prices'] = price_15m[-10:]  # Keep last 10 15m bars
+            self.timeframe_data['15m']['returns'] = returns_15m[-10:]
+    
+    def _apply_multi_timeframe_confirmation(self, base_signals: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
+        """Apply multi-timeframe confirmation to enhance signal quality."""
+        import numpy as np
+        
+        confirmed_signals = []
+        
+        for direction, confidence in base_signals:
+            if direction == "NONE":
+                confirmed_signals.append((direction, confidence))
+                continue
+            
+            # Calculate timeframe agreement
+            timeframe_agreement = self._calculate_timeframe_agreement(direction)
+            
+            # Enhance confidence based on timeframe agreement
+            enhanced_confidence = confidence * (0.7 + 0.3 * timeframe_agreement)  # Base weight 70%, agreement bonus 30%
+            
+            # Only pass signals with sufficient timeframe agreement
+            if timeframe_agreement >= 0.3:  # At least 30% agreement across timeframes
+                confirmed_signals.append((direction, enhanced_confidence))
+            else:
+                confirmed_signals.append(("NONE", 0.0))  # Filter out disagreeing signals
+        
+        return confirmed_signals
+    
+    def _calculate_timeframe_agreement(self, target_direction: str) -> float:
+        """Calculate agreement score across multiple timeframes."""
+        import numpy as np
+        
+        agreement_scores = []
+        
+        # Check each timeframe for trend alignment
+        for timeframe, data in self.timeframe_data.items():
+            if len(data['returns']) < 3:
+                continue
+                
+            # Calculate momentum for this timeframe
+            recent_momentum = np.mean(data['returns'][-3:]) if data['returns'] else 0
+            
+            # Determine direction agreement
+            if target_direction == "BUY" and recent_momentum > 0:
+                agreement_scores.append(1.0)
+            elif target_direction == "SELL" and recent_momentum < 0:
+                agreement_scores.append(1.0)
+            elif abs(recent_momentum) < 0.0001:  # Neutral
+                agreement_scores.append(0.5)
+            else:
+                agreement_scores.append(0.0)  # Disagreement
+        
+        # Return average agreement (0.0 = total disagreement, 1.0 = total agreement)
+        return np.mean(agreement_scores) if agreement_scores else 0.0
+
 
 class KellyRiskManager:
     """2025 SOTA: Kelly criterion-based position sizing with drawdown protection."""
