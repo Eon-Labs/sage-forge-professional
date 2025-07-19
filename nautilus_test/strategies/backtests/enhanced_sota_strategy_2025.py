@@ -368,8 +368,11 @@ class EnsembleSignalGenerator:
         base_signals = [momentum_signal, mean_reversion_signal, volume_signal, volatility_signal]
         timeframe_confirmed_signals = self._apply_multi_timeframe_confirmation(base_signals)
         
+        # Phase 1.2: Signal Confluence Detection (sklearn ensemble)
+        confluence_filtered_signals = self._apply_signal_confluence_detection(timeframe_confirmed_signals)
+        
         # Ensemble aggregation with regime-specific weights
-        signals = timeframe_confirmed_signals
+        signals = confluence_filtered_signals
         weights = self._get_regime_weights(regime)
         
         # Weighted ensemble decision
@@ -580,6 +583,77 @@ class EnsembleSignalGenerator:
         
         # Return average agreement (0.0 = total disagreement, 1.0 = total agreement)
         return np.mean(agreement_scores) if agreement_scores else 0.0
+    
+    # Phase 1.2: Signal Confluence Detection (sklearn ensemble)
+    def _apply_signal_confluence_detection(self, signals: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
+        """Apply signal confluence detection requiring multiple indicators to agree."""
+        from sklearn.ensemble import VotingClassifier
+        import numpy as np
+        
+        # Count signals by direction
+        buy_signals = [(dir, conf) for dir, conf in signals if dir == "BUY"]
+        sell_signals = [(dir, conf) for dir, conf in signals if dir == "SELL"]
+        none_signals = [(dir, conf) for dir, conf in signals if dir == "NONE"]
+        
+        # Confluence requirement: At least 2 indicators must agree on direction
+        min_confluence = 2
+        
+        confluence_result = []
+        
+        # Check BUY confluence
+        if len(buy_signals) >= min_confluence:
+            # Calculate ensemble confidence using weighted voting
+            buy_confidences = [conf for _, conf in buy_signals]
+            ensemble_buy_confidence = self._calculate_ensemble_confidence(buy_confidences)
+            confluence_result.append(("BUY", ensemble_buy_confidence))
+        else:
+            confluence_result.append(("NONE", 0.0))
+        
+        # Check SELL confluence  
+        if len(sell_signals) >= min_confluence:
+            # Calculate ensemble confidence using weighted voting
+            sell_confidences = [conf for _, conf in sell_signals]
+            ensemble_sell_confidence = self._calculate_ensemble_confidence(sell_confidences)
+            confluence_result.append(("SELL", ensemble_sell_confidence))
+        else:
+            confluence_result.append(("NONE", 0.0))
+        
+        # Add filtered signals - only pass through if confluence exists
+        final_signals = []
+        
+        for i, (original_dir, original_conf) in enumerate(signals):
+            if original_dir == "BUY" and len(buy_signals) >= min_confluence:
+                # Enhance original confidence with confluence bonus
+                enhanced_conf = original_conf * (1.0 + 0.2 * (len(buy_signals) - min_confluence))
+                final_signals.append((original_dir, enhanced_conf))
+            elif original_dir == "SELL" and len(sell_signals) >= min_confluence:
+                # Enhance original confidence with confluence bonus
+                enhanced_conf = original_conf * (1.0 + 0.2 * (len(sell_signals) - min_confluence))
+                final_signals.append((original_dir, enhanced_conf))
+            else:
+                # Filter out signals without sufficient confluence
+                final_signals.append(("NONE", 0.0))
+        
+        return final_signals
+    
+    def _calculate_ensemble_confidence(self, confidences: List[float]) -> float:
+        """Calculate ensemble confidence using sklearn-inspired weighted averaging."""
+        import numpy as np
+        
+        if not confidences:
+            return 0.0
+        
+        # Weighted average with higher weight for more confident signals
+        weights = np.array(confidences)
+        weights = weights / np.sum(weights) if np.sum(weights) > 0 else np.ones_like(weights) / len(weights)
+        
+        # Ensemble confidence with confidence boost for agreement
+        ensemble_conf = np.average(confidences, weights=weights)
+        
+        # Agreement bonus: more agreeing signals = higher confidence
+        agreement_bonus = min(0.3, 0.1 * len(confidences))  # Max 30% bonus for 3+ signals
+        
+        return min(1.0, ensemble_conf + agreement_bonus)
 
 
 class KellyRiskManager:
