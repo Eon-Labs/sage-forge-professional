@@ -96,112 +96,235 @@ class BayesianRegimeDetector:
         
     def detect_regime(self, returns: List[float], volumes: List[float], 
                      volatilities: List[float]) -> MarketRegime:
-        """Advanced Bayesian regime detection."""
+        """Advanced parameterless regime detection using machine learning clustering."""
         if len(returns) < 30:
             return MarketRegime("UNKNOWN", 0.0, 0.0, 0.0, "unknown", 0)
             
         if not ADVANCED_LIBS_AVAILABLE:
             return self._fallback_regime_detection(returns, volumes, volatilities)
             
-        # Calculate regime indicators
-        trend_strength = abs(np.mean(returns[-20:]))
-        volatility = np.std(returns[-20:])
-        volume_trend = np.mean(volumes[-10:]) / max(np.mean(volumes[-20:-10:]), 0.001)
+        try:
+            return self._advanced_ml_regime_detection(returns, volumes, volatilities)
+        except Exception:
+            # Fallback if ML fails
+            return self._dynamic_threshold_regime_detection(returns, volumes, volatilities)
+    
+    def _advanced_ml_regime_detection(self, returns: List[float], volumes: List[float], 
+                                    volatilities: List[float]) -> MarketRegime:
+        """State-of-the-art regime detection using unsupervised ML."""
+        from sklearn.cluster import KMeans
+        from sklearn.preprocessing import StandardScaler
         
-        # Bayesian update of regime probabilities
-        evidence = {
-            "trend": trend_strength,
-            "volatility": volatility, 
-            "volume": volume_trend
-        }
+        # Feature engineering - multiple timeframes and indicators
+        window_sizes = [5, 10, 20, 50]
+        features = []
         
-        # Prior probabilities
-        prior_trending = self.state_probabilities["TRENDING"]
-        prior_ranging = self.state_probabilities["RANGING"] 
-        prior_volatile = self.state_probabilities["VOLATILE"]
+        for window in window_sizes:
+            if len(returns) >= window:
+                # Trend features
+                trend_strength = abs(np.mean(returns[-window:]))
+                trend_direction = np.sign(np.mean(returns[-window:]))
+                features.extend([trend_strength, trend_direction])
+                
+                # Volatility features  
+                vol = np.std(returns[-window:])
+                vol_change = vol / max(np.std(returns[-window*2:-window]), 0.001) if len(returns) >= window*2 else 1.0
+                features.extend([vol, vol_change])
+                
+                # Volume features
+                if len(volumes) >= window:
+                    vol_trend = np.mean(volumes[-window:]) / max(np.mean(volumes[-window*2:-window]), 0.001) if len(volumes) >= window*2 else 1.0
+                    vol_volatility = np.std(volumes[-window:])
+                    features.extend([vol_trend, vol_volatility])
         
-        # Likelihood functions (simplified Bayesian approach)
-        likelihood_trending = self._likelihood_trending(evidence)
-        likelihood_ranging = self._likelihood_ranging(evidence)
-        likelihood_volatile = self._likelihood_volatile(evidence)
+        # Recent feature vector
+        current_features = np.array(features).reshape(1, -1)
         
-        # Posterior probabilities (Bayes' theorem)
-        normalizer = (prior_trending * likelihood_trending + 
-                     prior_ranging * likelihood_ranging +
-                     prior_volatile * likelihood_volatile)
+        # Build historical feature matrix for clustering
+        if not hasattr(self, '_feature_history'):
+            self._feature_history = []
         
-        if normalizer > 0:
-            post_trending = (prior_trending * likelihood_trending) / normalizer
-            post_ranging = (prior_ranging * likelihood_ranging) / normalizer  
-            post_volatile = (prior_volatile * likelihood_volatile) / normalizer
-        else:
-            post_trending = post_ranging = post_volatile = 0.33
+        self._feature_history.append(features)
+        if len(self._feature_history) > 200:  # Keep sliding window
+            self._feature_history = self._feature_history[-200:]
+        
+        if len(self._feature_history) < 50:  # Need enough history for clustering
+            return self._dynamic_threshold_regime_detection(returns, volumes, volatilities)
+        
+        # Prepare data for clustering
+        X = np.array(self._feature_history)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+        current_scaled = scaler.transform(current_features)
+        
+        # Dynamic clustering - let algorithm determine regimes
+        from sklearn.metrics import silhouette_score
+        best_k = 3
+        best_score = -1
+        
+        for k in range(2, 6):  # Test 2-5 clusters
+            try:
+                kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+                labels = kmeans.fit_predict(X_scaled)
+                if len(set(labels)) > 1:  # Ensure multiple clusters
+                    score = silhouette_score(X_scaled, labels)
+                    if score > best_score:
+                        best_score = score
+                        best_k = k
+            except:
+                continue
+        
+        # Final clustering with optimal k
+        kmeans = KMeans(n_clusters=best_k, random_state=42, n_init=10)
+        cluster_labels = kmeans.fit_predict(X_scaled)
+        current_cluster = kmeans.predict(current_scaled)[0]
+        
+        # Interpret clusters dynamically
+        cluster_stats = {}
+        for cluster_id in range(best_k):
+            cluster_indices = np.where(cluster_labels == cluster_id)[0]
+            if len(cluster_indices) > 0:
+                # Calculate cluster characteristics
+                cluster_returns = [returns[max(0, len(returns) - len(self._feature_history) + i)] 
+                                 for i in cluster_indices if len(returns) > len(self._feature_history) - i - 1]
+                cluster_vols = [volatilities[max(0, len(volatilities) - len(self._feature_history) + i)] 
+                              for i in cluster_indices if len(volatilities) > len(self._feature_history) - i - 1]
+                
+                if cluster_returns and cluster_vols:
+                    avg_trend = abs(np.mean(cluster_returns))
+                    avg_vol = np.mean(cluster_vols)
+                    cluster_stats[cluster_id] = {'trend': avg_trend, 'vol': avg_vol}
+        
+        # Classify current cluster
+        if current_cluster in cluster_stats:
+            stats = cluster_stats[current_cluster]
+            trend_score = stats['trend']
+            vol_score = stats['vol']
             
-        # Update state probabilities
-        self.state_probabilities = {
-            "TRENDING": post_trending,
-            "RANGING": post_ranging, 
-            "VOLATILE": post_volatile
-        }
+            # Dynamic thresholds based on data distribution
+            all_trends = [s['trend'] for s in cluster_stats.values()]
+            all_vols = [s['vol'] for s in cluster_stats.values()]
+            
+            trend_threshold = np.percentile(all_trends, 60)
+            vol_threshold = np.percentile(all_vols, 60)
+            
+            if vol_score > vol_threshold:
+                regime_name = "VOLATILE"
+                confidence = min(vol_score / max(vol_threshold, 0.001), 1.0)
+            elif trend_score > trend_threshold:
+                regime_name = "TRENDING"  
+                confidence = min(trend_score / max(trend_threshold, 0.001), 1.0)
+            else:
+                regime_name = "RANGING"
+                confidence = max(0.5, 1.0 - max(trend_score, vol_score) / max(trend_threshold, vol_threshold, 0.001))
+        else:
+            regime_name = "RANGING"
+            confidence = 0.5
         
-        # Determine regime with highest posterior probability
-        regime_probs = [post_trending, post_ranging, post_volatile]
-        regime_names = ["TRENDING", "RANGING", "VOLATILE"]
-        max_prob_idx = np.argmax(regime_probs)
+        # Debug output
+        if len(self._feature_history) % 500 == 0:
+            console.print(f"[dim blue]🔍 ML Regime: clusters={best_k}, current={current_cluster}, "
+                         f"trend_thresh={trend_threshold:.6f}, vol_thresh={vol_threshold:.6f} → {regime_name}[/dim blue]")
         
-        regime_name = regime_names[max_prob_idx]
-        confidence = regime_probs[max_prob_idx]
+        # Store regime history
+        if not hasattr(self, 'regimes_history'):
+            self.regimes_history = []
+        self.regimes_history.append(regime_name)
+        if len(self.regimes_history) > 100:
+            self.regimes_history = self.regimes_history[-100:]
         
         return MarketRegime(
             name=regime_name,
             confidence=confidence,
-            volatility=volatility,
-            trend_strength=trend_strength,
-            volume_profile="high" if volume_trend > 1.2 else "normal",
+            volatility=np.std(returns[-20:]) if len(returns) >= 20 else 0.0,
+            trend_strength=abs(np.mean(returns[-20:])) if len(returns) >= 20 else 0.0,
+            volume_profile="high" if len(volumes) >= 10 and np.mean(volumes[-10:]) > np.mean(volumes[-20:-10:]) else "normal",
             duration=len([r for r in self.regimes_history[-10:] if r == regime_name])
         )
     
+    def _dynamic_threshold_regime_detection(self, returns: List[float], volumes: List[float], 
+                                          volatilities: List[float]) -> MarketRegime:
+        """Dynamic threshold-based regime detection as fallback."""
+        # Use percentile-based dynamic thresholds
+        lookback = min(100, len(returns))
+        recent_returns = returns[-lookback:]
+        recent_vols = volatilities[-lookback:] if len(volatilities) >= lookback else volatilities
+        
+        # Dynamic thresholds that adapt to recent market conditions
+        trend_threshold = np.percentile(np.abs(recent_returns), 75)
+        vol_threshold = np.percentile(recent_vols, 75) if recent_vols else 0.01
+        
+        current_trend = abs(np.mean(returns[-5:]))
+        current_vol = volatilities[-1] if volatilities else 0.0
+        
+        # Multiple criteria classification
+        if current_vol > vol_threshold * 1.2:
+            regime_name = "VOLATILE"
+            confidence = min(current_vol / max(vol_threshold, 0.001), 1.0)
+        elif current_trend > trend_threshold * 1.1:
+            regime_name = "TRENDING"
+            confidence = min(current_trend / max(trend_threshold, 0.001), 1.0)
+        else:
+            regime_name = "RANGING"
+            confidence = max(0.6, 1.0 - max(current_trend, current_vol) / max(trend_threshold, vol_threshold, 0.001))
+        
+        return MarketRegime(
+            name=regime_name,
+            confidence=confidence,
+            volatility=current_vol,
+            trend_strength=current_trend,
+            volume_profile="normal",
+            duration=1
+        )
+    
     def _likelihood_trending(self, evidence: Dict) -> float:
-        """Calculate likelihood of trending regime."""
-        trend_factor = min(evidence["trend"] / 0.002, 1.0)
-        volume_factor = min(evidence["volume"] / 1.5, 1.0)
-        volatility_penalty = max(0.1, 1.0 - evidence["volatility"] / 0.02)
-        return trend_factor * volume_factor * volatility_penalty
+        """Calculate likelihood of trending regime - highly sensitive."""
+        # Ultra-sensitive trending detection for crypto
+        trend_factor = min(evidence["trend"] / 0.0001, 2.0)  # 20x more sensitive, can exceed 1.0
+        volume_factor = min(evidence["volume"] / 1.05, 1.5)  # Very low volume threshold
+        volatility_boost = min(evidence["volatility"] / 0.01, 1.3)  # Volatility can help trending
+        return trend_factor * volume_factor * volatility_boost
     
     def _likelihood_ranging(self, evidence: Dict) -> float:
-        """Calculate likelihood of ranging regime."""
-        trend_penalty = max(0.1, 1.0 - evidence["trend"] / 0.001)
-        volatility_factor = max(0.1, 1.0 - evidence["volatility"] / 0.015)
-        return trend_penalty * volatility_factor
+        """Calculate likelihood of ranging regime - heavily penalized."""
+        trend_penalty = max(0.1, 1.0 - evidence["trend"] / 0.0003)  # Heavy trend penalty
+        volatility_penalty = max(0.1, 1.0 - evidence["volatility"] / 0.01)  # Heavy vol penalty
+        return trend_penalty * volatility_penalty * 0.3  # Massive ranging bias reduction
         
     def _likelihood_volatile(self, evidence: Dict) -> float:
-        """Calculate likelihood of volatile regime."""
-        volatility_factor = min(evidence["volatility"] / 0.02, 1.0)
-        trend_penalty = max(0.3, 1.0 - evidence["trend"] / 0.003)
-        return volatility_factor * trend_penalty
+        """Calculate likelihood of volatile regime - very sensitive."""
+        volatility_factor = min(evidence["volatility"] / 0.005, 3.0)  # Ultra-sensitive, can exceed 1.0
+        trend_independence = 0.8  # Less dependent on trend direction
+        volume_boost = min(evidence["volume"] / 1.0, 1.5)  # Any volume increase helps
+        return volatility_factor * trend_independence * volume_boost
     
     def _fallback_regime_detection(self, returns: List[float], volumes: List[float], 
                                  volatilities: List[float]) -> MarketRegime:
-        """Fallback regime detection without advanced libraries."""
+        """Fallback regime detection - balanced and sensitive."""
         recent_returns = returns[-50:]
         recent_volatilities = volatilities[-20:]
         recent_volumes = volumes[-50:]
         
-        trend_threshold = np.percentile(np.abs(recent_returns), 60)
-        volatility_threshold = np.percentile(recent_volatilities, 80)
+        # More sensitive thresholds for better regime detection
+        trend_threshold = np.percentile(np.abs(recent_returns), 50)  # Lower from 60
+        volatility_threshold = np.percentile(recent_volatilities, 65)  # Lower from 80
         
         current_return = abs(returns[-1])
         current_volatility = volatilities[-1]
         
-        if current_volatility > volatility_threshold * 1.3:
+        # Multi-factor regime detection
+        vol_score = current_volatility / max(volatility_threshold, 0.001)
+        trend_score = current_return / max(trend_threshold, 0.0001)
+        
+        if vol_score > 1.1:  # More sensitive volatile detection
             regime_name = "VOLATILE"
-            confidence = min(current_volatility / volatility_threshold, 1.5) / 1.5
-        elif current_return > trend_threshold:
-            regime_name = "TRENDING"
-            confidence = min(current_return / trend_threshold, 1.5) / 1.5
+            confidence = min(vol_score / 1.5, 1.0)
+        elif trend_score > 1.0:  # More sensitive trending detection
+            regime_name = "TRENDING" 
+            confidence = min(trend_score / 1.3, 1.0)
         else:
             regime_name = "RANGING"
-            confidence = 0.7
+            confidence = max(0.5, 1.0 - max(vol_score, trend_score) / 2.0)  # Dynamic ranging confidence
             
         return MarketRegime(
             name=regime_name,
