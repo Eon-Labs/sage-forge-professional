@@ -891,6 +891,11 @@ class Enhanced2025Strategy(Strategy):
         self.position_hold_bars = 0
         self.bar_counter = 0  # Add dedicated bar counter for progress
         
+        # Phase 1.3: Dynamic Confidence Thresholds (scipy.stats)
+        self.performance_history = []
+        self.threshold_adjustment_period = 100  # Adjust every 100 bars
+        self.last_threshold_adjustment = 0
+        
         # Trade logging
         self.setup_trade_logging()
         
@@ -1139,6 +1144,9 @@ class Enhanced2025Strategy(Strategy):
             self.prices, self.volumes, self.returns, self.current_regime
         )
         
+        # Phase 1.3: Dynamic threshold adjustment
+        self._update_dynamic_thresholds(current_bar, signal_confidence)
+        
         # Store confidence for logging
         self._last_confidence = signal_confidence
         
@@ -1327,6 +1335,97 @@ class Enhanced2025Strategy(Strategy):
             console.print(f"[dim cyan]🎯 Final score: {self.optimizer.study.best_value:.4f}[/dim cyan]")
             
         console.print("[green]🚀 2025 SOTA Strategy completed successfully![/green]")
+    
+    # Phase 1.3: Dynamic Confidence Thresholds (scipy.stats)
+    def _update_dynamic_thresholds(self, current_bar: int, signal_confidence: float):
+        """Update confidence thresholds based on recent performance using scipy.stats."""
+        from scipy import stats
+        import numpy as np
+        
+        # Track signal performance for threshold adjustment
+        self.performance_history.append({
+            'bar': current_bar,
+            'signal_confidence': signal_confidence,
+            'regime_confidence': self.current_regime.confidence,
+            'executed_trades': self.executed_trades
+        })
+        
+        # Keep sliding window of performance data
+        if len(self.performance_history) > 200:
+            self.performance_history = self.performance_history[-200:]
+        
+        # Adjust thresholds periodically
+        if (current_bar - self.last_threshold_adjustment >= self.threshold_adjustment_period and 
+            len(self.performance_history) >= 50):
+            
+            self._adjust_confidence_threshold()
+            self.last_threshold_adjustment = current_bar
+    
+    def _adjust_confidence_threshold(self):
+        """Dynamically adjust confidence threshold based on performance statistics."""
+        from scipy import stats
+        import numpy as np
+        
+        if len(self.performance_history) < 30:
+            return
+        
+        # Extract recent performance metrics
+        recent_data = self.performance_history[-50:]  # Last 50 observations
+        confidences = [d['signal_confidence'] for d in recent_data if d['signal_confidence'] > 0]
+        
+        if len(confidences) < 10:
+            return
+        
+        # Calculate statistical metrics using scipy.stats
+        confidence_array = np.array(confidences)
+        
+        # Use percentile-based adaptive thresholding
+        current_threshold = self.params.signal_confidence_threshold
+        
+        # Calculate performance indicators
+        median_confidence = np.median(confidence_array)
+        confidence_std = np.std(confidence_array)
+        
+        # Use scipy.stats for distribution analysis
+        try:
+            # Test for normality and get distribution parameters
+            shapiro_stat, shapiro_p = stats.shapiro(confidence_array)
+            
+            # Calculate optimal threshold based on distribution
+            if shapiro_p > 0.05:  # Normally distributed
+                # Use statistical significance for threshold
+                optimal_threshold = median_confidence - 0.5 * confidence_std
+            else:
+                # Use robust percentile-based approach
+                optimal_threshold = np.percentile(confidence_array, 25)  # 25th percentile
+            
+            # Apply constraints and smoothing
+            min_threshold = 0.01
+            max_threshold = 0.3
+            
+            # Smooth adjustment to prevent oscillation
+            adjustment_factor = 0.1  # 10% adjustment per period
+            new_threshold = (current_threshold * (1 - adjustment_factor) + 
+                           optimal_threshold * adjustment_factor)
+            
+            # Apply bounds
+            new_threshold = max(min_threshold, min(new_threshold, max_threshold))
+            
+            # Update threshold if significant change
+            if abs(new_threshold - current_threshold) > 0.005:  # 0.5% minimum change
+                self.params.signal_confidence_threshold = new_threshold
+                
+                # Log threshold adjustment for tracking
+                console.print(f"[dim cyan]🎯 Threshold adjusted: {current_threshold:.4f} → {new_threshold:.4f} "
+                             f"(median={median_confidence:.4f}, std={confidence_std:.4f})[/dim cyan]")
+        
+        except Exception:
+            # Fallback to simple percentile adjustment if scipy.stats fails
+            new_threshold = np.percentile(confidence_array, 30)  # 30th percentile
+            new_threshold = max(0.01, min(new_threshold, 0.3))
+            
+            if abs(new_threshold - current_threshold) > 0.005:
+                self.params.signal_confidence_threshold = new_threshold
     
     def on_reset(self):
         """Reset strategy state."""
