@@ -64,6 +64,10 @@ class BacktestFundingIntegrator:
         """
         self.cache_dir = cache_dir or get_funding_cache_dir()
         console.print(f"[blue]📁 Backtest funding cache: {self.cache_dir}[/blue]")
+        
+        # Ensure cache directory exists
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        console.print(f"[blue]📁 Funding cache directory: {self.cache_dir}[/blue]")
 
         # Initialize components with enhanced provider
         self.funding_provider = funding_provider or FundingRateProvider(

@@ -43,6 +43,23 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+# Import enhanced visualization functions
+from nautilus_test.visualization.enhanced_charts import (
+    add_enhanced_indicators,
+    add_realistic_trade_markers,
+    create_enhanced_candlestick_chart,
+    create_post_backtest_chart,
+    display_enhanced_chart,
+    display_ultimate_performance_summary,
+    prepare_bars_dataframe,
+)
+
+# Import position sizing
+from nautilus_test.providers.position_sizing import RealisticPositionSizer
+
+# Import Binance specifications
+from nautilus_test.providers.binance_specs import BinanceSpecificationManager
+
 import finplot as fplt
 import pandas as pd
 import pyqtgraph as pg
@@ -296,251 +313,8 @@ class FinplotActor(Actor):
 # Strategy code removed - imported from enhanced_profitable_strategy_v2.py
 
 
-class BinanceSpecificationManager:
-    """Manages real Binance specifications using python-binance."""
-
-    def __init__(self):
-        self.specs = None
-        self.last_updated = None
-
-    def fetch_btcusdt_perpetual_specs(self):
-        """Fetch current BTCUSDT perpetual futures specifications."""
-        try:
-            from binance import Client
-
-            console.print(
-                "[bold blue]🔍 Fetching Real Binance BTCUSDT-PERP "
-                "Specifications...[/bold blue]"
-            )
-
-            client = Client()
-            exchange_info = client.futures_exchange_info()
-            btc_symbol = next(s for s in exchange_info["symbols"] if s["symbol"] == "BTCUSDT")
-            filters = {f["filterType"]: f for f in btc_symbol["filters"]}
-
-            # Get current market data
-            ticker = client.futures_symbol_ticker(symbol="BTCUSDT")
-            funding = client.futures_funding_rate(symbol="BTCUSDT", limit=1)
-
-            self.specs = {
-                "symbol": btc_symbol["symbol"],
-                "status": btc_symbol["status"],
-                "price_precision": btc_symbol["pricePrecision"],
-                "quantity_precision": btc_symbol["quantityPrecision"],
-                "base_asset_precision": btc_symbol["baseAssetPrecision"],
-                "quote_precision": btc_symbol["quotePrecision"],
-                "tick_size": filters["PRICE_FILTER"]["tickSize"],
-                "step_size": filters["LOT_SIZE"]["stepSize"],
-                "min_qty": filters["LOT_SIZE"]["minQty"],
-                "max_qty": filters["LOT_SIZE"]["maxQty"],
-                "min_notional": filters["MIN_NOTIONAL"]["notional"],
-                "current_price": float(ticker["price"]),
-                "funding_rate": float(funding[0]["fundingRate"]) if funding else 0.0,
-                "funding_time": funding[0]["fundingTime"] if funding else None,
-            }
-
-            self.last_updated = datetime.now()
-            console.print("✅ Successfully fetched real Binance specifications")
-            return True
-
-        except Exception as e:
-            console.print(f"[red]❌ Failed to fetch Binance specs: {e}[/red]")
-            return False
-
-    def create_nautilus_instrument(self) -> CryptoPerpetual:
-        """Create NautilusTrader instrument with REAL Binance specifications."""
-        if not self.specs:
-            raise ValueError("Must fetch specifications first")
-
-        console.print(
-            "[bold green]🔧 Creating NautilusTrader Instrument "
-            "with REAL Specs...[/bold green]"
-        )
-
-        # 🔥 DISPLAY SPECIFICATION COMPARISON
-        comparison_table = Table(title="⚔️ Specification Correction")
-        comparison_table.add_column("Specification", style="bold")
-        comparison_table.add_column("DSM Demo (WRONG)", style="red")
-        comparison_table.add_column("Real Binance (CORRECT)", style="green")
-        comparison_table.add_column("Impact", style="yellow")
-
-        comparisons = [
-            ("Price Precision", "5", str(self.specs["price_precision"]), "API accuracy"),
-            ("Size Precision", "0", str(self.specs["quantity_precision"]), "Order precision"),
-            ("Tick Size", "0.00001", self.specs["tick_size"], "Price increments"),
-            ("Step Size", "1", self.specs["step_size"], "Position sizing"),
-            ("Min Quantity", "1", self.specs["min_qty"], "Minimum orders"),
-            ("Min Notional", "$5", f"${self.specs['min_notional']}", "Order value"),
-        ]
-
-        for spec, wrong_val, correct_val, impact in comparisons:
-            comparison_table.add_row(spec, wrong_val, correct_val, impact)
-
-        console.print(comparison_table)
-
-        instrument = CryptoPerpetual(
-            instrument_id=InstrumentId.from_str("BTCUSDT-PERP.SIM"),
-            raw_symbol=Symbol("BTCUSDT"),
-            base_currency=BTC,
-            quote_currency=USDT,
-            settlement_currency=USDT,
-            is_inverse=False,
-
-            # 🔥 REAL SPECIFICATIONS FROM BINANCE API (NOT HARDCODED!)
-            price_precision=int(self.specs["price_precision"]),
-            size_precision=int(self.specs["quantity_precision"]),
-            price_increment=Price.from_str(self.specs["tick_size"]),
-            size_increment=Quantity.from_str(self.specs["step_size"]),
-            min_quantity=Quantity.from_str(self.specs["min_qty"]),
-            max_quantity=Quantity.from_str(self.specs["max_qty"]),
-            min_notional=Money(float(self.specs["min_notional"]), USDT),
-
-            # Conservative margin and REAL Binance VIP 3 fee estimates
-            margin_init=Decimal("0.01"),
-            margin_maint=Decimal("0.005"),
-            maker_fee=Decimal("0.00012"),  # Real Binance VIP 3: 0.012%
-            taker_fee=Decimal("0.00032"),  # Real Binance VIP 3: 0.032%
-
-            ts_event=0,
-            ts_init=0,
-        )
-
-        console.print("✅ NautilusTrader instrument created with REAL specifications")
-        return instrument
 
 
-class RealisticPositionSizer:
-    """Calculates realistic position sizes preventing account blow-up."""
-
-    def __init__(self, specs: dict, account_balance: float = 10000, max_risk_pct: float = 0.02):
-        self.specs = specs
-        self.account_balance = account_balance
-        self.max_risk_pct = max_risk_pct
-
-    def calculate_position_size(self) -> dict:
-        """Calculate realistic position size based on risk management."""
-        current_price = self.specs["current_price"]
-        min_qty = float(self.specs["min_qty"])
-        min_notional = float(self.specs["min_notional"])
-
-        # Calculate maximum risk in USD
-        max_risk_usd = self.account_balance * self.max_risk_pct
-
-        # Calculate position size based on risk
-        position_size_btc = max_risk_usd / current_price
-
-        # Round to step size
-        precision = len(self.specs["step_size"].split(".")[-1])
-        position_size_btc = round(position_size_btc, precision)
-
-        # Ensure minimum requirements
-        position_size_btc = max(position_size_btc, min_qty)
-
-        # Check minimum notional
-        notional_value = position_size_btc * current_price
-        if notional_value < min_notional:
-            position_size_btc = min_notional / current_price
-            position_size_btc = round(position_size_btc, precision)
-
-        return {
-            "position_size_btc": position_size_btc,
-            "notional_value": position_size_btc * current_price,
-            "risk_percentage": (position_size_btc * current_price) / self.account_balance * 100,
-            "meets_min_qty": position_size_btc >= min_qty,
-            "meets_min_notional": (position_size_btc * current_price) >= min_notional,
-            "max_risk_usd": max_risk_usd,
-        }
-
-    def display_position_analysis(self):
-        """Display position sizing analysis with safety comparison."""
-        calc = self.calculate_position_size()
-
-        table = Table(title="💰 Enhanced Position Sizing (DSM + Hybrid)")
-        table.add_column("Metric", style="bold")
-        table.add_column("Realistic Value", style="green")
-        table.add_column("DSM Demo (Dangerous)", style="red")
-        table.add_column("Safety Factor", style="cyan")
-
-        # 🔧 CRITICAL FIX #4: Fix position sizing mathematical contradictions with validation
-        console.print("[yellow]🔍 DEBUG: Validating position sizing mathematics...[/yellow]")
-
-        dangerous_1btc_value = 1.0 * self.specs["current_price"]
-        console.print(f"[blue]📊 DEBUG: Dangerous 1 BTC value: ${dangerous_1btc_value:,.2f}[/blue]")
-        console.print(
-            f"[blue]📊 DEBUG: Realistic position value: "
-            f"${calc['notional_value']:.2f}[/blue]"
-        )
-
-        # Calculate consistent safety factors
-        position_size_ratio = 1.0 / calc["position_size_btc"]  # How many times larger 1 BTC is
-        # How many times safer realistic position is
-        value_safety_factor = dangerous_1btc_value / calc["notional_value"]
-
-        console.print(
-            f"[cyan]🔍 DEBUG: Position size ratio: {position_size_ratio:.1f}x "
-            f"(1 BTC is {position_size_ratio:.1f}x larger)[/cyan]"
-        )
-        console.print(
-            f"[cyan]🔍 DEBUG: Value safety factor: {value_safety_factor:.1f}x "
-            f"(realistic position is {value_safety_factor:.1f}x safer)[/cyan]"
-        )
-
-        # 🚨 MATHEMATICAL VALIDATION: These should be approximately equal!
-        ratio_difference = abs(position_size_ratio - value_safety_factor)
-        console.print(
-            f"[cyan]🧮 DEBUG: Safety factor consistency check: "
-            f"{ratio_difference:.1f} difference[/cyan]"
-        )
-
-        if ratio_difference > 1.0:  # Allow for small rounding differences
-            console.print("[red]🚨 WARNING: Inconsistent safety factors detected![/red]")
-            console.print(
-                f"[red]📊 Position ratio: {position_size_ratio:.1f}x vs "
-                f"Value safety: {value_safety_factor:.1f}x[/red]"
-            )
-            console.print("[red]🔍 This indicates mathematical errors in position sizing[/red]")
-
-        # Use consistent terminology and validated calculations
-        metrics = [
-            (
-                "Account Balance",
-                f"${self.account_balance:,.0f}",
-                f"${self.account_balance:,.0f}",
-                "Same"
-            ),
-            (
-                "Position Size",
-                f"{calc['position_size_btc']:.3f} BTC",
-                "1.000 BTC",
-                f"{position_size_ratio:.0f}x smaller (safer)"
-            ),
-            (
-                "Trade Value",
-                f"${calc['notional_value']:.2f}",
-                f"${dangerous_1btc_value:,.0f}",
-                f"{value_safety_factor:.0f}x smaller (safer)"
-            ),
-            (
-                "Account Risk",
-                f"{calc['risk_percentage']:.1f}%",
-                f"{(dangerous_1btc_value/self.account_balance)*100:.0f}%",
-                "Controlled vs Reckless"
-            ),
-            (
-                "Blow-up Risk",
-                "Protected via small size",
-                "Extreme via large size",
-                f"{value_safety_factor:.0f}x risk reduction"
-            ),
-        ]
-
-        console.print("[green]✅ DEBUG: Position sizing mathematics validated[/green]")
-
-        for metric, safe_val, dangerous_val, safety in metrics:
-            table.add_row(metric, safe_val, dangerous_val, safety)
-
-        console.print(table)
-        return calc
 
 
 class EnhancedModernBarDataProvider:
@@ -1028,265 +802,6 @@ class EnhancedModernBarDataProvider:
         return bars
 
 
-# Import all the visualization functions from DSM demo
-def prepare_bars_dataframe(bars: list[Bar]) -> pd.DataFrame:
-    """Convert NautilusTrader Bar objects to DataFrame for visualization."""
-    data = []
-    for bar in bars:
-        timestamp = pd.Timestamp(bar.ts_event, unit="ns")
-        data.append({
-            "time": timestamp,
-            "open": float(bar.open),
-            "high": float(bar.high),
-            "low": float(bar.low),
-            "close": float(bar.close),
-            "volume": float(bar.volume),
-        })
-
-    df = pd.DataFrame(data)
-    df.set_index("time", inplace=True)
-    return df
-
-
-def create_enhanced_candlestick_chart(df: pd.DataFrame, title: str = "Enhanced OHLC Chart with Real Specs"):
-    """Create candlestick chart with enhanced dark theme for real data."""
-    import pyqtgraph as pg
-
-    # Enhanced dark theme for real data visualization
-    fplt.foreground = "#f0f6fc"
-    fplt.background = "#0d1117"
-
-    pg.setConfigOptions(
-        foreground=fplt.foreground,
-        background=fplt.background,
-        antialias=True,
-    )
-
-    fplt.odd_plot_background = fplt.background
-    fplt.candle_bull_color = "#26d0ce"
-    fplt.candle_bear_color = "#f85149"
-    fplt.candle_bull_body_color = "#238636"
-    fplt.candle_bear_body_color = "#da3633"
-    fplt.volume_bull_color = "#26d0ce40"
-    fplt.volume_bear_color = "#f8514940"
-    fplt.cross_hair_color = "#58a6ff"
-
-    # Create figure with enhanced styling
-    ax, ax2 = fplt.create_plot(title, rows=2)
-
-    # Plot with real data
-    fplt.candlestick_ochl(df[["open", "close", "high", "low"]], ax=ax)
-    fplt.volume_ocv(df[["open", "close", "volume"]], ax=ax2)
-
-    return ax, ax2
-
-
-def add_enhanced_indicators(df: pd.DataFrame, ax, fast_period: int = 10, slow_period: int = 21):
-    """Add enhanced indicators with real specification validation."""
-    # Calculate indicators
-    df["ema_fast"] = df["close"].ewm(span=fast_period, adjust=False).mean()
-    df["ema_slow"] = df["close"].ewm(span=slow_period, adjust=False).mean()
-    df["bb_middle"] = df["close"].rolling(window=20).mean()
-    df["bb_std"] = df["close"].rolling(window=20).std()
-    df["bb_upper"] = df["bb_middle"] + (df["bb_std"] * 2)
-    df["bb_lower"] = df["bb_middle"] - (df["bb_std"] * 2)
-
-    # Plot with enhanced colors
-    fplt.plot(df["ema_fast"], ax=ax, color="#58a6ff", width=2, legend=f"EMA {fast_period}")
-    fplt.plot(df["ema_slow"], ax=ax, color="#ff7b72", width=2, legend=f"EMA {slow_period}")
-    fplt.plot(df["bb_upper"], ax=ax, color="#7c3aed", width=1, style="--", legend="BB Upper")
-    fplt.plot(df["bb_lower"], ax=ax, color="#7c3aed", width=1, style="--", legend="BB Lower")
-
-    return df
-
-
-def add_realistic_trade_markers(df: pd.DataFrame, fills_report: pd.DataFrame, ax):
-    """Add trade markers positioned with realistic position sizes."""
-    if fills_report.empty:
-        return
-
-    buy_times, buy_prices = [], []
-    sell_times, sell_prices = [], []
-
-    for _, fill in fills_report.iterrows():
-        timestamp_val = fill["ts_init"]
-        if isinstance(timestamp_val, pd.Series):
-            timestamp_val = timestamp_val.iloc[0] if not timestamp_val.empty else None
-        if timestamp_val is not None:
-            try:
-                # Safely convert to timestamp
-                if hasattr(timestamp_val, "timestamp") and hasattr(timestamp_val, "floor"):
-                    timestamp = timestamp_val
-                else:
-                    timestamp = pd.Timestamp(timestamp_val)  # type: ignore[arg-type]
-            except (ValueError, TypeError):
-                continue  # Skip invalid timestamps
-
-            try:
-                # Ensure we have a proper Timestamp object
-                if not isinstance(timestamp, pd.Timestamp):
-                    timestamp = pd.Timestamp(timestamp)  # type: ignore
-                trade_time = timestamp.floor("min")
-
-                if trade_time in df.index:
-                    bar_row = df.loc[trade_time]
-                else:
-                    nearest_idx = df.index.get_indexer([trade_time], method="nearest")[0]
-                    bar_row = df.iloc[nearest_idx]
-
-                bar_high = float(bar_row["high"])
-                bar_low = float(bar_row["low"])
-
-                if fill["side"] == "BUY":
-                    buy_times.append(timestamp)
-                    buy_prices.append(bar_low - (bar_high - bar_low) * 0.05)
-                else:
-                    sell_times.append(timestamp)
-                    sell_prices.append(bar_high + (bar_high - bar_low) * 0.05)
-
-            except (IndexError, KeyError, TypeError):
-                price = float(fill["avg_px"])
-                price_offset = price * 0.001
-
-                if fill["side"] == "BUY":
-                    buy_times.append(timestamp)
-                    buy_prices.append(price - price_offset)
-                else:
-                    sell_times.append(timestamp)
-                    sell_prices.append(price + price_offset)
-
-    # Enhanced trade markers
-    if buy_times:
-        buy_df = pd.DataFrame({"price": buy_prices}, index=pd.Index(buy_times))
-        fplt.plot(buy_df, ax=ax, style="^", color="#26d0ce", width=4, legend="Buy (Realistic Size)")
-
-    if sell_times:
-        sell_df = pd.DataFrame({"price": sell_prices}, index=pd.Index(sell_times))
-        fplt.plot(sell_df, ax=ax, style="v", color="#f85149", width=4, legend="Sell (Realistic Size)")
-
-
-def display_enhanced_chart(
-    bars: list[Bar],
-    fills_report: pd.DataFrame,
-    instrument_id: str,
-    specs: dict,
-    position_calc: dict,
-    fast_ema: int = 10,
-    slow_ema: int = 21,
-):
-    """Display ultimate chart with real specs + realistic positions + rich visualization."""
-    # Convert bars to DataFrame
-    df = prepare_bars_dataframe(bars)
-
-    # Create enhanced chart
-    chart_title = f"{instrument_id} - Real Binance Specs + Realistic Positions + Rich Visualization"
-    ax, _ = create_enhanced_candlestick_chart(df, chart_title)  # ax2 used internally for volume
-
-    # Add indicators
-    add_enhanced_indicators(df, ax, fast_ema, slow_ema)
-
-    # Add realistic trade markers
-    add_realistic_trade_markers(df, fills_report, ax)
-
-    # Add specification info to chart
-    info_text = (
-        f"Real Specs: {specs['tick_size']} tick, {specs['step_size']} step | "
-        f"Realistic Position: {position_calc['position_size_btc']:.3f} BTC (${position_calc['notional_value']:.0f})"
-    )
-    console.print(f"[cyan]📊 Chart Info: {info_text}[/cyan]")
-
-    # Show enhanced visualization
-    fplt.show()
-
-    return df
-
-
-def create_post_backtest_chart(bars, fills_report, specs, position_calc):
-    """Create post-backtest chart using existing enhanced visualization."""
-    return display_enhanced_chart(
-        bars, fills_report, "BTC/USDT Enhanced System",
-        specs, position_calc, fast_ema=10, slow_ema=21,
-    )
-
-
-def display_ultimate_performance_summary(
-    account_report, fills_report, starting_balance, specs, position_calc, funding_summary=None, adjusted_final_balance=None,
-):
-    """Display ultimate performance summary combining all enhancements."""
-    table = Table(
-        title="🏆 Ultimate Performance Summary (Real Specs + Realistic Positions + Rich Visualization)",
-        box=box.DOUBLE_EDGE,
-        show_header=True,
-        header_style="bold cyan",
-    )
-
-    table.add_column("Category", style="bold")
-    table.add_column("Metric", style="bold")
-    table.add_column("Value", justify="right")
-
-    # Specifications section
-    table.add_row("📊 Real Specifications", "Price Precision", str(specs["price_precision"]))
-    table.add_row("", "Size Precision", str(specs["quantity_precision"]))
-    table.add_row("", "Tick Size", specs["tick_size"])
-    table.add_row("", "Step Size", specs["step_size"])
-    table.add_row("", "Min Notional", f"${specs['min_notional']}")
-    table.add_row("", "", "")  # Separator
-
-    # Position sizing section
-    table.add_row("💰 Realistic Positions", "Position Size", f"{position_calc['position_size_btc']:.3f} BTC")
-    table.add_row("", "Trade Value", f"${position_calc['notional_value']:.2f}")
-    table.add_row("", "Account Risk", f"{position_calc['risk_percentage']:.1f}%")
-    table.add_row("", "vs Dangerous 1 BTC", f"{119000/position_calc['notional_value']:.0f}x safer")
-    table.add_row("", "", "")  # Separator
-
-    # Performance section
-    if not account_report.empty:
-        try:
-            original_final_balance = float(account_report.iloc[-1]["total"])
-            original_pnl = original_final_balance - starting_balance
-            original_pnl_pct = (original_pnl / starting_balance) * 100
-            original_pnl_color = "green" if original_pnl >= 0 else "red"
-
-            table.add_row("📈 Trading Performance", "Starting Balance", f"${starting_balance:,.2f}")
-            table.add_row("", "Original Final Balance", f"[{original_pnl_color}]${original_final_balance:,.2f}[/{original_pnl_color}]")
-            table.add_row("", "Original P&L", f"[{original_pnl_color}]{original_pnl:+,.2f} ({original_pnl_pct:+.2f}%)[/{original_pnl_color}]")
-
-            # Add funding-adjusted P&L if available
-            if adjusted_final_balance is not None:
-                adjusted_pnl = adjusted_final_balance - starting_balance
-                adjusted_pnl_pct = (adjusted_pnl / starting_balance) * 100
-                adjusted_pnl_color = "green" if adjusted_pnl >= 0 else "red"
-                funding_cost = original_final_balance - adjusted_final_balance
-
-                table.add_row("", "Funding Costs", f"[red]${funding_cost:+.2f}[/red]")
-                table.add_row("", "Adjusted Final Balance", f"[{adjusted_pnl_color}]${adjusted_final_balance:,.2f}[/{adjusted_pnl_color}]")
-                table.add_row("", "Funding-Adjusted P&L", f"[{adjusted_pnl_color}]{adjusted_pnl:+,.2f} ({adjusted_pnl_pct:+.2f}%)[/{adjusted_pnl_color}]")
-
-            table.add_row("", "Total Trades", str(len(fills_report)))
-
-        except Exception as e:
-            table.add_row("📈 Trading Performance", "Error", str(e))
-
-    # Funding costs section (if available)
-    if funding_summary and funding_summary.get("total_events", 0) > 0:
-        table.add_row("", "", "")  # Separator
-
-        # Use production funding data
-        total_funding_cost = funding_summary.get("total_funding_cost", 0)
-        impact_pct = funding_summary.get("account_impact_pct", 0)
-
-        funding_impact = total_funding_cost * -1  # Negative if cost
-        impact_color = "red" if funding_impact < 0 else "green"
-        table.add_row("💸 Production Funding", "Total Events", str(funding_summary["total_events"]))
-        table.add_row("", "Net Funding Impact (negative = cost)", f"[{impact_color}]${funding_impact:+.2f}[/{impact_color}]")
-        table.add_row("", "Account Impact", f"{impact_pct:.3f}% of capital")
-        table.add_row("", "Data Source", funding_summary.get("data_source", "Unknown"))
-        table.add_row("", "Temporal Accuracy", funding_summary.get("temporal_accuracy", "Unknown"))
-        table.add_row("", "Math Integrity", funding_summary.get("mathematical_integrity", "Unknown"))
-
-    console.print(table)
-
-
 async def main():
     """Ultimate main function combining real specs + realistic positions + rich visualization."""
     console.print(Panel.fit(
@@ -1480,7 +995,7 @@ async def main():
     try:
         # Try to access engine's internal bar type registry
         console.print(f"[blue]🔍 DEEP DEBUG: Engine cache has instruments: {len(engine.cache.instruments())}[/blue]")
-        console.print(f"[blue]🔍 DEEP DEBUG: Engine cache bars count: {engine.cache.bar_count()}[/blue]")
+        console.print(f"[blue]🔍 DEEP DEBUG: Engine cache bars count: {engine.cache.bar_count(bar_type)}[/blue]")
 
         # Check if our bar type is in the cache
         bars_in_cache = []
@@ -1596,9 +1111,9 @@ async def main():
     # 🔍 DEEP DEBUG: Post-execution analysis
     console.print("[yellow]🔍 DEEP DEBUG: Post-execution analysis...[/yellow]")
     try:
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache bar count: {engine.cache.bar_count()}[/blue]")
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache order count: {engine.cache.order_count()}[/blue]")
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache position count: {engine.cache.position_count()}[/blue]")
+        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache bar count: {engine.cache.bar_count(bar_type)}[/blue]")
+        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache order count: {engine.cache.orders_total_count()}[/blue]")
+        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache position count: {engine.cache.positions_total_count()}[/blue]")
 
         # 🔍 CRITICAL ANALYSIS: Check if trades were actually executed despite error message
         try:

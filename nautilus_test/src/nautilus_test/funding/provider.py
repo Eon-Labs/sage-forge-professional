@@ -208,7 +208,15 @@ class FundingRateProvider:
 
             # Convert to FundingRateUpdate objects
             funding_rates = []
-            for row in df.iter_rows(named=True):
+            # Handle both Polars and Pandas DataFrames
+            try:
+                # Try Polars first
+                row_data = list(df.iter_rows(named=True))
+            except AttributeError:
+                # Fallback to Pandas
+                row_data = [row.to_dict() for _, row in df.iterrows()]
+            
+            for row in row_data:
                 try:
                     # Convert to pandas timestamp and verify it's valid
                     funding_time_raw = row["funding_time"]

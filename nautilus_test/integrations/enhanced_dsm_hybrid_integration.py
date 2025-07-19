@@ -1395,7 +1395,7 @@ async def main():
     try:
         # Try to access engine's internal bar type registry
         console.print(f"[blue]🔍 DEEP DEBUG: Engine cache has instruments: {len(engine.cache.instruments())}[/blue]")
-        console.print(f"[blue]🔍 DEEP DEBUG: Engine cache bars count: {engine.cache.bar_count()}[/blue]")
+        console.print(f"[blue]🔍 DEEP DEBUG: Engine cache bars count: {engine.cache.bar_count(bar_type)}[/blue]")
 
         # Check if our bar type is in the cache
         bars_in_cache = []
@@ -1512,9 +1512,9 @@ async def main():
     # 🔍 DEEP DEBUG: Post-execution analysis
     console.print("[yellow]🔍 DEEP DEBUG: Post-execution analysis...[/yellow]")
     try:
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache bar count: {engine.cache.bar_count()}[/blue]")
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache order count: {engine.cache.order_count()}[/blue]")
-        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache position count: {engine.cache.position_count()}[/blue]")
+        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache bar count: {engine.cache.bar_count(bar_type)}[/blue]")
+        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache order count: {engine.cache.orders_total_count()}[/blue]")
+        console.print(f"[blue]📊 DEEP DEBUG: Final engine cache position count: {engine.cache.positions_total_count()}[/blue]")
 
         # 🔍 CRITICAL ANALYSIS: Check if trades were actually executed despite error message
         try:

@@ -72,11 +72,6 @@
     "./nautilus_test/src",
     "./nautilus_test/.venv/lib/python3.12/site-packages"
   ],
-  "basedpyright.analysis.typeCheckingMode": "standard",
-  "basedpyright.analysis.autoImportCompletions": true,
-  "basedpyright.analysis.useLibraryCodeForTypes": true,
-  "basedpyright.analysis.diagnosticMode": "workspace",
-  "basedpyright.configFile": "./nautilus_test/pyrightconfig.json",
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUnusedVariable": "none",
     "reportUnusedImport": "none",

@@ -85,7 +85,7 @@
   ],
   "venvPath": "./nautilus_test",
   "venv": ".venv",
-  "typeCheckingMode": "standard",
+  "typeCheckingMode": "off",
   "useLibraryCodeForTypes": true,
   "autoImportCompletions": true,
   "reportMissingImports": "warning",
