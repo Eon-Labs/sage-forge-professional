@@ -1,17 +1,5 @@
 # Project Memory
 
-## 🧠 Workspace
-
-`uv run python -c "import pathlib;g=next((x for x in [pathlib.Path.cwd()]+list(pathlib.Path.cwd().parents) if (x/'.git').exists()),pathlib.Path.cwd());print(g)"`
-
-**Tools**: uv, black, ruff, mypy, pytest  
-**Python**: 3.11+, type hints required  
-**Commands**: Use `make` or `uv run` for operations
-
-## Cache System
-
-\*\*Uses `platformdirs` for platform-appropriate cache directories (not workspace dirs)
-
 ## Project Resources
 
 ## FPPA: FinPlot Pattern Alignment

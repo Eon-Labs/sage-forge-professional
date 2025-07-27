@@ -130,7 +130,7 @@ NautilusTrader's defense against look-ahead bias is not just a set of features, 
 
 ### 3.12 **Order-Book Delta Buffering**
 
-- **buffer_deltas** (DataEngineConfig): Buffers incoming `OrderBookDelta` messages until the venue flag `F_LAST` is received, guaranteeing a _complete_ order-book snapshot before it’s forwarded to strategies/indicators.
+- **buffer_deltas** (DataEngineConfig): Buffers incoming `OrderBookDelta` messages until the venue flag `F_LAST` is received, guaranteeing a _complete_ order-book snapshot before it's forwarded to strategies/indicators.
   ```python
   config = DataEngineConfig(buffer_deltas=True)
   ```
@@ -291,7 +291,528 @@ engine.add_venue(
 )
 ```
 
-## 9. Common Pitfalls & Tips
+## 9. Native Long/Short Target and Stop Loss Management
+
+NautilusTrader provides comprehensive native support for position management through sophisticated order types, bracket orders, and trailing stops. This section covers all available mechanisms for setting targets and stop losses in both backtesting and live trading environments.
+
+### 9.1 **Order Types for Position Management**
+
+NautilusTrader supports a comprehensive set of order types that enable sophisticated risk management:
+
+#### **Core Order Types**
+
+- **`MARKET`**: Immediate execution at best available price
+- **`LIMIT`**: Execute at specific price or better
+- **`STOP_MARKET`**: Conditional market order triggered at stop price
+- **`STOP_LIMIT`**: Conditional limit order triggered at stop price
+- **`MARKET_IF_TOUCHED`**: Market order triggered when price touches trigger level
+- **`LIMIT_IF_TOUCHED`**: Limit order triggered when price touches trigger level
+
+#### **Advanced Order Types**
+
+- **`TRAILING_STOP_MARKET`**: Dynamic stop that trails favorable price movement
+- **`TRAILING_STOP_LIMIT`**: Trailing stop with limit price protection
+- **`MARKET_TO_LIMIT`**: Market order that converts to limit if partially filled
+
+### 9.2 **Position Sides and Order Sides**
+
+Understanding the relationship between position sides and order sides is crucial:
+
+```python
+from nautilus_trader.model.enums import OrderSide, PositionSide
+
+# Position sides
+PositionSide.LONG    # Long position (expecting price to rise)
+PositionSide.SHORT   # Short position (expecting price to fall)
+PositionSide.FLAT    # No position
+
+# Order sides for position management
+OrderSide.BUY        # Creates LONG position or closes SHORT position
+OrderSide.SELL       # Creates SHORT position or closes LONG position
+
+# Position closing logic
+def get_closing_side(position_side: PositionSide) -> OrderSide:
+    if position_side == PositionSide.LONG:
+        return OrderSide.SELL    # Sell to close long
+    elif position_side == PositionSide.SHORT:
+        return OrderSide.BUY     # Buy to close short
+    else:
+        return OrderSide.NO_ORDER_SIDE
+```
+
+### 9.3 **Bracket Orders: Complete Position Management**
+
+Bracket orders are the most powerful tool for comprehensive position management, allowing you to set entry, take-profit, and stop-loss orders simultaneously.
+
+#### **Basic Bracket Order Example**
+
+```python
+from nautilus_trader.model.enums import OrderSide, OrderType, TimeInForce
+
+# Create a bracket order for a long position
+bracket_order_list = self.order_factory.bracket(
+    instrument_id=self.instrument_id,
+    order_side=OrderSide.BUY,                    # Long position
+    quantity=self.instrument.make_qty(100),      # Position size
+
+    # Entry order (default: MARKET)
+    entry_order_type=OrderType.MARKET,
+
+    # Take-profit order (target)
+    tp_price=self.instrument.make_price(last_price + (20 * tick_size)),  # 20 ticks profit
+    tp_order_type=OrderType.LIMIT,                # Default: LIMIT
+
+    # Stop-loss order
+    sl_trigger_price=self.instrument.make_price(last_price - (10 * tick_size)),  # 10 ticks risk
+    sl_order_type=OrderType.STOP_MARKET,          # Default: STOP_MARKET
+
+    time_in_force=TimeInForce.GTC,
+)
+
+# Submit the bracket order
+self.submit_order_list(bracket_order_list)
+```
+
+#### **Advanced Bracket Order Configuration**
+
+```python
+from nautilus_trader.model.enums import ContingencyType, TriggerType
+from decimal import Decimal
+
+# Advanced bracket with conditional entry
+bracket_order_list = self.order_factory.bracket(
+    instrument_id=self.instrument_id,
+    order_side=OrderSide.SELL,                   # Short position
+    quantity=self.instrument.make_qty(100),
+
+    # Conditional entry order
+    entry_order_type=OrderType.LIMIT_IF_TOUCHED,
+    entry_price=self.instrument.make_price(entry_limit_price),
+    entry_trigger_price=self.instrument.make_price(entry_trigger_price),
+
+    # Take-profit with trigger
+    tp_order_type=OrderType.LIMIT_IF_TOUCHED,
+    tp_price=self.instrument.make_price(target_price),
+    tp_trigger_price=self.instrument.make_price(target_trigger),
+    tp_trigger_type=TriggerType.BID_ASK,
+
+    # Trailing stop-loss
+    sl_order_type=OrderType.TRAILING_STOP_MARKET,
+    sl_trailing_offset=Decimal("0.50"),          # 50 cent trailing offset
+    sl_trailing_offset_type=TrailingOffsetType.PRICE,
+    sl_trigger_type=TriggerType.LAST_PRICE,
+
+    # Contingency relationship
+    contingency_type=ContingencyType.OUO,        # One-Updates-Other
+
+    # Emulation for unsupported venues
+    emulation_trigger=TriggerType.BID_ASK,
+
+    time_in_force=TimeInForce.GTC,
+)
+```
+
+### 9.4 **Trailing Stops: Dynamic Risk Management**
+
+Trailing stops automatically adjust stop prices as the market moves favorably, locking in profits while maintaining downside protection.
+
+#### **Trailing Stop Market Orders**
+
+```python
+from nautilus_trader.model.enums import TrailingOffsetType
+from decimal import Decimal
+
+# Trailing stop for long position (sell to close)
+trailing_stop = self.order_factory.trailing_stop_market(
+    instrument_id=self.instrument_id,
+    order_side=OrderSide.SELL,                   # Close long position
+    quantity=position.quantity,                   # Full position size
+
+    # Trailing configuration
+    trailing_offset=Decimal("100"),               # Offset amount
+    trailing_offset_type=TrailingOffsetType.BASIS_POINTS,  # 1% trailing
+
+    # Activation price (when trailing starts)
+    activation_price=self.instrument.make_price(current_price + profit_buffer),
+
+    # Trigger type for monitoring
+    trigger_type=TriggerType.LAST_PRICE,
+
+    # Risk management
+    reduce_only=True,                            # Only reduce position
+    time_in_force=TimeInForce.GTC,
+)
+
+self.submit_order(trailing_stop)
+```
+
+#### **Trailing Stop Limit Orders**
+
+```python
+# More sophisticated trailing stop with limit protection
+trailing_stop_limit = self.order_factory.trailing_stop_limit(
+    instrument_id=self.instrument_id,
+    order_side=OrderSide.BUY,                    # Close short position
+    quantity=position.quantity,
+
+    # Initial limit price
+    price=self.instrument.make_price(initial_limit_price),
+
+    # Trailing offsets
+    trailing_offset=Decimal("0.25"),             # 25 cent trailing for trigger
+    limit_offset=Decimal("0.10"),               # 10 cent offset for limit from trigger
+    trailing_offset_type=TrailingOffsetType.PRICE,
+
+    # Activation and trigger
+    activation_price=self.instrument.make_price(activation_level),
+    trigger_type=TriggerType.BID_ASK,
+
+    reduce_only=True,
+    time_in_force=TimeInForce.GTC,
+)
+```
+
+#### **Trailing Offset Types**
+
+```python
+# Different ways to specify trailing offsets
+TrailingOffsetType.PRICE          # Fixed price offset (e.g., $0.50)
+TrailingOffsetType.BASIS_POINTS   # Percentage offset (e.g., 100bp = 1%)
+TrailingOffsetType.TICKS          # Number of ticks (e.g., 5 ticks)
+TrailingOffsetType.PRICE_TIER     # Venue-specific price tier
+
+# Examples for each type
+trailing_price = Decimal("0.50")      # $0.50 trailing
+trailing_bp = Decimal("100")          # 1% trailing (100 basis points)
+trailing_ticks = Decimal("5")         # 5 tick trailing
+```
+
+### 9.5 **Position-Aware Order Management**
+
+Strategies can intelligently manage orders based on current position state:
+
+```python
+class PositionAwareStrategy(Strategy):
+    def on_bar(self, bar: Bar):
+        # Get current position
+        position = self.cache.position_for_instrument(self.instrument_id)
+
+        if position is None or position.side == PositionSide.FLAT:
+            self.enter_position(bar)
+        elif position.side == PositionSide.LONG:
+            self.manage_long_position(position, bar)
+        elif position.side == PositionSide.SHORT:
+            self.manage_short_position(position, bar)
+
+    def manage_long_position(self, position, bar):
+        """Manage existing long position with dynamic stops/targets."""
+        unrealized_pnl = position.unrealized_pnl(bar.close)
+
+        # Dynamic stop loss based on ATR
+        atr_stop = bar.close - (2.0 * self.atr.value)
+        current_stop = self.get_current_stop_price()
+
+        # Trail stop higher if profitable
+        if unrealized_pnl.as_double() > 0 and atr_stop > current_stop:
+            self.update_stop_loss(atr_stop)
+
+        # Take partial profits at targets
+        if unrealized_pnl.as_double() > self.profit_target:
+            self.take_partial_profits(position.quantity * 0.5)
+
+    def update_stop_loss(self, new_stop_price):
+        """Update existing stop loss order."""
+        # Find current stop loss order
+        stop_orders = [order for order in self.cache.orders_open()
+                      if order.order_type == OrderType.STOP_MARKET
+                      and order.order_side == OrderSide.SELL]
+
+        if stop_orders:
+            # Modify existing stop
+            stop_order = stop_orders[0]
+            self.modify_order(
+                order=stop_order,
+                trigger_price=self.instrument.make_price(new_stop_price)
+            )
+        else:
+            # Create new stop loss
+            stop_order = self.order_factory.stop_market(
+                instrument_id=self.instrument_id,
+                order_side=OrderSide.SELL,
+                quantity=self.cache.position_for_instrument(self.instrument_id).quantity,
+                trigger_price=self.instrument.make_price(new_stop_price),
+                reduce_only=True,
+            )
+            self.submit_order(stop_order)
+```
+
+### 9.6 **Venue-Specific Capabilities**
+
+Different venues support different order types and features:
+
+#### **Binance Futures**
+
+```python
+# Binance supports comprehensive order types
+- MARKET, LIMIT, STOP_MARKET, STOP_LIMIT
+- MARKET_IF_TOUCHED, LIMIT_IF_TOUCHED
+- TRAILING_STOP_MARKET (with activation_price)
+- reduce_only instruction supported
+- Hedging mode with position IDs
+
+# Binance trailing stops require activation_price
+trailing_stop = self.order_factory.trailing_stop_market(
+    instrument_id=instrument_id,
+    order_side=OrderSide.SELL,
+    quantity=quantity,
+    activation_price=activation_price,        # Required for Binance
+    trailing_offset=Decimal("100"),           # Basis points only
+    trailing_offset_type=TrailingOffsetType.BASIS_POINTS,
+)
+```
+
+#### **Interactive Brokers**
+
+```python
+# IB supports most order types with OCA (One-Cancels-All) groups
+- Full bracket order support
+- Configurable OCA behavior (pro-rate vs full cancel)
+- Advanced trigger types (BID_ASK, LAST_PRICE, etc.)
+- Comprehensive trailing stop support
+
+# IB bracket orders can be configured for partial fills
+bracket_order_list = self.order_factory.bracket(
+    instrument_id=instrument_id,
+    order_side=OrderSide.BUY,
+    quantity=quantity,
+    tp_price=target_price,
+    sl_trigger_price=stop_price,
+    contingency_type=ContingencyType.OUO,     # Partial fill handling
+)
+```
+
+#### **dYdX v4**
+
+```python
+# dYdX supports basic order types with on-chain conditions
+- MARKET, LIMIT, STOP_MARKET, STOP_LIMIT
+- Oracle-based trigger prices
+- Size-exact bracket conditions
+- No partial fill complications (all-or-nothing)
+```
+
+### 9.7 **Risk Management Best Practices**
+
+#### **Position Sizing and Risk**
+
+```python
+class RiskManagedStrategy(Strategy):
+    def calculate_position_size(self, entry_price, stop_price, risk_per_trade):
+        """Calculate position size based on risk management rules."""
+        risk_per_share = abs(entry_price - stop_price)
+        max_shares = risk_per_trade / risk_per_share
+
+        # Account for minimum tick size
+        tick_size = self.instrument.price_increment
+        adjusted_shares = int(max_shares / tick_size) * tick_size
+
+        return self.instrument.make_qty(adjusted_shares)
+
+    def create_risk_managed_bracket(self, signal_strength):
+        """Create bracket order with dynamic risk/reward."""
+        current_price = self.last_quote.bid_price
+        atr_value = self.atr.value
+
+        # Dynamic stops based on volatility and signal strength
+        stop_multiplier = 2.0 / signal_strength  # Tighter stops for stronger signals
+        target_multiplier = 3.0 * signal_strength  # Bigger targets for stronger signals
+
+        stop_price = current_price - (stop_multiplier * atr_value)
+        target_price = current_price + (target_multiplier * atr_value)
+
+        # Calculate position size for fixed risk
+        position_size = self.calculate_position_size(
+            entry_price=current_price,
+            stop_price=stop_price,
+            risk_per_trade=self.account_balance * 0.02  # 2% risk per trade
+        )
+
+        return self.order_factory.bracket(
+            instrument_id=self.instrument_id,
+            order_side=OrderSide.BUY,
+            quantity=position_size,
+            tp_price=self.instrument.make_price(target_price),
+            sl_trigger_price=self.instrument.make_price(stop_price),
+        )
+```
+
+#### **Multi-Level Exit Strategy**
+
+```python
+def create_scaled_exit_strategy(self, position_size, entry_price):
+    """Create multiple exit orders for scaled position management."""
+    orders = []
+
+    # First target: 50% at 1:1 risk/reward
+    target_1 = entry_price + (entry_price - self.stop_price)
+    orders.append(self.order_factory.limit(
+        instrument_id=self.instrument_id,
+        order_side=OrderSide.SELL,
+        quantity=position_size * 0.5,
+        price=self.instrument.make_price(target_1),
+        reduce_only=True,
+    ))
+
+    # Second target: 30% at 2:1 risk/reward
+    target_2 = entry_price + 2 * (entry_price - self.stop_price)
+    orders.append(self.order_factory.limit(
+        instrument_id=self.instrument_id,
+        order_side=OrderSide.SELL,
+        quantity=position_size * 0.3,
+        price=self.instrument.make_price(target_2),
+        reduce_only=True,
+    ))
+
+    # Trailing stop for remaining 20%
+    orders.append(self.order_factory.trailing_stop_market(
+        instrument_id=self.instrument_id,
+        order_side=OrderSide.SELL,
+        quantity=position_size * 0.2,
+        trailing_offset=Decimal("50"),  # 50bp trailing
+        trailing_offset_type=TrailingOffsetType.BASIS_POINTS,
+        reduce_only=True,
+    ))
+
+    return orders
+```
+
+### 9.8 **Backtesting Considerations**
+
+#### **Realistic Execution Simulation**
+
+```python
+# Configure venues for realistic bracket order simulation
+engine.add_venue(
+    venue=VENUE,
+    oms_type=OmsType.NETTING,
+    account_type=AccountType.MARGIN,           # Enable short selling
+    starting_balances=[Money(100_000, USD)],
+
+    # Realistic latency for order processing
+    latency_model=LatencyModel(
+        base_latency_nanos=1_000_000,          # 1ms base latency
+        insert_latency_nanos=2_000_000,        # 2ms order submission
+        update_latency_nanos=1_500_000,        # 1.5ms order modifications
+        cancel_latency_nanos=1_000_000,        # 1ms order cancellations
+    ),
+
+    # Realistic fill simulation
+    fill_model=FillModel(
+        prob_fill_on_limit=0.8,                # 80% fill probability on limit orders
+        prob_slippage=0.3,                     # 30% chance of slippage on market orders
+    ),
+
+    # Realistic OHLC sequencing for intrabar fills
+    bar_adaptive_high_low_ordering=True,
+)
+```
+
+#### **Stop Loss and Take Profit Validation**
+
+```python
+def validate_bracket_execution(self, bracket_results):
+    """Validate that bracket orders executed properly in backtest."""
+    entry_order, stop_order, target_order = bracket_results.orders
+
+    # Verify only one exit order filled (OUO behavior)
+    exit_fills = [order for order in [stop_order, target_order] if order.is_closed()]
+    assert len(exit_fills) == 1, "Multiple exit orders filled - OUO not working"
+
+    # Verify realistic fill prices
+    if entry_order.is_filled():
+        fill_price = entry_order.last_event.last_px
+        market_price = self.cache.quote_tick(self.instrument_id).bid_price
+        slippage = abs(fill_price - market_price)
+        assert slippage <= self.max_expected_slippage
+
+    # Verify stop loss triggered at correct price
+    if stop_order.is_filled():
+        trigger_price = stop_order.trigger_price
+        fill_price = stop_order.last_event.last_px
+        # Stop should fill at or worse than trigger price
+        if entry_order.order_side == OrderSide.BUY:  # Long position
+            assert fill_price <= trigger_price, "Stop filled better than trigger"
+```
+
+### 9.9 **Live Trading Considerations**
+
+#### **Order Management in Live Trading**
+
+```python
+class LivePositionManager:
+    def __init__(self, strategy):
+        self.strategy = strategy
+        self.active_stops = {}
+        self.active_targets = {}
+
+    def on_position_opened(self, event):
+        """Set up stop loss and take profit when position opens."""
+        position = event.position
+
+        # Calculate stop and target prices
+        entry_price = position.avg_px_open
+        atr_value = self.strategy.atr.value
+
+        stop_price = entry_price - (2.0 * atr_value) if position.side == PositionSide.LONG else entry_price + (2.0 * atr_value)
+        target_price = entry_price + (3.0 * atr_value) if position.side == PositionSide.LONG else entry_price - (3.0 * atr_value)
+
+        # Create stop loss
+        stop_order = self.strategy.order_factory.stop_market(
+            instrument_id=position.instrument_id,
+            order_side=position.closing_order_side(),
+            quantity=position.quantity,
+            trigger_price=self.strategy.instrument.make_price(stop_price),
+            reduce_only=True,
+        )
+
+        # Create take profit
+        target_order = self.strategy.order_factory.limit(
+            instrument_id=position.instrument_id,
+            order_side=position.closing_order_side(),
+            quantity=position.quantity,
+            price=self.strategy.instrument.make_price(target_price),
+            reduce_only=True,
+        )
+
+        # Submit orders
+        self.strategy.submit_order(stop_order)
+        self.strategy.submit_order(target_order)
+
+        # Track orders
+        self.active_stops[position.id] = stop_order
+        self.active_targets[position.id] = target_order
+
+    def on_position_closed(self, event):
+        """Clean up orders when position closes."""
+        position_id = event.position.id
+
+        # Cancel remaining orders
+        if position_id in self.active_stops:
+            remaining_stop = self.active_stops[position_id]
+            if not remaining_stop.is_closed():
+                self.strategy.cancel_order(remaining_stop)
+            del self.active_stops[position_id]
+
+        if position_id in self.active_targets:
+            remaining_target = self.active_targets[position_id]
+            if not remaining_target.is_closed():
+                self.strategy.cancel_order(remaining_target)
+            del self.active_targets[position_id]
+```
+
+This comprehensive coverage of NautilusTrader's native long/short target and stop loss capabilities provides traders with all the tools needed for sophisticated position management in both backtesting and live trading environments.
+
+## 10. Common Pitfalls & Tips
 
 - **Bias**: Always verify timestamps and use cache methods.
 - **Performance**: Profile heavy computations; use Rust for speed.

@@ -2,10 +2,7 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": {
-          "tools": ["Edit", "MultiEdit", "Write"],
-          "file_paths": ["*.py"]
-        },
+        "matcher": "tools:Edit,MultiEdit,Write file_paths:*.py",
         "hooks": [
           {
             "type": "command",

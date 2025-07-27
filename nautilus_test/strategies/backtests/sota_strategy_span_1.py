@@ -82,13 +82,23 @@ from rich.table import Table
 # Initialize console early for imports
 console = Console()
 
-# Import SOTA strategy components - NT-NATIVE BIAS-FREE 2025 VERSION
+# Import SOTA strategy components - NT-NATIVE BIAS-FREE 2025 VERSION + ENHANCED SOTA
 try:
     from strategies.backtests.nt_native_bias_free_strategy_2025 import NTNativeBiasFreeStrategy
     from strategies.backtests.nt_bias_free_config import create_comprehensive_bias_free_config, get_bias_free_strategy_config
     from strategies.sota.enhanced_profitable_strategy_v2 import create_sota_strategy_config
     NT_NATIVE_2025_AVAILABLE = True
     console.print("[bold green]🔒 2025 NT-NATIVE Bias-Free Strategy available - Using NautilusTrader's built-in bias prevention![/bold green]")
+    
+    # Import enhanced SOTA strategy (Phase 9+)
+    try:
+        from strategies.backtests.nt_enhanced_sota_strategy_2025 import NTEnhancedSOTAStrategy
+        ENHANCED_SOTA_AVAILABLE = True
+        console.print("[bold green]🚀 Enhanced SOTA Strategy (Phase 9+) available - Catch22 + Online Feature Selection![/bold green]")
+    except ImportError:
+        ENHANCED_SOTA_AVAILABLE = False
+        console.print("[yellow]⚠️ Enhanced SOTA strategy not available (Phase 9 features missing)[/yellow]")
+        
 except ImportError:
     try:
         from strategies.backtests.deprecated_biased_implementations.mathematically_guaranteed_bias_free_strategy_2025 import MathematicallyGuaranteedBiasFreeStrategy
@@ -896,8 +906,11 @@ async def main():
 
     console.print(f"[cyan]🔧 Strategy configured: {position_calc['position_size_btc']:.3f} BTC trade size[/cyan]")
 
-    # Create strategy instance
-    if NT_NATIVE_2025_AVAILABLE:
+    # Create strategy instance - PRIORITIZE ENHANCED SOTA (Phase 9+)
+    if ENHANCED_SOTA_AVAILABLE and NT_NATIVE_2025_AVAILABLE:
+        strategy = NTEnhancedSOTAStrategy(config=strategy_config)
+        console.print("[bold green]🚀 Using Enhanced SOTA Strategy (Phase 9+) - NT-Native + Catch22 + Online Feature Selection![/bold green]")
+    elif NT_NATIVE_2025_AVAILABLE:
         strategy = NTNativeBiasFreeStrategy(config=strategy_config)
         console.print("[bold green]🔒 Using NT-NATIVE Bias-Free 2025 Strategy - NautilusTrader's built-in bias prevention![/bold green]")
     elif DEPRECATED_BIASED_2025_AVAILABLE:
@@ -947,7 +960,7 @@ async def main():
             TaskProgressColumn(),
             TimeElapsedColumn(),
             console=console,
-            transient=False,
+            transient=True,  # Make progress bar transient so it disappears when done
         ) as progress:
             backtest_task = progress.add_task("🚀 Running ultimate backtest", total=100)
             
@@ -955,6 +968,11 @@ async def main():
             progress.update(backtest_task, advance=10, description="🚀 Initializing backtest engine")
             engine.run()
             progress.update(backtest_task, advance=90, description="✅ Backtest completed")
+        
+        # Add blank lines after progress bar to ensure clean separation
+        console.print()
+        console.print("[bold green]🎉 Backtest execution completed![/bold green]")
+        console.print()
 
     except Exception as engine_error:
         console.print(f"[red]💥 Backtest failed: {engine_error}[/red]")

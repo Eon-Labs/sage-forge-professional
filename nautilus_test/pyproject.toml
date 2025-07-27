@@ -30,6 +30,8 @@ dependencies = [
     "scipy>=1.16.0",
     "scikit-learn>=1.7.1",
     "stumpy>=1.13.0",
+    "pycatch22>=0.4.5",
+    "scikit-optimize>=0.10.2",
 ]
 
 [project.optional-dependencies]
