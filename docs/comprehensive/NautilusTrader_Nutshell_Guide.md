@@ -9,7 +9,7 @@ A concise guide for users of NautilusTrader (NT), focusing on backtesting, bias 
   - **Strategies**: Subclass `Strategy` in `nautilus_trader/trading/strategy.py`.
   - **Backtesting**: Use `BacktestEngine` (low-level) or `BacktestNode` (high-level) in `nautilus_trader/backtest/`.
   - **Live Trading**: Configure via adapters (e.g., Binance in `nautilus_trader/adapters/binance/`).
-- **Documentation**: Check `docs/` for concepts like [backtesting](concepts/backtesting.md) and [indicators](concepts/indicators.md).
+- **Documentation**: Check `docs/` for concepts like [backtesting](../../repos/nautilus_trader/docs/concepts/backtesting.md) and [indicators](../../repos/nautilus_trader/docs/api_reference/indicators.md).
 - **Examples**: See `examples/backtest/` for strategy templates.
 
 ## 2. Backtesting Basics
