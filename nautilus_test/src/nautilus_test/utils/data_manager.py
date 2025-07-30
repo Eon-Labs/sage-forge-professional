@@ -41,8 +41,8 @@ class ArrowDataManager:
         from datetime import datetime
         from pathlib import Path
 
-        # Add data-source-manager to path
-        dsm_path = Path("/Users/terryli/eon/data-source-manager")
+        # Add local data-source-manager to path
+        dsm_path = Path(__file__).parent.parent.parent.parent.parent / "repos" / "data-source-manager"
         if str(dsm_path) not in sys.path:
             sys.path.insert(0, str(dsm_path))
 
