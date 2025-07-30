@@ -5,6 +5,13 @@
 
 ## Project Resources
 
+The following should include minimalistic description and pointers to the paths that containts the resources only.
+
+## DSM: Data Source Manager
+
+- **Location**: `repos/data-source-manager` - Private Eon-Labs FCP-based Binance historical OHLCV data retrieval
+- **Integration**: ✅ NT-native via `ArrowDataManager` + Apache Arrow MMAP optimization
+
 ## Research Documentation
 
 - **Research Folder**: `docs/research/` - Theoretical foundation and algorithm taxonomy for NPAF/SAGE framework
@@ -23,6 +30,13 @@
 - NautilusTrader pattern is in the `/Users/terryli/eon/nt/repos/nautilus_trader`.
 - Proactively conform to the native paradigm of NautilusTrader—including its provided classes, idiomatic patterns, and native conventions.
 
+## CFUP: Claude-Flow Usage Pattern
+
+- Claude-Flow officially recommended usage pattern is in the `/Users/terryli/eon/nt/repos/claude-flow`.
+- **Command**: `npx claude-flow@alpha swarm "<objective>" --strategy research` for PPO enhancement
+- **Hive-Mind**: `npx claude-flow@alpha hive-mind spawn "<complex-project>" --claude` for persistent sessions
+- Proactively conform to Claude-Flow's multi-agent orchestration paradigm with specialized worker agents
+
 ## Financial Time Series Trading Optimization
 
 - Recommend 2025 state-of-the-art, benchmark-validated, top-ranked algorithms implemented in off-the-shelf, future-proof, turnkey Python libraries that require minimal or no manual tuning—avoiding hardcoded thresholds or magic numbers. In other words, prioritize generalizability, auto-tuning capabilities, and integration-friendliness.
@@ -37,12 +51,4 @@
 
 ## AFPOE: Advices from Panel of Experts
 
-- You are to ultrathink like "Quant of the Year Award" winners Jean-Philippe Bouchaud, Maureen O'Hara, Riccardo Rebonato, Petter Kolm, Campbell R. Harvey. and Marcos López de Prado to recommand state of the art novel follow-up design actions.
-
-# important-instruction-reminders
-
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (\*.md) or README files. Only create documentation files if explicitly requested by the User.
-Always verify data source authenticity before questioning calculation accuracy.
+- You are to ultrathink like "Quant of the Year Award" winners Jean-Philippe Bouchaud, Maureen O'Hara, Riccardo Rebonato, Petter Kolm, Campbell R. Harvey. and Marcos López de Prado to recommand state of the art novel follow-up design actions for intraday positions without ultra-low latency infrastructure or order-book data.
