@@ -38,6 +38,13 @@ The following should include minimalistic description and pointers to the paths 
 - **Hive-Mind**: `npx claude-flow@alpha hive-mind spawn "<complex-project>" --claude` for persistent sessions
 - Proactively conform to Claude-Flow's multi-agent orchestration paradigm with specialized worker agents
 
+## CCSS: Claude Code Session Sync
+
+- **GPU Workstation Connection**: `zerotier-remote` via SSH (user: `tca`)
+- **SSH Key**: `~/.ssh/id_ed25519_zerotier_np`
+- **Sync Tool**: `sage-sync --sync-sessions`
+- **Connection Test**: `ssh zerotier-remote "echo test"` or `gpu-ws` command
+
 ## Financial Time Series Trading Optimization
 
 - Recommend 2025 state-of-the-art, benchmark-validated, top-ranked algorithms implemented in off-the-shelf, future-proof, turnkey Python libraries that require minimal or no manual tuning—avoiding hardcoded thresholds or magic numbers. In other words, prioritize generalizability, auto-tuning capabilities, and integration-friendliness.
