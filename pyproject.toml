@@ -37,6 +37,7 @@ dependencies = [
     "platformdirs>=4.0.0",
     "pycatch22>=0.4.5",
     "tsfresh>=0.21.0",
+    "setuptools>=80.9.0",
 ]
 
 [project.optional-dependencies]
