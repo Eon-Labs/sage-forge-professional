@@ -1,0 +1,77 @@
+#!/bin/bash
+# Safe git commit script that excludes third-party submodules
+# Usage: git-commit-safe "commit message"
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Define third-party submodules that should be excluded
+THIRD_PARTY_SUBMODULES=(
+    "repos/nautilus_trader"
+    "repos/finplot" 
+    "repos/claude-flow"
+)
+
+# Function to check if any third-party submodules are modified
+check_third_party_modifications() {
+    local modified_submodules=()
+    
+    # Get modified submodules
+    while IFS= read -r line; do
+        if [[ $line =~ ^[[:space:]]+M[[:space:]]+(.*) ]]; then
+            modified_submodules+=("${BASH_REMATCH[1]}")
+        fi
+    done < <(git status --porcelain)
+    
+    # Check if any modified submodules are third-party
+    local third_party_modified=()
+    for submodule in "${modified_submodules[@]}"; do
+        for third_party in "${THIRD_PARTY_SUBMODULES[@]}"; do
+            if [[ "$submodule" == "$third_party" ]]; then
+                third_party_modified+=("$submodule")
+            fi
+        done
+    done
+    
+    if [[ ${#third_party_modified[@]} -gt 0 ]]; then
+        echo "⚠️  WARNING: Third-party submodules are modified:"
+        printf "   - %s\n" "${third_party_modified[@]}"
+        echo ""
+        echo "These will be excluded from the commit to avoid tampering with third-party repositories."
+        echo "Only private Eon-Labs repositories will be committed."
+        echo ""
+        
+        # Reset third-party submodules to prevent accidental commits
+        for submodule in "${third_party_modified[@]}"; do
+            echo "🔒 Protecting: $submodule"
+            git submodule update "$submodule"
+        done
+        echo ""
+    fi
+}
+
+# Main execution
+if [[ $# -eq 0 ]]; then
+    echo "Usage: git-commit-safe \"commit message\""
+    echo "       git-commit-safe --check-only"
+    exit 1
+fi
+
+if [[ "$1" == "--check-only" ]]; then
+    check_third_party_modifications
+    exit 0
+fi
+
+COMMIT_MESSAGE="$1"
+
+echo "🔍 Checking for third-party submodule modifications..."
+check_third_party_modifications
+
+echo "✅ Proceeding with safe commit (third-party submodules protected)"
+git add .
+git status --short
+echo ""
+echo "📝 Committing: $COMMIT_MESSAGE"
+git commit -m "$COMMIT_MESSAGE"

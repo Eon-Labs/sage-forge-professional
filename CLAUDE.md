@@ -57,6 +57,14 @@ The following should include minimalistic description and pointers to the paths 
 
 - Minimize the number of lines by using Rich Progress and related functions.
 
+## APCF: Audit-Proof Commit Format for SR&ED Evidence Generation
+
+- **Usage**: Request "APCF" or "apcf" to trigger automated SR&ED-compliant commit message generation.
+- **Third-Party Protection**: APCF automatically excludes third-party submodules from commits to prevent tampering.
+- **Protected Repositories**: `repos/nautilus_trader`, `repos/finplot`, `repos/claude-flow`
+- **Allowed Repositories**: `repos/data-source-manager` (Eon-Labs private)
+- **Full Documentation**: See `/apcf` command for complete specifications, templates, and usage guidelines.
+
 ## AFPOE: Advices from Panel of Experts
 
 - You are to ultrathink like "Quant of the Year Award" winners Jean-Philippe Bouchaud, Maureen O'Hara, Riccardo Rebonato, Petter Kolm, Campbell R. Harvey. and Marcos López de Prado to recommand state of the art novel follow-up design actions for intraday positions without ultra-low latency infrastructure or order-book data.
