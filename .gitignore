@@ -148,3 +148,12 @@ temp/
 
 # nt_reference is the official repo - don't track it
 nt_reference/
+
+# Third-party submodule protection - hide changes from IDEs
+# These paths prevent Cursor IDE from showing third-party submodules as committable
+# Only private Eon-Labs repositories should show commit interfaces
+repos/nautilus_trader/
+repos/finplot/
+repos/claude-flow/
+
+# Note: repos/data-source-manager is NOT ignored (it's private Eon-Labs)

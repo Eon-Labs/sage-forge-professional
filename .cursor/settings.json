@@ -1,0 +1,16 @@
+{
+  "git.ignoredRepositories": [
+    "repos/nautilus_trader",
+    "repos/finplot", 
+    "repos/claude-flow"
+  ],
+  "git.detectSubmodules": false,
+  "git.repositoryScanMaxDepth": 1,
+  "git.openRepositoryInParentFolders": "never",
+  "scm.repositories.visible": 1,
+  "git.alwaysShowStagedChangesResourceGroup": false,
+  "git.showInlineOpenFileAction": false,
+  "scm.defaultViewMode": "list",
+  "scm.alwaysShowProviders": false,
+  "scm.providers.visible": 1
+}

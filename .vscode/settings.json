@@ -53,7 +53,10 @@
     "**/.pytest_cache": true,
     "**/node_modules": true,
     "nt_reference/**": true,
-    "**/.venv": false
+    "**/.venv": false,
+    "repos/nautilus_trader/.git": true,
+    "repos/finplot/.git": true,
+    "repos/claude-flow/.git": true
   },
   "files.watcherExclude": {
     "**/.venv/**": true,
@@ -117,5 +120,15 @@
     "reportOptionalIterable": "none",
     "reportOptionalContextManager": "none",
     "reportOptionalOperand": "none"
-  }
+  },
+  "git.ignoredRepositories": [
+    "repos/nautilus_trader",
+    "repos/finplot", 
+    "repos/claude-flow"
+  ],
+  "git.detectSubmodules": false,
+  "git.repositoryScanMaxDepth": 1,
+  "git.openRepositoryInParentFolders": "never",
+  "scm.repositories.visible": 1,
+  "git.alwaysShowStagedChangesResourceGroup": false
 }
