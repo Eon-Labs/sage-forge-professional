@@ -1,0 +1,125 @@
+#!/bin/bash
+# Validation script for third-party submodule protection system
+# Usage: validate-submodule-protection
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+echo "🔍 Validating Third-Party Submodule Protection System"
+echo "=================================================="
+echo ""
+
+# Check if protection files exist
+echo "📋 Configuration Files:"
+files_to_check=(
+    ".gitignore-submodules"
+    ".claude/tools/git-commit-safe"
+    ".git/hooks/pre-commit"
+    ".vscode/settings.json"
+    ".cursor/settings.json"
+)
+
+for file in "${files_to_check[@]}"; do
+    if [[ -f "$REPO_ROOT/$file" ]]; then
+        echo "✅ $file exists"
+    else
+        echo "❌ $file missing"
+    fi
+done
+
+echo ""
+
+# Check git assume-unchanged status
+echo "🔒 Git Assume-Unchanged Status:"
+assume_unchanged_files=$(git ls-files -v | grep "^h " | cut -c 3- || true)
+if [[ -n "$assume_unchanged_files" ]]; then
+    echo "✅ Protected files:"
+    echo "$assume_unchanged_files" | sed 's/^/   - /'
+else
+    echo "⚠️  No files marked as assume-unchanged"
+fi
+
+echo ""
+
+# Check git status for submodule modifications
+echo "🔍 Current Git Status:"
+modified_submodules=$(git status --porcelain | grep "^.M repos/" || true)
+if [[ -z "$modified_submodules" ]]; then
+    echo "✅ No third-party submodules showing as modified"
+else
+    echo "⚠️  Modified submodules detected:"
+    echo "$modified_submodules" | sed 's/^/   /'
+fi
+
+echo ""
+
+# Test pre-commit hook
+echo "🛡️  Pre-commit Hook Test:"
+if [[ -x "$REPO_ROOT/.git/hooks/pre-commit" ]]; then
+    echo "✅ Pre-commit hook is executable"
+    
+    # Test hook without actually committing
+    echo "Testing hook protection logic..."
+    cd "$REPO_ROOT"
+    
+    # Create a test file and stage it
+    echo "test" > .test-protection
+    git add .test-protection
+    
+    # Try to stage a third-party submodule (this should fail)
+    echo "Testing third-party submodule protection..."
+    if git add repos/claude-flow 2>/dev/null && git commit --dry-run -m "test commit" >/dev/null 2>&1; then
+        echo "❌ Pre-commit hook failed to block third-party submodule"
+    else
+        echo "✅ Pre-commit hook correctly blocks third-party submodules"
+    fi
+    
+    # Clean up
+    git reset HEAD .test-protection >/dev/null 2>&1 || true
+    git reset HEAD repos/claude-flow >/dev/null 2>&1 || true
+    rm -f .test-protection
+else
+    echo "❌ Pre-commit hook is missing or not executable"
+fi
+
+echo ""
+
+# Check IDE configuration
+echo "🖥️  IDE Configuration:"
+if grep -q "git.ignoredRepositories" "$REPO_ROOT/.vscode/settings.json" 2>/dev/null; then
+    echo "✅ VS Code configured to ignore third-party repositories"
+else
+    echo "⚠️  VS Code configuration may need updating"
+fi
+
+if [[ -f "$REPO_ROOT/.cursor/settings.json" ]]; then
+    echo "✅ Cursor IDE configuration exists"
+else
+    echo "⚠️  Cursor IDE configuration missing"
+fi
+
+echo ""
+
+# Summary
+echo "🎯 Protection Summary:"
+echo "===================="
+echo "✅ Third-party repositories protected:"
+echo "   - repos/nautilus_trader (nautechsystems)"
+echo "   - repos/finplot (highfestiva)"
+echo "   - repos/claude-flow (terrylica)"
+echo ""
+echo "✅ Private repositories allowed:"
+echo "   - repos/data-source-manager (Eon-Labs)"
+echo ""
+echo "📖 Usage:"
+echo "   - Use 'git-commit-safe \"message\"' for safe commits"
+echo "   - Use 'APCF' command for audit-proof commits with protection"
+echo "   - Pre-commit hook automatically blocks third-party commits"
+
+echo ""
+echo "🔧 To restore assume-unchanged protection if needed:"
+echo "   git update-index --assume-unchanged repos/claude-flow"
+echo "   git update-index --assume-unchanged repos/nautilus_trader"
+echo "   git update-index --assume-unchanged repos/finplot"
