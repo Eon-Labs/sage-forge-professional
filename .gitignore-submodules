@@ -1,0 +1,10 @@
+# Third-party submodule protection
+# These submodules should NOT be committed when modified
+# Only private Eon-Labs repositories should have their changes committed
+
+# Third-party repositories - ignore when modified
+repos/nautilus_trader
+repos/finplot  
+repos/claude-flow
+
+# Note: repos/data-source-manager is Eon-Labs private - changes CAN be committed
