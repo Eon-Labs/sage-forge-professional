@@ -7,7 +7,7 @@ name = "nt"
 version = "0.1.0"
 description = "NPAF/SAGE: Self-Adaptive Nonparametric Predictive Alpha Factor Framework"
 readme = "docs/README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.14"
 authors = [
     {name = "Eon Labs", email = "terry@eonlabs.com"}
 ]
@@ -35,6 +35,8 @@ dependencies = [
     "pendulum>=3.0.0",
     "polars>=0.20.0",
     "platformdirs>=4.0.0",
+    "pycatch22>=0.4.5",
+    "tsfresh>=0.21.0",
 ]
 
 [project.optional-dependencies]
