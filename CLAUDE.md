@@ -1,5 +1,6 @@
 # PPO: Project Prime Objective
 
+- Domain: financial time series forecasting ("FTSF") for intraday directional trading.
 - Design OHLCV-turning self-adaptive Nonparametric Predictive Alpha Factor ("NPPAF") that's Self-Adaptive Generative Evaluation ("SAGE").
 - SAGE is quantitatively and adaptively assessed through parameter-free, regime-aware evaluation frameworks that discover optimal performance criteria from market structure rather than relying on fixed thresholds, ensuring robust nonparametric out-of-sample viability across market variations.
 
