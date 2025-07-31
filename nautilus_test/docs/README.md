@@ -50,6 +50,18 @@ The `learning_notes/` directory contains the authoritative documentation based o
 
 ---
 
+## 🔧 Additional Documentation
+
+### **[cache_management.md](cache_management.md)**
+- Cache management strategies and optimization
+- Data caching patterns for performance improvement
+
+### **[funding_integration_guide.md](funding_integration_guide.md)**
+- Funding rate integration procedures
+- Perpetual futures funding mechanisms and calculations
+
+---
+
 ## 📈 Journey Summary
 
 ### **Evolution Path:**

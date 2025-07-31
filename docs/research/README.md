@@ -14,6 +14,7 @@ This folder contains research documentation supporting the development of **OHLC
 
 - **[research_motivation.md](./research_motivation.md)** - Research genesis, problem statement, and driving philosophy behind the NPAF/SAGE framework
 - **[adaptive_algorithm_taxonomy_2024_2025.md](./adaptive_algorithm_taxonomy_2024_2025.md)** - Comprehensive categorization of state-of-the-art parameter-free adaptive algorithms
+- **[pending_research_topics.md](./pending_research_topics.md)** - Dynamic progress tracking for ongoing research initiatives
 
 ### 2025 Research Enhancements
 

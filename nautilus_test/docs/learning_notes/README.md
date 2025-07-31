@@ -48,6 +48,26 @@ This directory contains comprehensive learning documentation for your NautilusTr
 - Pipeline validation and error handling
 - Production monitoring and performance optimization
 
+### [08_backtesting_pnl_calculation_lessons.md](08_backtesting_pnl_calculation_lessons.md) 📊 **TESTING**
+- Backtesting PnL calculation methodology
+- Performance measurement and validation
+- Result interpretation and analysis
+
+### [09_native_integration_refactoring_lessons.md](09_native_integration_refactoring_lessons.md) 🔧 **REFACTORING**
+- Native integration refactoring lessons
+- Code optimization and architecture improvements
+- Integration pattern evolution
+
+### [10_finplot_dual_window_resolution.md](10_finplot_dual_window_resolution.md) 📈 **VISUALIZATION**
+- FinPlot dual window resolution techniques
+- Advanced charting and visualization patterns
+- Technical analysis display optimization
+
+### [10_funding_audit_data_verification_lessons.md](10_funding_audit_data_verification_lessons.md) 🔍 **AUDIT**
+- Funding audit data verification procedures
+- Data integrity validation methods
+- Quality assurance and compliance patterns
+
 ## 🎯 Quick Start Guide
 
 1. **Read**: Start with `01_project_overview.md` for context
