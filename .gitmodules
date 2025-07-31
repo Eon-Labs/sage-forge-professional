@@ -1,0 +1,25 @@
+# Public third-party repositories - auto-update from upstream
+[submodule "repos/nautilus_trader"]
+	path = repos/nautilus_trader
+	url = https://github.com/nautechsystems/nautilus_trader.git
+	branch = master
+	update = merge
+
+[submodule "repos/finplot"]
+	path = repos/finplot
+	url = https://github.com/highfestiva/finplot.git
+	branch = master
+	update = merge
+
+[submodule "repos/claude-flow"]
+	path = repos/claude-flow
+	url = https://github.com/terrylica/claude-flow.git
+	branch = main
+	update = merge
+
+# Private Eon-Labs repository - manual version control
+[submodule "repos/data-source-manager"]
+	path = repos/data-source-manager
+	url = https://github.com/Eon-Labs/data-source-manager.git
+	branch = main
+	update = none
