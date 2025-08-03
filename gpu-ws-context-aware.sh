@@ -33,13 +33,22 @@ else
     REMOTE_ENV="GPU workstation (el02)"
 fi
 
-# Colors and logging
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# Colors and logging (with proper terminal detection)
+if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
+    RED=$(tput setaf 1)
+    GREEN=$(tput setaf 2)
+    YELLOW=$(tput setaf 3)
+    BLUE=$(tput setaf 4)
+    CYAN=$(tput setaf 6)
+    NC=$(tput sgr0)
+else
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    CYAN=''
+    NC=''
+fi
 
 # Logging functions
 log_info() { echo -e "${BLUE}ℹ️  $*${NC}"; }
