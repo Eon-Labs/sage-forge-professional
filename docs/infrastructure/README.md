@@ -10,6 +10,8 @@ This directory contains comprehensive documentation for the complete SAGE (Self-
 - **[gpu-workstation-setup.md](gpu-workstation-setup.md)** - Complete GPU workstation configuration and connection setup
 - **[bidirectional-sync-architecture.md](bidirectional-sync-architecture.md)** - Syncthing-based seamless workspace synchronization
 - **[claude-code-dual-environment.md](claude-code-dual-environment.md)** - Claude Code installation and configuration on both environments
+- **[claude-code-session-sync-guide.md](claude-code-session-sync-guide.md)** - Complete guide for syncing Claude Code sessions and development context
+- **[tirex-gpu-workstation-integration.md](tirex-gpu-workstation-integration.md)** - Real NX-AI TiRex 35M model integration with GPU acceleration
 
 ### Network & Connectivity
 - **[zerotier-network-analysis.md](zerotier-network-analysis.md)** - ZeroTier network performance optimization and analysis
@@ -86,6 +88,13 @@ ssh zerotier-remote "nvidia-smi --query-gpu=gpu_name,memory.used,memory.total --
 - **Optimal Performance**: RTX 4090 directly accessible for GPU models
 - **Seamless Sync**: 10-second bidirectional workspace synchronization
 - **Production Ready**: All infrastructure validated and documented
+
+### ✅ Real TiRex Integration Complete (2025-08-03)
+- **Fake Code Eliminated**: Removed synthetic placeholder TiRex implementation
+- **Authentic Model**: Real NX-AI TiRex 35M parameter xLSTM integrated
+- **GPU Acceleration**: Custom CUDA kernels operational on RTX 4090
+- **Session Sync**: Complete Claude Code conversation history preserved
+- **Backtesting Framework**: NT-native backtesting system implemented
 
 ### ✅ Network Optimization
 - **ZeroTier Performance**: Direct P2P connection, local network speeds

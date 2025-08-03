@@ -44,6 +44,8 @@ The following should include minimalistic description and pointers to the paths 
 - **SSH Key**: `~/.ssh/id_ed25519_zerotier_np`
 - **Sync Tool**: `sage-sync --sync-sessions`
 - **Connection Test**: `ssh zerotier-remote "echo test"` or `gpu-ws` command
+- **Complete Documentation**: `docs/infrastructure/claude-code-session-sync-guide.md`
+- **TiRex Integration Guide**: `docs/infrastructure/tirex-gpu-workstation-integration.md`
 
 ## Financial Time Series Trading Optimization
 
