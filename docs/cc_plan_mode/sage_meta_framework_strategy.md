@@ -399,6 +399,9 @@ def week1_correlation_analysis():
 ### **Week 2: Regime Analysis and Dynamic Weighting**
 
 #### **Day 8-10: TiRex Regime Detection Development**
+
+**🔥 DETAILED IMPLEMENTATION PLAN**: [TiRex Regime Detection Implementation Plan](tirex_regime_detection_implementation_plan.md)
+
 ```python
 def week2_regime_development():
     """Develop TiRex-based regime detection system"""
@@ -427,6 +430,12 @@ def week2_regime_development():
         'transition_probabilities': calculate_transition_matrix(regime_indicators)
     }
 ```
+
+**Implementation Notes**: The TiRex regime detection is the **critical breakthrough component** that enables SAGE's dynamic model weighting. See the detailed implementation plan for:
+- NT-native Actor/Strategy pattern integration
+- 4-level fallback system for robust operation
+- Performance optimization for backtesting (<50ms latency target)
+- Comprehensive error handling and memory management
 
 #### **Day 11-12: Dynamic Weighting System**
 ```python

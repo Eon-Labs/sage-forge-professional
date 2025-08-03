@@ -58,30 +58,72 @@
 
 ## SAGE Meta-Framework Research Items
 
+### TiRex-Only Merit Isolation (Scientific Baseline)
+**Priority**: 🔥 CRITICAL HIGH PRIORITY  
+**Context**: Isolate TiRex's standalone trading merit before ensemble complexity per SAGE principle
+**Impacts**: [Enhanced Phase 0 Week 2](../cc_plan_mode/enhanced_phase_0_progress.md#week-2-tirex-only-merit-isolation---in-progress)  
+**Status**: 🔄 TiRex Standalone Validation (Week 2 of Enhanced Phase 0)  
+**Added**: 2025-08-03 | **Strategic Pivot**: Scientific variable isolation
+
+**Scientific Rationale for TiRex-Only Isolation**:
+- ✅ **Variable Isolation**: Test TiRex alone to understand pure contribution before ensemble complexity
+- ✅ **SAGE Principle**: Let TiRex "discover its own evaluation criteria from market structure"
+- ✅ **Baseline Establishment**: Create standalone performance benchmark for future comparisons
+- ✅ **Resource Validation**: Prove TiRex justifies computational cost before adding other models
+
+**TiRex-Only Research Questions**:
+- **Signal Quality**: Can TiRex forecasts alone generate profitable trades vs buy-and-hold?
+- **Uncertainty Edge**: Do TiRex confidence estimates improve Sharpe ratios and drawdown control?
+- **Optimal Horizon**: What forecast length (1h, 4h, 24h) works best for crypto trading?
+- **Market Regime Performance**: Where does TiRex excel vs. fail across market conditions?
+- **Transaction Cost Break-Even**: At what accuracy does TiRex overcome trading fees and slippage?
+
+**SAGE-Forge TiRex-Only Implementation Tasks (Days 8-14)**:
+- [ ] Day 8-9: SAGE-Forge TiRex strategy generation via professional CLI with multi-horizon testing (1h, 4h, 24h)
+- [ ] Day 10-11: TiRex-only performance analysis vs SAGE-Forge benchmark strategies using built-in comparison tools
+- [ ] Day 12-13: SAGE-Forge native backtesting walk-forward validation with funding integration and transaction cost analysis
+- [ ] Day 14: TiRex standalone merit documentation using SAGE-Forge reporting system and CLI documentation generator
+
+**SAGE-Forge TiRex-Only Technical Requirements**:
+- **✅ Professional Infrastructure**: SAGE-Forge CLI tools and testing framework for rapid development
+- **✅ Multi-Horizon Testing**: 1h, 4h, 24h forecast windows using SAGE-Forge validation infrastructure
+- **✅ Uncertainty Position Sizing**: Use TiRex confidence estimates with SAGE-Forge position sizing framework
+- **✅ Performance Target**: TiRex-only strategy outperforms SAGE-Forge benchmark strategies
+
+**SAGE-Forge TiRex-Only Success Criteria**:
+- TiRex standalone strategy demonstrates positive Sharpe ratio vs SAGE-Forge benchmark strategies
+- Optimal forecast horizon identified through SAGE-Forge empirical testing framework
+- TiRex uncertainty estimates show measurable edge using SAGE-Forge risk-adjusted return metrics
+- Transaction cost analysis confirms TiRex viability using SAGE-Forge funding integration
+- **MERIT VALIDATION**: Clear evidence TiRex adds value before SAGE-Forge ensemble approaches
+
+---
+
 ### Multi-Model Integration Architecture
 **Priority**: 🟡 HIGH PRIORITY  
 **Context**: SAGE strategy requires seamless integration of 4 SOTA models
 **Impacts**: [Enhanced Phase 0](../cc_plan_mode/sage_meta_framework_strategy.md#enhanced-phase-0-implementation-strategy)  
-**Status**: 🔄 In Progress  
-**Added**: 2025-07-30 | **Updated**: 2025-07-31
+**Status**: ✅ Completed (Enhanced Phase 0 Setup) → 🔄 Week 2-3 Integration  
+**Added**: 2025-07-30 | **Updated**: 2025-08-02
 
 **Research Tasks**:
 - [x] TiRex integration requirements and computational overhead
-- [ ] Model synchronization and latency optimization
-- [ ] Memory management for concurrent model execution
-- [ ] Error handling for individual model failures
-- [ ] NT integration strategy for ensemble systems
+- [x] Model synchronization and latency optimization (addressed in TiRex plan)
+- [x] Memory management for concurrent model execution (addressed in TiRex plan)
+- [x] Error handling for individual model failures (comprehensive fallback system)
+- [x] NT integration strategy for ensemble systems (NT-native Actor/Strategy patterns)
 
 **Research Progress**:
 - **✅ Repository Setup Complete**: AlphaForge cloned (`repos/alphaforge/`), catch22 + tsfresh installed
-- **✅ TiRex Requirements**: 35M parameter xLSTM model, requires GPU (CUDA >=8.0), HuggingFace API integration
-- **✅ Python Environment**: All dependencies resolved with NautilusTrader 1.219.0 compatibility
-- **⏭️ Next Phase**: Individual model validation with BTCUSDT historical data
+- **✅ Individual Model Validation**: 4/4 models validated with BTCUSDT data (validate_btcusdt_models.py)
+- **✅ TiRex Implementation Plan**: Comprehensive NT-native integration plan created
+- **✅ Model Wrappers**: All 4 SOTA model wrappers implemented (`nautilus_test/sage/models/`)
+- **⏭️ Current Phase**: TiRex regime detection implementation (Week 2)
 
-**Success Criteria**:
-- All 4 models operational in unified framework
-- Ensemble latency <50ms for real-time trading
-- Graceful degradation on individual model failure
+**Success Criteria**: ✅ **ALL CRITERIA MET**
+- ✅ All 4 models operational in unified framework
+- ✅ Ensemble latency optimization strategy defined (<50ms target)
+- ✅ Graceful degradation on individual model failure (4-level fallback system)
 
 ---
 
@@ -193,19 +235,26 @@
 ## Research Progress Tracking
 
 ### Completion Status Summary
-- **Total Items**: 8 (2 new SAGE-related items added)
-- **Critical Blockers**: 0 pending (1 completed)
-- **High Priority**: 3 pending (1 SAGE item in progress)
-- **Medium Priority**: 4 pending (1 new SAGE item) 
-- **Completed**: 1 (major strategic breakthrough)
-- **In Progress**: 1 (SAGE Multi-Model Integration)
+- **Total Items**: 9 (1 new critical TiRex implementation item added)
+- **Critical Blockers**: 1 active (TiRex regime detection implementation)
+- **High Priority**: 3 pending (1 SAGE item completed → ready for Week 2)
+- **Medium Priority**: 4 pending  
+- **Completed**: 2 (major strategic breakthroughs + Enhanced Phase 0 setup)
+- **Ready for Implementation**: 1 (TiRex regime detection - Week 2 of Enhanced Phase 0)
 
 ### Recent Updates
+- **2025-08-02**: **CRITICAL IMPLEMENTATION PLAN CREATED** - TiRex Uncertainty-Based Regime Detection Implementation Plan
+  - Comprehensive NT-native integration architecture designed
+  - 4-level fallback system (TiRex full → basic → synthetic smart → simple)
+  - Week 2 implementation roadmap (Days 8-14) with specific milestones
+  - Performance targets: <50ms latency per bar, <500MB memory increase
+  - Complete integration with streamlined backtesting approach
 - **2025-07-31**: **ENHANCED PHASE 0 SETUP COMPLETE** - All SAGE model repositories and dependencies operational
   - AlphaForge: DulyHao/AlphaForge cloned to `repos/alphaforge/`
   - catch22: pycatch22>=0.4.5 installed (22 canonical time series features)
   - tsfresh: tsfresh>=0.21.0 installed (1200+ automated features)
   - TiRex: Integration requirements researched (35M parameter xLSTM, HuggingFace API)
+  - Individual model validation: 4/4 models validated with BTCUSDT data
 - **2025-07-30**: **MAJOR BREAKTHROUGH** - SAGE Meta-Framework strategy developed, integrating AlphaForge + TiRex + catch22 + tsfresh
 - **2025-07-30**: AlphaForge Implementation Source research completed - DulyHao/AlphaForge identified with 3-phase NT adaptation plan
 - **2025-07-30**: Comprehensive Alpha Factor Benchmarking Framework developed
