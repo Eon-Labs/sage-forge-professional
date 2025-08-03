@@ -23,3 +23,6 @@
 	url = https://github.com/Eon-Labs/data-source-manager.git
 	branch = main
 	update = none
+[submodule "repos/tirex"]
+	path = repos/tirex
+	url = https://github.com/NX-AI/tirex.git

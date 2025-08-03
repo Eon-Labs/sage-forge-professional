@@ -62,7 +62,7 @@ class TiRexSageStrategy(Strategy):
         self.min_confidence = strategy_config.get('min_confidence', 0.6)
         self.max_position_size = strategy_config.get('max_position_size', 0.1)  # 10% of account
         self.risk_per_trade = strategy_config.get('risk_per_trade', 0.02)  # 2% risk per trade
-        self.model_path = strategy_config.get('model_path', '/home/tca/eon/nt/models/tirex')
+        self.model_name = strategy_config.get('model_name', 'NX-AI/TiRex')  # HuggingFace model ID
         
         # Initialize components
         self.tirex_model = None
@@ -87,12 +87,13 @@ class TiRexSageStrategy(Strategy):
         
         # Initialize TiRex model
         try:
-            self.tirex_model = TiRexModel(model_path=self.model_path, device="cuda")
+            # Use real TiRex model from HuggingFace
+            self.tirex_model = TiRexModel(model_name=self.model_name, prediction_length=1)
             if not self.tirex_model.is_loaded:
                 self.log.error("Failed to load TiRex model")
                 return
             
-            console.print("✅ TiRex model loaded successfully")
+            console.print("✅ Real TiRex 35M parameter model loaded successfully")
             
         except Exception as e:
             self.log.error(f"TiRex model initialization failed: {e}")
