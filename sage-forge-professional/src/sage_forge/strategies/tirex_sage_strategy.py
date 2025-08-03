@@ -52,17 +52,41 @@ class TiRexSageStrategy(Strategy):
     - Real-time performance monitoring
     """
     
-    def __init__(self, config: Optional[Dict] = None):
+    def __init__(self, config=None):
         """Initialize TiRex SAGE Strategy."""
         
-        # Load configuration
-        strategy_config = config or get_config().get('tirex_strategy', {})
-        
-        # Strategy parameters
-        self.min_confidence = strategy_config.get('min_confidence', 0.6)
-        self.max_position_size = strategy_config.get('max_position_size', 0.1)  # 10% of account
-        self.risk_per_trade = strategy_config.get('risk_per_trade', 0.02)  # 2% risk per trade
-        self.model_name = strategy_config.get('model_name', 'NX-AI/TiRex')  # HuggingFace model ID
+        # Handle both dict and StrategyConfig objects with improved detection
+        if config is None:
+            strategy_config = get_config().get('tirex_strategy', {})
+            self.min_confidence = strategy_config.get('min_confidence', 0.6)
+            self.max_position_size = strategy_config.get('max_position_size', 0.1)
+            self.risk_per_trade = strategy_config.get('risk_per_trade', 0.02)
+            self.model_name = strategy_config.get('model_name', 'NX-AI/TiRex')
+        elif hasattr(config, 'min_confidence') and not hasattr(config, 'get'):
+            # StrategyConfig object (has attributes but no get method)
+            self.min_confidence = getattr(config, 'min_confidence', 0.6)
+            self.max_position_size = getattr(config, 'max_position_size', 0.1)
+            self.risk_per_trade = getattr(config, 'risk_per_trade', 0.02)
+            self.model_name = getattr(config, 'model_name', 'NX-AI/TiRex')
+        elif hasattr(config, 'get'):
+            # Dict-like object with get method
+            self.min_confidence = config.get('min_confidence', 0.6)
+            self.max_position_size = config.get('max_position_size', 0.1)
+            self.risk_per_trade = config.get('risk_per_trade', 0.02)
+            self.model_name = config.get('model_name', 'NX-AI/TiRex')
+        else:
+            # Fallback: try both attribute and dict access
+            try:
+                self.min_confidence = getattr(config, 'min_confidence', 0.6)
+                self.max_position_size = getattr(config, 'max_position_size', 0.1)
+                self.risk_per_trade = getattr(config, 'risk_per_trade', 0.02)
+                self.model_name = getattr(config, 'model_name', 'NX-AI/TiRex')
+            except (AttributeError, TypeError):
+                # Last resort defaults
+                self.min_confidence = 0.6
+                self.max_position_size = 0.1
+                self.risk_per_trade = 0.02
+                self.model_name = 'NX-AI/TiRex'
         
         # Initialize components
         self.tirex_model = None
@@ -99,22 +123,56 @@ class TiRexSageStrategy(Strategy):
             self.log.error(f"TiRex model initialization failed: {e}")
             return
         
-        # Initialize position sizer
+        # Initialize position sizer with correct constructor parameters
+        specs = {
+            "min_qty": 0.001,  # Minimum BTC quantity 
+            "step_size": 0.001,  # Step size for BTC
+            "current_price": 50000.0  # Will be updated with real price later
+        }
+        # Fix portfolio account access - use Venue and Currency objects
+        from nautilus_trader.model.identifiers import Venue
+        from nautilus_trader.model.objects import Currency
+        venue = Venue("BINANCE")
+        account = self.portfolio.account(venue)
+        usdt_currency = Currency.from_str("USDT")
+        account_balance = float(account.balance_total(usdt_currency))
         self.position_sizer = RealisticPositionSizer(
-            max_position_size=self.max_position_size,
-            risk_per_trade=self.risk_per_trade
+            specs=specs,
+            account_balance=account_balance,
+            max_risk_pct=self.risk_per_trade
         )
         
-        # Subscribe to data
+        # Subscribe to data - create proper BarType to match our 15-minute data catalog
+        from nautilus_trader.model.data import BarType, BarSpecification
+        from nautilus_trader.model.enums import BarAggregation, PriceType, AggregationSource
+        
         for instrument_id in self.cache.instrument_ids():
+            # Create 15-minute bar specification to match our DSM data
+            bar_spec = BarSpecification(
+                step=15,
+                aggregation=BarAggregation.MINUTE,
+                price_type=PriceType.LAST
+            )
+            
+            # Create bar type that matches our data catalog format
+            bar_type = BarType(
+                instrument_id=instrument_id,
+                bar_spec=bar_spec,
+                aggregation_source=AggregationSource.EXTERNAL
+            )
+            
             self.subscribe_bars(
-                bar_type=f"{instrument_id}-1-MINUTE-LAST-INTERNAL",
+                bar_type=bar_type,
                 await_partial=True
             )
             self.instrument_id = instrument_id  # Store for trading
-            break  # Use first instrument for now
+            console.print(f"✅ Subscribed to {bar_type}")
+            break
         
-        console.print(f"✅ Subscribed to {self.instrument_id}")
+        if not hasattr(self, 'instrument_id') or self.instrument_id is None:
+            console.print("❌ No instruments found for subscription")
+        else:
+            console.print(f"✅ Using instrument: {self.instrument_id}")
         
         self.log.info("TiRex SAGE Strategy started successfully")
     

@@ -19,12 +19,13 @@ from decimal import Decimal
 
 import polars as pl
 from nautilus_trader.backtest.node import BacktestNode
-from nautilus_trader.backtest.config import BacktestRunConfig, BacktestVenueConfig, BacktestEngineConfig
-from nautilus_trader.config import ImportableStrategyConfig
+from nautilus_trader.backtest.config import BacktestRunConfig, BacktestVenueConfig, BacktestEngineConfig, BacktestDataConfig
+from nautilus_trader.config import StrategyConfig, ImportableStrategyConfig
 from nautilus_trader.model.identifiers import InstrumentId, Venue
 from nautilus_trader.model.instruments import CryptoPerpetual
 from nautilus_trader.model.objects import Money, Price, Quantity
 from nautilus_trader.model.enums import AccountType, OmsType
+from nautilus_trader.config import InvalidConfiguration
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
@@ -36,6 +37,8 @@ from sage_forge.data.manager import ArrowDataManager
 from sage_forge.strategies.tirex_sage_strategy import TiRexSageStrategy
 
 console = Console()
+
+
 
 
 class TiRexBacktestEngine:
@@ -61,6 +64,7 @@ class TiRexBacktestEngine:
         self.end_date = None
         self.instrument_id = None
         self.initial_balance = Decimal("100000.00")  # $100K default
+        self.market_bars = []  # Store NT-native Bar objects
         
         console.print("🏗️ TiRex SAGE Backtesting Engine initialized")
     
@@ -91,6 +95,7 @@ class TiRexBacktestEngine:
         self.start_date = datetime.strptime(start_date, "%Y-%m-%d")
         self.end_date = datetime.strptime(end_date, "%Y-%m-%d")
         self.initial_balance = Decimal(str(initial_balance))
+        self._current_timeframe = timeframe  # Store for later use in data catalog
         
         # Create instrument ID
         self.instrument_id = InstrumentId.from_str(f"{symbol}-PERP.BINANCE")
@@ -101,7 +106,7 @@ class TiRexBacktestEngine:
     def _prepare_historical_data(self, symbol: str, timeframe: str) -> bool:
         """Prepare historical data using Data Source Manager."""
         try:
-            console.print("📊 Fetching historical data from DSM...")
+            console.print("📊 Fetching real market data from DSM...")
             
             with Progress(
                 SpinnerColumn(),
@@ -113,28 +118,61 @@ class TiRexBacktestEngine:
                 
                 task = progress.add_task("Loading market data...", total=None)
                 
-                # Convert timeframe to DSM format
-                dsm_timeframe = self._convert_timeframe(timeframe)
-                
-                # Fetch data using DSM
+                # Fetch real data using DSM integration
                 try:
-                    # This would use the actual DSM API
-                    # For now, we'll simulate the data fetch
                     days_diff = (self.end_date - self.start_date).days
                     progress.update(task, description=f"Fetching {days_diff} days of {symbol} data...")
                     
-                    # In production, this would be:
-                    # data = self.data_manager.get_historical_data(
-                    #     symbol=symbol,
-                    #     start_date=self.start_date,
-                    #     end_date=self.end_date,
-                    #     timeframe=dsm_timeframe
-                    # )
+                    # Use the existing DSM integration via ArrowDataManager
+                    df_polars = self.data_manager.fetch_real_market_data(
+                        symbol=symbol,
+                        start_time=self.start_date,
+                        end_time=self.end_date,
+                        timeframe=timeframe
+                    )
                     
-                    # For demo, create sample data structure
-                    console.print("✅ Historical data prepared successfully")
-                    console.print(f"   Data points: {days_diff * 1440 // self._timeframe_to_minutes(timeframe):,}")
-                    console.print(f"   Memory usage: ~{days_diff * 0.5:.1f} MB")
+                    if df_polars is None or df_polars.height == 0:
+                        console.print("❌ No data returned from DSM")
+                        return False
+                    
+                    console.print("✅ Real market data fetched successfully")
+                    console.print(f"   Data points: {df_polars.height:,}")
+                    console.print(f"   Memory usage: ~{df_polars.estimated_size('mb'):.1f} MB")
+                    
+                    # Convert to NT-native Bar objects with correct timeframe
+                    from nautilus_trader.model.data import BarSpecification
+                    from nautilus_trader.model.enums import BarAggregation, PriceType
+                    
+                    # Create bar specification that matches the actual timeframe
+                    timeframe_to_step = {
+                        "1m": 1,
+                        "5m": 5,
+                        "15m": 15,
+                        "1h": 60,
+                        "4h": 240,
+                        "1d": 1440
+                    }
+                    
+                    step = timeframe_to_step.get(timeframe, 15)  # Default to 15m
+                    aggregation = BarAggregation.MINUTE if timeframe != "1d" else BarAggregation.DAY
+                    
+                    bar_spec = BarSpecification(
+                        step=step,
+                        aggregation=aggregation,
+                        price_type=PriceType.LAST
+                    )
+                    
+                    instrument_id_str = f"{symbol}-PERP.BINANCE"
+                    bars = self.data_manager.to_nautilus_bars(
+                        df_polars, 
+                        instrument_id=instrument_id_str,
+                        bar_spec=bar_spec
+                    )
+                    
+                    console.print(f"   NT Bars created: {len(bars):,}")
+                    
+                    # Store bars for backtesting
+                    self.market_bars = bars
                     
                     return True
                     
@@ -174,41 +212,134 @@ class TiRexBacktestEngine:
         """Create NautilusTrader backtest configuration."""
         console.print("⚙️ Creating NT-native backtest configuration...")
         
-        # Venue configuration
+        # Venue configuration with correct enum string values
         venue_config = BacktestVenueConfig(
             name="BINANCE",
-            oms_type=OmsType.HEDGING,
-            account_type=AccountType.MARGIN,
+            oms_type="HEDGING",  # Use string instead of enum
+            account_type="MARGIN",  # Use string instead of enum
             base_currency="USDT",
             starting_balances=[f"{self.initial_balance} USDT"],
             default_leverage=Decimal("10.0"),  # 10x leverage for crypto futures
-            leverages={self.instrument_id: Decimal("10.0")},
+            leverages={str(self.instrument_id): Decimal("10.0")},
         )
         
-        # Strategy configuration
+        # Strategy configuration using ImportableStrategyConfig
         strategy_config = ImportableStrategyConfig(
             strategy_path="sage_forge.strategies.tirex_sage_strategy:TiRexSageStrategy",
-            config_path=None,
+            config_path="sage_forge.strategies.tirex_sage_config:TiRexSageStrategyConfig",
             config={
                 "instrument_id": str(self.instrument_id),
                 "min_confidence": 0.6,
                 "max_position_size": 0.1,
                 "risk_per_trade": 0.02,
-                "model_path": "/home/tca/eon/nt/models/tirex",
-                "device": "cuda"  # GPU acceleration
+                "model_name": "NX-AI/TiRex",
+                "device": "cuda"
             }
         )
         
-        # Engine configuration
+        # Engine configuration using strategy config
         engine_config = BacktestEngineConfig(
             strategies=[strategy_config]
         )
         
-        # Complete backtest configuration
+        # Create data configuration using real DSM data
+        data_configs = []
+        if hasattr(self, 'market_bars') and self.market_bars:
+            # Create proper NT data catalog
+            import tempfile
+            import pandas as pd
+            from nautilus_trader.persistence.catalog import ParquetDataCatalog
+            from nautilus_trader.model.instruments import CryptoPerpetual
+            from nautilus_trader.model.objects import Price, Money, Quantity
+            from nautilus_trader.model.identifiers import Symbol, Venue, InstrumentId
+            from nautilus_trader.model.enums import AssetClass, InstrumentClass
+            from nautilus_trader.model.currencies import USDT, BTC
+            
+            # Create temp directory for backtest catalog
+            temp_dir = Path(tempfile.mkdtemp(prefix="tirex_backtest_"))
+            
+            # Create proper NT data catalog with the expected directory structure
+            catalog = ParquetDataCatalog(str(temp_dir))
+            
+            # Create instrument definition for the catalog
+            instrument = CryptoPerpetual(
+                instrument_id=self.instrument_id,
+                raw_symbol=Symbol("BTCUSDT"),
+                base_currency=BTC,  # Bitcoin is the base currency
+                quote_currency=USDT,
+                settlement_currency=USDT,
+                is_inverse=False,
+                price_precision=2,
+                size_precision=3,
+                price_increment=Price.from_str("0.01"),
+                size_increment=Quantity.from_str("0.001"),
+                margin_init=Decimal("0.10"),
+                margin_maint=Decimal("0.05"),
+                maker_fee=Decimal("0.0002"),
+                taker_fee=Decimal("0.0004"),
+                ts_event=0,
+                ts_init=0,
+            )
+            
+            # Write instrument to catalog first - this creates instrument data
+            catalog.write_data([instrument])
+            
+            # Write bar data to catalog - this creates the proper directory structure:
+            # catalog_root/data/bar/{bar_type_identifier}/timestamp.parquet
+            catalog.write_data(self.market_bars)
+            
+            # Debug: Check what was actually created
+            import os
+            data_dir = temp_dir / "data"
+            if data_dir.exists():
+                bar_dir = data_dir / "bar"
+                if bar_dir.exists():
+                    console.print(f"✅ NT catalog structure created: {list(bar_dir.iterdir())}")
+                else:
+                    console.print("❌ No bar directory created in NT catalog")
+            else:
+                console.print("❌ No data directory created in NT catalog")
+            
+            console.print(f"📄 Written {len(self.market_bars)} bars to NT catalog: {temp_dir}")
+            
+            # Create BacktestDataConfig using the proper NT catalog
+            # NT expects the FULL bar type identifier for BacktestDataConfig, not just bar_spec
+            if self.market_bars:
+                # Use the exact bar_type string from our created bars
+                first_bar = self.market_bars[0]
+                full_bar_type_str = str(first_bar.bar_type)
+                console.print(f"🔍 Using full bar type from data: {full_bar_type_str}")
+                
+                # For BacktestDataConfig, we need to specify the full bar type identifier
+                # which matches the directory name: BTCUSDT-PERP.BINANCE-15-MINUTE-LAST-EXTERNAL
+                data_config = BacktestDataConfig(
+                    catalog_path=str(temp_dir),
+                    data_cls="nautilus_trader.model.data:Bar",
+                    instrument_id=str(self.instrument_id),
+                    # Use bar_types parameter with the full bar type string
+                    bar_types=[full_bar_type_str],
+                    start_time=int(self.start_date.timestamp() * 1_000_000_000),
+                    end_time=int(self.end_date.timestamp() * 1_000_000_000),
+                )
+                console.print(f"📊 BacktestDataConfig using bar_types: [{full_bar_type_str}]")
+            else:
+                # Fallback if no bars
+                data_config = BacktestDataConfig(
+                    catalog_path=str(temp_dir),
+                    data_cls="nautilus_trader.model.data:Bar",
+                    instrument_id=str(self.instrument_id),
+                    bar_spec="15-MINUTE-LAST",
+                    start_time=int(self.start_date.timestamp() * 1_000_000_000),
+                    end_time=int(self.end_date.timestamp() * 1_000_000_000),
+                )
+                console.print("📊 BacktestDataConfig using fallback bar_spec: 15-MINUTE-LAST")
+            data_configs.append(data_config)
+        
+        # Complete backtest configuration with real data
         backtest_config = BacktestRunConfig(
             engine=engine_config,
             venues=[venue_config],
-            data=[],  # Will be populated with DSM data
+            data=data_configs,  # Now populated with real DSM data
             start=self.start_date,
             end=self.end_date,
         )

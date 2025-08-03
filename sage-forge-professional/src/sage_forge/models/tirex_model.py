@@ -74,9 +74,9 @@ class TiRexInputProcessor:
             return None
         
         # Convert to tensor format expected by TiRex
-        # Shape: [batch_size, sequence_length] = [1, 128]
+        # TiRex expects 1D tensor [sequence_length] for single time series
         price_series = np.array(list(self.price_buffer), dtype=np.float32)
-        input_tensor = torch.tensor(price_series).unsqueeze(0)  # Add batch dimension
+        input_tensor = torch.tensor(price_series)  # 1D tensor: [128]
         
         return input_tensor
     
@@ -183,8 +183,13 @@ class TiRexModel:
         start_time = time.time()
         
         try:
+            # Debug: Log input shape
+            logger.debug(f"TiRex input shape: {model_input.shape}, dtype: {model_input.dtype}")
+            logger.debug(f"TiRex input sample: {model_input[:5].tolist()}")  # First 5 values
+            
             # Real TiRex inference
-            forecast = self.model.forecast(
+            # TiRex returns (quantiles, means) tuple
+            quantiles, means = self.model.forecast(
                 context=model_input, 
                 prediction_length=self.prediction_length
             )
@@ -192,26 +197,43 @@ class TiRexModel:
             processing_time = (time.time() - start_time) * 1000  # Convert to ms
             self.inference_times.append(processing_time)
             
-            # Extract forecast data
-            if hasattr(forecast, 'samples'):
-                # Probabilistic forecast
-                forecast_samples = forecast.samples  # Shape: [num_samples, prediction_length]
-                mean_forecast = np.mean(forecast_samples, axis=0)
-                forecast_std = np.std(forecast_samples, axis=0)
-            else:
-                # Point forecast
-                mean_forecast = forecast.mean if hasattr(forecast, 'mean') else forecast
-                forecast_std = np.ones_like(mean_forecast) * 0.1  # Default uncertainty
+            # Extract forecast data from TiRex output
+            # quantiles: [batch, prediction_length, num_quantiles] = [1, 1, 9]
+            # means: [batch, prediction_length] = [1, 1]
+            mean_forecast = means.squeeze().cpu().numpy()  # Remove batch dimensions
+            
+            # Calculate uncertainty from quantiles (use std of quantile predictions)
+            quantile_values = quantiles.squeeze().cpu().numpy()  # [prediction_length, num_quantiles]
+            forecast_std = np.std(quantile_values, axis=-1) if len(quantile_values.shape) > 0 else 0.1
             
             # Convert to directional signal
-            forecast_value = mean_forecast[0] if len(mean_forecast.shape) > 0 else float(mean_forecast)
+            # Handle scalar and array cases properly
+            if isinstance(mean_forecast, np.ndarray) and mean_forecast.shape == ():
+                # Scalar case
+                forecast_value = float(mean_forecast)
+            elif hasattr(mean_forecast, '__len__') and len(mean_forecast) > 0:
+                # Array case
+                forecast_value = float(mean_forecast[0])
+            else:
+                # Fallback
+                forecast_value = float(mean_forecast)
+                
             current_price = list(self.input_processor.price_buffer)[-1]
             
             # Calculate direction and confidence
             price_change = forecast_value - current_price
             direction = self._interpret_forecast(price_change, current_price)
-            confidence = self._calculate_confidence(price_change, current_price, forecast_std[0])
-            volatility_forecast = float(forecast_std[0]) / current_price  # Normalized volatility
+            
+            # Handle forecast_std properly
+            if isinstance(forecast_std, np.ndarray) and forecast_std.shape == ():
+                std_value = float(forecast_std)
+            elif hasattr(forecast_std, '__len__') and len(forecast_std) > 0:
+                std_value = float(forecast_std[0])
+            else:
+                std_value = float(forecast_std)
+                
+            confidence = self._calculate_confidence(price_change, current_price, std_value)
+            volatility_forecast = std_value / current_price  # Normalized volatility
             market_regime = self.input_processor.get_market_regime()
             
             prediction = TiRexPrediction(
