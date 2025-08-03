@@ -79,7 +79,7 @@ class FundingRateProvider:
         try:
             # Add DSM to path
             # Use local DSM repository in workspace
-        dsm_path = Path(__file__).parent.parent.parent.parent.parent / "repos" / "data-source-manager"
+            dsm_path = Path(__file__).parent.parent.parent.parent.parent / "repos" / "data-source-manager"
             if str(dsm_path) not in sys.path:
                 sys.path.insert(0, str(dsm_path))
 

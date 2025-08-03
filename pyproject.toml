@@ -38,6 +38,10 @@ dependencies = [
     "pycatch22>=0.4.5",
     "tsfresh>=0.21.0",
     "setuptools>=80.9.0",
+    "tenacity>=9.1.2",
+    "finplot>=1.9.7",
+    "pyqtgraph>=0.13.7",
+    "python-binance>=1.0.29",
 ]
 
 [project.optional-dependencies]

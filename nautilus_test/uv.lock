@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [[package]]
@@ -704,6 +704,7 @@ dependencies = [
     { name = "platformdirs" },
     { name = "polars" },
     { name = "pycatch22" },
+    { name = "pyqtgraph" },
     { name = "python-binance" },
     { name = "redis" },
     { name = "requests" },
@@ -747,6 +748,7 @@ requires-dist = [
     { name = "platformdirs", specifier = ">=4.3.8" },
     { name = "polars", specifier = ">=1.30.0" },
     { name = "pycatch22", specifier = ">=0.4.5" },
+    { name = "pyqtgraph", specifier = ">=0.13.7" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "python-binance", specifier = ">=1.0.29" },
