@@ -1,0 +1,87 @@
+# 🔥 SAGE-Forge Production Configuration
+# Optimized settings for live trading environment
+
+# Core Framework Settings
+framework:
+  version: "0.1.0"
+  mode: "production"
+  log_level: "WARNING"
+
+# Risk Management (Conservative for Production)
+risk:
+  max_account_risk: 0.01      # 1% maximum account risk per trade
+  max_position_size: 0.005    # 0.5% maximum position size
+  default_position_size: 0.002 # 0.2% default position size
+  margin_buffer: 0.10         # 10% margin buffer
+  stop_loss_threshold: 0.02   # 2% stop loss
+  take_profit_threshold: 0.04 # 4% take profit
+
+# Market Data (Production Optimized)
+data:
+  cache_directory: "production_cache"
+  max_cache_size_gb: 50
+  data_quality_threshold: 0.99  # 99% minimum data quality
+  real_time_updates: true
+  backup_data_sources: true
+
+# Trading (Production Settings)
+trading:
+  default_instrument: "BTCUSDT-PERP"
+  default_venue: "BINANCE"  # Real venue for production
+  order_timeout_seconds: 10
+  position_timeout_minutes: 30
+  enable_funding_tracking: true
+  transaction_cost_threshold: 0.001
+
+# Models (Production Weights)
+models:
+  alphaforge:
+    enabled: true
+    weight: 0.30  # Higher weight for proven model
+  tirex:
+    enabled: true
+    weight: 0.25
+    forecast_horizons: [4, 24]  # Focus on longer horizons
+    uncertainty_threshold: 0.7
+  catch22:
+    enabled: true
+    weight: 0.25
+  tsfresh:
+    enabled: false  # Disabled for production speed
+    weight: 0.20
+
+# Visualization (Minimal for Production)
+visualization:
+  finplot:
+    enabled: false  # Disabled for production
+    theme: "dark"
+    auto_show: false
+  charts:
+    candlestick: false
+    volume: false
+    indicators: false
+    trade_markers: false
+
+# Performance (Enhanced Monitoring)
+performance:
+  enable_metrics: true
+  save_reports: true
+  export_format: ["json"]
+  real_time_monitoring: true
+  alert_thresholds:
+    max_drawdown: 0.05  # 5%
+    daily_loss_limit: 0.02  # 2%
+
+# Development (Disabled)
+development:
+  debug_mode: false
+  verbose_logging: false
+  test_mode: false
+
+# Production Specific
+production:
+  enable_alerts: true
+  slack_webhook: null  # Set in environment
+  email_notifications: true
+  backup_frequency_hours: 6
+  performance_reporting_frequency_hours: 24

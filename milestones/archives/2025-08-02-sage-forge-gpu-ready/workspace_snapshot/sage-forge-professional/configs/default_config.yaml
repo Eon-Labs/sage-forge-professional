@@ -1,0 +1,69 @@
+# 🔥 SAGE-Forge Default Configuration
+# Professional configuration for NT-native trading system
+
+# Core Framework Settings
+framework:
+  version: "0.1.0"
+  mode: "development"  # development, production, testing
+  log_level: "INFO"    # DEBUG, INFO, WARNING, ERROR
+
+# Risk Management
+risk:
+  max_account_risk: 0.02      # 2% maximum account risk per trade
+  max_position_size: 0.01     # 1% maximum position size
+  default_position_size: 0.003 # 0.3% default position size
+  margin_buffer: 0.05         # 5% margin buffer
+
+# Market Data
+data:
+  cache_directory: "data_cache"
+  max_cache_size_gb: 10
+  data_quality_threshold: 0.95  # 95% minimum data quality
+  real_time_updates: true
+
+# Trading
+trading:
+  default_instrument: "BTCUSDT-PERP"
+  default_venue: "SIM"
+  order_timeout_seconds: 30
+  position_timeout_minutes: 60
+
+# Models
+models:
+  alphaforge:
+    enabled: true
+    weight: 0.25
+  tirex:
+    enabled: true
+    weight: 0.25
+    forecast_horizons: [1, 4, 24]
+  catch22:
+    enabled: true
+    weight: 0.25
+  tsfresh:
+    enabled: true
+    weight: 0.25
+
+# Visualization
+visualization:
+  finplot:
+    enabled: true
+    theme: "dark"
+    auto_show: true
+  charts:
+    candlestick: true
+    volume: true
+    indicators: true
+    trade_markers: true
+
+# Performance
+performance:
+  enable_metrics: true
+  save_reports: true
+  export_format: ["json", "csv"]
+
+# Development
+development:
+  debug_mode: false
+  verbose_logging: false
+  test_mode: false
