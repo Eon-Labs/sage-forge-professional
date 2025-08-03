@@ -1,0 +1,41 @@
+# TiRex-Only Strategy Configuration
+# Parameter-free, regime-aware trading system
+
+strategy:
+  class_name: "TiRexOnlyStrategy"
+  module_path: "sage_forge.strategies.tirexonlystrategy_strategy"
+  
+  # TiRex Parameters (minimal configuration)
+  max_lookback: 200          # Historical data buffer size
+  min_confidence: 0.4        # Minimum signal confidence threshold
+  min_signal_strength: 0.1   # Minimum signal strength to trade
+  
+  # Regime detection settings (adaptive, no fixed thresholds)
+  regime_log_frequency: 50   # Log regime every N bars
+  
+  # Risk management
+  max_position_ratio: 0.1    # Maximum 10% of account per position
+  
+# Market data configuration
+market_data:
+  bar_type: "BINANCE.BTCUSDT-1-MINUTE-BID-EXTERNAL"
+  
+# Backtest configuration  
+backtest:
+  start_time: "2024-01-01T00:00:00Z"
+  end_time: "2024-01-31T23:59:59Z"
+  
+  # Account settings
+  account_id: "BINANCE-001"
+  base_currency: "USDT"
+  starting_balance: 10000
+  
+# SAGE-Forge Integration
+sage_forge:
+  enable_diagnostics: true
+  log_regime_changes: true
+  export_performance_metrics: true
+  
+  # Data quality requirements
+  require_core_ohlcv: true
+  min_data_quality: 1.0      # 100% data quality requirement

@@ -1,0 +1,63 @@
+# TiRex SAGE Strategy Configuration
+# Real-time directional trading with NX-AI TiRex model integration
+
+strategy:
+  class_name: "TiRexSageStrategy"
+  module_path: "sage_forge.strategies.tirex_sage_strategy"
+  
+  # Model Configuration
+  model_path: "/home/tca/eon/nt/models/tirex"
+  device: "cuda"  # Use GPU acceleration
+  
+  # Signal Generation
+  min_confidence: 0.6      # Minimum confidence threshold for trades
+  max_lookback: 200        # Maximum bars for model input
+  
+  # Risk Management
+  max_position_size: 0.1   # Maximum 10% of account per position
+  risk_per_trade: 0.02     # Risk 2% of account per trade
+  
+  # Performance Optimization
+  inference_batch_size: 1   # Real-time single prediction
+  model_warmup: true       # Warm up model on startup
+  
+  # Market Regime Adaptivity
+  regime_multipliers:
+    low_vol_trending: 1.2    # Increase size in stable trends
+    low_vol_ranging: 0.8     # Reduce size in ranging markets
+    medium_vol_trending: 1.0 # Normal size
+    medium_vol_ranging: 0.7  # Conservative in ranging
+    high_vol_trending: 0.9   # Slightly reduced in high volatility
+    high_vol_ranging: 0.5    # Very conservative
+    insufficient_data: 0.3   # Minimal size with limited data
+
+# Data Configuration
+data:
+  bar_type: "1-MINUTE-LAST"
+  subscription_mode: "STREAMING"
+  await_partial: true
+  
+# Execution Configuration  
+execution:
+  order_type: "MARKET"
+  time_in_force: "GTC"
+  reduce_only: false
+  
+# Logging Configuration
+logging:
+  level: "INFO"
+  performance_log_interval: 100  # Log every 100 predictions
+  trade_history_size: 1000       # Keep last 1000 trades
+  
+# GPU Performance
+gpu:
+  cuda_device: 0
+  memory_fraction: 0.3     # Use 30% of GPU memory
+  precision: "float32"     # Model precision
+  
+# Backtesting (for testing)
+backtest:
+  start_date: "2024-01-01"
+  end_date: "2024-12-31"
+  initial_balance: 10000.0
+  commission: 0.001        # 0.1% commission

@@ -6,5 +6,13 @@
     "git_tag": "milestone-2025-08-02-sage-forge-gpu-ready",
     "created": "2025-08-02T21:31:57.853203",
     "restoration_verified": false
+  },
+  {
+    "name": "2025-08-03-tirex-nx-ai-model-integration-complete",
+    "description": "TiRex NX-AI Model Integration Complete",
+    "commit_sha": "c5d91f2ee1f1f49c983a93646067acccc3e717b5",
+    "git_tag": "milestone-2025-08-03-tirex-nx-ai-model-integration-complete",
+    "created": "2025-08-03T03:05:40.236087",
+    "restoration_verified": false
   }
 ]
