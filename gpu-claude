@@ -1,0 +1,15 @@
+#!/bin/bash
+# GPU Workstation Claude Code Helper - Enhanced Session Management
+# Usage: ./gpu-claude [claude-arguments]
+
+# Enhanced SSH command with proper session handling
+if [ "$1" = "--resume" ] || [ "$1" = "-r" ]; then
+    # Interactive session resume without requiring session ID
+    ssh zerotier-remote -t "cd ~/eon/nt && export PATH=~/.npm-global/bin:\$PATH && claude --resume"
+elif [ "$1" = "--continue" ] || [ "$1" = "-c" ]; then
+    # Continue most recent session
+    ssh zerotier-remote -t "cd ~/eon/nt && export PATH=~/.npm-global/bin:\$PATH && claude --continue"
+else
+    # Pass all arguments through
+    ssh zerotier-remote -t "cd ~/eon/nt && export PATH=~/.npm-global/bin:\$PATH && claude $*"
+fi
