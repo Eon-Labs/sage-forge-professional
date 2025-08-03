@@ -12,6 +12,7 @@ This directory contains comprehensive documentation for the complete SAGE (Self-
 - **[claude-code-dual-environment.md](claude-code-dual-environment.md)** - Claude Code installation and configuration on both environments
 - **[claude-code-session-sync-guide.md](claude-code-session-sync-guide.md)** - Complete guide for syncing Claude Code sessions and development context
 - **[tirex-gpu-workstation-integration.md](tirex-gpu-workstation-integration.md)** - Real NX-AI TiRex 35M model integration with GPU acceleration
+- **[gpu-ws-comprehensive-sync-design.md](gpu-ws-comprehensive-sync-design.md)** - Enhanced gpu-ws command with comprehensive sync capabilities
 
 ### Network & Connectivity
 - **[zerotier-network-analysis.md](zerotier-network-analysis.md)** - ZeroTier network performance optimization and analysis

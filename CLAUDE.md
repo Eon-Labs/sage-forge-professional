@@ -42,10 +42,12 @@ The following should include minimalistic description and pointers to the paths 
 
 - **GPU Workstation Connection**: `zerotier-remote` via SSH (user: `tca`)
 - **SSH Key**: `~/.ssh/id_ed25519_zerotier_np`
-- **Sync Tool**: `sage-sync --sync-sessions`
+- **Enhanced Sync Tool**: `gpu-ws sync-all`, `gpu-ws push-all`, `gpu-ws pull-all`
 - **Connection Test**: `ssh zerotier-remote "echo test"` or `gpu-ws` command
+- **Comprehensive Sync**: Sessions, config, git, workspace, and environment files
 - **Complete Documentation**: `docs/infrastructure/claude-code-session-sync-guide.md`
 - **TiRex Integration Guide**: `docs/infrastructure/tirex-gpu-workstation-integration.md`
+- **GPU-WS Design**: `docs/infrastructure/gpu-ws-comprehensive-sync-design.md`
 
 ## Financial Time Series Trading Optimization
 
