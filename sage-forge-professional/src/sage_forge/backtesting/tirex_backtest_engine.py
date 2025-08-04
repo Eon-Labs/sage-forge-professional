@@ -229,11 +229,12 @@ class TiRexBacktestEngine:
             config_path="sage_forge.strategies.tirex_sage_config:TiRexSageStrategyConfig",
             config={
                 "instrument_id": str(self.instrument_id),
-                "min_confidence": 0.6,
+                "min_confidence": 0.15,  # OPTIMIZED: Based on comprehensive validation
                 "max_position_size": 0.1,
                 "risk_per_trade": 0.02,
                 "model_name": "NX-AI/TiRex",
-                "device": "cuda"
+                "device": "cuda",
+                "adaptive_thresholds": True  # Enable market regime adaptive thresholds
             }
         )
         
