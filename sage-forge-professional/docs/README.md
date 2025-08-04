@@ -17,10 +17,15 @@ Technical how-to guides for system components
 - **[Backtesting](/docs/implementation/backtesting/)**: NautilusTrader framework patterns
 - **[Infrastructure](/docs/implementation/infrastructure/)**: GPU workstation and system setup
 
+### 🔥 [Breakthroughs](/docs/breakthroughs/)
+Critical system breakthroughs and fraud elimination
+- **[🚨 AUTHENTIC TiRex Integration](/docs/breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)**: Systematic fraud elimination & real model integration
+
 ### 🎖️ [Milestones](/docs/milestones/)
 Achievement records and SR&ED evidence
-- **[Current Achievements](/docs/milestones/2025-08-03-tirex-signals-working.md)**: TiRex signal generation working
-- **[Historical Archive](/docs/milestones/archive/)**: Previous milestone records
+- **[🔥 CRITICAL: Authentic TiRex Integration](/docs/milestones/2025-08-04-authentic-tirex-integration-established.md)**: Fraud elimination & real model integration
+- **[Historical Achievements](/docs/milestones/2025-08-03-tirex-signals-working.md)**: Previous TiRex development milestones
+- **[Archive](/docs/milestones/archive/)**: Historical milestone records
 
 ### 🔧 [Operations](/docs/operations/)
 Support, troubleshooting, and system monitoring
@@ -36,17 +41,29 @@ Quick lookups, examples, and design patterns
 
 ## 🎯 Quick Start Paths
 
-**New Developer**: Research → Implementation → Examples → Tutorials  
+**New Developer**: Breakthroughs → Implementation → Examples → Tutorials  
+**TiRex Integration**: [Authentic TiRex Script](../visualize_authentic_tirex_signals.py) → [Breakthrough Docs](/docs/breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)  
 **System Operator**: Operations → Troubleshooting → Monitoring  
-**Stakeholder**: Milestones → Research → Implementation Overview  
+**Stakeholder**: Breakthroughs → Milestones → Research → Implementation Overview  
 **Debugging Issue**: Operations/Troubleshooting → Implementation/Component Guide
 
-## 🚨 Current Critical Focus
+## 🔥 **BREAKTHROUGH ACHIEVED: Authentic TiRex Integration**
 
-**Signal Generation Challenge**: TiRex confidence levels (max 18.5%) below trading threshold (60%)
-- 📍 **Status**: Investigating threshold strategies and market condition validation
-- 📖 **Details**: [TiRex Troubleshooting Guide](/docs/operations/troubleshooting/tirex-guide.md)
-- 🔬 **Research**: [TiRex Integration Breakthrough](/docs/implementation/tirex/integration-breakthrough.md)
+**August 4, 2025**: Systematic fraud elimination and establishment of authentic NX-AI/TiRex model integration
+- ✅ **Status**: 100% authentic signal generation with real GPU inference established
+- 🚨 **Impact**: All fraudulent hardcoded signals eliminated from workspace
+- 📊 **Result**: Single legitimate script with real NX-AI/TiRex 35M parameter model
+- 📄 **Implementation**: `visualize_authentic_tirex_signals.py` 
+- 📖 **Full Details**: [Fraud Elimination Breakthrough](/docs/breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)
+- 🎖️ **Milestone**: [Authentic TiRex Integration Established](/docs/milestones/2025-08-04-authentic-tirex-integration-established.md)
+
+## 🎯 Current Development Status
+
+**Authentic Foundation Established**: Ready for legitimate strategy development and backtesting
+- 📈 **Model**: Real NX-AI/TiRex 35M parameter xLSTM with CUDA acceleration
+- 📊 **Data**: Authentic DSM market data integration (BTCUSDT 15m historical)
+- 🎨 **Visualization**: Professional FinPlot with proportionate signal markers
+- ⚡ **Performance**: Normal CUDA compilation behavior accepted (architectural feature)
 
 ---
 
