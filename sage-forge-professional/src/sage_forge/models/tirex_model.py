@@ -148,12 +148,19 @@ class TiRexModel:
         self.input_processor = TiRexInputProcessor()
         self.is_loaded = False
         
+        # Device configuration
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         # Performance tracking
         self.inference_times = deque(maxlen=100)
         self.prediction_history = deque(maxlen=1000)
         
         # Load model
         self._load_model()
+    
+    def load_model(self) -> bool:
+        """Public API method to load the TiRex model."""
+        return self._load_model()
     
     def _load_model(self) -> bool:
         """Load the real TiRex model."""
