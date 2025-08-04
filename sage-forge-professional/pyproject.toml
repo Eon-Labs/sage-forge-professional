@@ -25,38 +25,45 @@ classifiers = [
 dependencies = [
     # Core NautilusTrader ecosystem
     "nautilus-trader==1.219.0",
-    
     # Data processing and management
     "pandas==2.3.1",
-    "polars==1.31.0", 
+    "polars==1.31.0",
     "pyarrow==20.0.0",
-    
     # External APIs and networking
     "python-binance==1.0.29",
     "httpx==0.28.1",
     "tenacity==9.1.2",
-    
     # Visualization and GUI
     "finplot==1.9.7",
     "pyqtgraph==0.13.7",
-    
     # Machine learning and features
     "scikit-learn==1.7.1",
     "pycatch22==0.4.5",
     "scipy==1.16.0",
     "stumpy==1.13.0",
-    
     # CLI and user interface
     "rich==14.0.0",
     "click==8.2.1",
-    
     # Logging and utilities
     "loguru==0.7.3",
     "platformdirs==4.3.8",
     "attrs==25.3.0",
-    
     # Development and validation
     "pendulum==3.1.0",
+    "pyqt5>=5.15.11",
+    "torch>=2.5.1",
+    "torchvision>=0.22.1",
+    "torchaudio>=2.7.1",
+    "transformers>=4.54.1",
+    "huggingface-hub>=0.34.3",
+    "accelerate>=1.9.0",
+    "datasets>=4.0.0",
+    "tokenizers>=0.21.4",
+    "optuna>=4.4.0",
+    "hyperopt>=0.2.7",
+    "statsmodels>=0.14.5",
+    "ta-lib>=0.6.4",
+    "tirex",
 ]
 
 # Professional CLI interface
@@ -71,6 +78,8 @@ Homepage = "https://github.com/sage-forge/sage-forge"
 Documentation = "https://sage-forge.readthedocs.io"
 Repository = "https://github.com/sage-forge/sage-forge.git"
 Issues = "https://github.com/sage-forge/sage-forge/issues"
+
+# PyTorch index will be specified per-package to avoid conflicts
 
 # Development dependencies organized by purpose
 [dependency-groups]
@@ -106,6 +115,9 @@ python-preference = "only-managed"  # Use UV-managed Python for consistency
 resolution = "highest"              # Latest compatible versions
 cache-dir = ".uv-cache"            # Local cache directory for speed
 index-strategy = "unsafe-first-match"  # Faster resolution
+
+[tool.uv.sources]
+tirex = { path = "../repos/tirex", editable = true }
 
 # Modern package discovery (src/ layout)
 [tool.hatchling.build.targets.wheel]
