@@ -6,14 +6,49 @@ Provides centralized configuration with:
 - Validation and defaults
 - Type safety and documentation  
 - Integration with external systems
+- Warning management for third-party dependencies
 """
 
 import os
+import warnings
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, field
 
 import platformdirs
+
+
+def configure_sage_forge_warnings():
+    """
+    Configure warnings for SAGE-Forge Professional.
+    
+    Suppresses known third-party deprecation warnings that don't affect
+    functionality but clutter test output and logs.
+    
+    IMPORTANT: Only suppresses third-party warnings. All SAGE-Forge warnings
+    should be addressed immediately.
+    """
+    # Third-party deprecation warnings to suppress
+    third_party_warning_patterns = [
+        # xLSTM library (used by TiRex) - PyTorch 2.x compatibility
+        ".*torch.cuda.amp.custom_fwd.*",
+        ".*torch.cuda.amp.custom_bwd.*",
+        
+        # CUDA compilation warnings
+        ".*TORCH_CUDA_ARCH_LIST.*",
+        
+        # Additional PyTorch extension warnings
+        ".*torch.utils.cpp_extension.*",
+        ".*cpp_extension.*",
+        ".*ninja.*",  # Build system messages
+    ]
+    
+    # Suppress specific third-party warnings
+    for pattern in third_party_warning_patterns:
+        warnings.filterwarnings('ignore', category=FutureWarning, message=pattern)
+        warnings.filterwarnings('ignore', category=UserWarning, message=pattern)
+    
+    # Note: We deliberately DO NOT suppress all warnings to catch our own issues
 
 
 @dataclass
