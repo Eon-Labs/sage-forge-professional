@@ -48,6 +48,12 @@ console = Console()
 # Add SAGE-Forge to path
 sys.path.append(str(Path(__file__).parent.parent))
 from sage_forge.models.tirex_model import TiRexModel
+from sage_forge.reporting.performance import (
+    OmniscientDirectionalEfficiencyBenchmark,
+    Position,
+    OdebResult,
+    run_odeb_analysis
+)
 
 
 @dataclass 
@@ -434,6 +440,278 @@ class TiRexParameterOptimizer:
         
         console.print(f"✅ Optimal prediction horizon: {optimal_horizon}")
         console.print(f"📊 Performance/uncertainty ratio: {result.performance_score:.4f}")
+        
+        return result
+    
+    def evaluate_with_odeb(self, 
+                          optimization_results: Dict[str, OptimizationResult],
+                          market_data: pd.DataFrame,
+                          positions_data: List[Dict[str, Any]]) -> Dict[str, float]:
+        """
+        Evaluate optimization results using ODEB methodology.
+        
+        This integrates the Omniscient Directional Efficiency Benchmark to measure
+        how effectively the optimized parameters capture directional market movements
+        compared to a theoretical perfect-information baseline.
+        
+        Args:
+            optimization_results: Results from parameter optimization
+            market_data: OHLCV market data for the evaluation period
+            positions_data: List of position dictionaries with ODEB-required fields
+            
+        Returns:
+            Dictionary containing ODEB evaluation metrics
+        """
+        console.print("🧙‍♂️ Running ODEB evaluation on optimization results...")
+        
+        try:
+            # Initialize ODEB benchmark
+            historical_positions = []
+            if hasattr(self, 'historical_positions'):  # Use if available
+                historical_positions = self.historical_positions
+            
+            odeb_benchmark = OmniscientDirectionalEfficiencyBenchmark(historical_positions)
+            
+            # Run ODEB analysis using convenience function
+            odeb_result = run_odeb_analysis(positions_data, market_data, display_results=False)
+            
+            # Calculate aggregate ODEB metrics
+            odeb_metrics = {
+                'odeb_directional_capture': odeb_result.directional_capture_pct,
+                'odeb_efficiency_ratio': odeb_result.tirex_efficiency_ratio,
+                'odeb_oracle_efficiency': odeb_result.oracle_efficiency_ratio,
+                'odeb_oracle_direction': odeb_result.oracle_direction,
+                'odeb_noise_floor': odeb_result.noise_floor_applied,
+                'odeb_total_pnl': odeb_result.tirex_final_pnl,
+                'odeb_oracle_pnl': odeb_result.oracle_final_pnl
+            }
+            
+            # Display ODEB summary
+            console.print("📊 ODEB Evaluation Summary:")
+            console.print(f"  • Directional Capture: {odeb_metrics['odeb_directional_capture']:.1f}%")
+            console.print(f"  • Efficiency Ratio: {odeb_metrics['odeb_efficiency_ratio']:.3f}")
+            console.print(f"  • Oracle Direction: {'📈 LONG' if odeb_metrics['odeb_oracle_direction'] == 1 else '📉 SHORT'}")
+            
+            return odeb_metrics
+            
+        except Exception as e:
+            console.print(f"⚠️ ODEB evaluation failed: {e}")
+            return {'odeb_error': str(e)}
+    
+    def evaluate_window_with_odeb(self, 
+                                 window: WalkForwardWindow,
+                                 parameters: Dict[str, Any],
+                                 market_data: pd.DataFrame) -> Dict[str, float]:
+        """
+        Evaluate parameter performance on a walk-forward window using ODEB.
+        
+        This method integrates ODEB analysis into the walk-forward validation process,
+        providing directional efficiency metrics alongside traditional performance measures.
+        
+        Args:
+            window: Walk-forward validation window
+            parameters: Parameter configuration to evaluate
+            market_data: Market data for the window period
+            
+        Returns:
+            Dictionary containing both traditional and ODEB metrics
+        """
+        try:
+            # Extract window market data
+            window_mask = (market_data.index >= window.test_start) & (market_data.index <= window.test_end)
+            window_market_data = market_data.loc[window_mask].copy()
+            
+            if len(window_market_data) < 10:  # Need minimum data for ODEB
+                return {'error': 'Insufficient market data for ODEB analysis'}
+            
+            # Mock position generation based on parameters (in real implementation, this would come from backtest)
+            positions_data = self._generate_mock_positions_for_window(window, parameters, window_market_data)
+            
+            if not positions_data:
+                return {'traditional_score': 0.0, 'odeb_directional_capture': 0.0}
+            
+            # Run ODEB analysis
+            odeb_result = run_odeb_analysis(positions_data, window_market_data, display_results=False)
+            
+            # Calculate traditional performance score (mock implementation)
+            traditional_score = self._calculate_traditional_performance(positions_data)
+            
+            # Combine metrics
+            combined_metrics = {
+                'traditional_score': traditional_score,
+                'odeb_directional_capture': odeb_result.directional_capture_pct,
+                'odeb_efficiency_ratio': odeb_result.tirex_efficiency_ratio,
+                'odeb_combined_score': traditional_score * (odeb_result.directional_capture_pct / 100.0),
+                'window_id': window.window_id
+            }
+            
+            return combined_metrics
+            
+        except Exception as e:
+            console.print(f"⚠️ Window ODEB evaluation failed for {window.window_id}: {e}")
+            return {'error': str(e), 'window_id': window.window_id}
+    
+    def _generate_mock_positions_for_window(self, 
+                                          window: WalkForwardWindow,
+                                          parameters: Dict[str, Any],
+                                          market_data: pd.DataFrame) -> List[Dict[str, Any]]:
+        """
+        Generate mock positions for ODEB testing (in real implementation, extract from backtest).
+        
+        This is a placeholder that generates synthetic positions based on parameters.
+        In production, this would extract actual positions from NT backtesting results.
+        """
+        try:
+            positions = []
+            
+            # Get parameter values with defaults
+            signal_threshold = parameters.get('signal_threshold', 0.0001)
+            position_size = 10000.0  # Mock position size
+            
+            # Generate 2-3 mock positions for the window
+            data_length = len(market_data)
+            num_positions = min(3, data_length // 50)  # One position per ~50 bars
+            
+            for i in range(num_positions):
+                # Mock position timing
+                start_idx = i * (data_length // num_positions)
+                end_idx = min(start_idx + 20, data_length - 1)  # ~20 bar holding period
+                
+                start_time = market_data.index[start_idx]
+                end_time = market_data.index[end_idx]
+                start_price = market_data.iloc[start_idx]['close']
+                end_price = market_data.iloc[end_idx]['close']
+                
+                # Mock direction based on signal threshold sensitivity
+                price_change = (end_price - start_price) / start_price
+                
+                if abs(price_change) > signal_threshold:
+                    direction = 1 if price_change > 0 else -1
+                    pnl = direction * position_size * abs(price_change) * 0.8  # Mock 80% capture
+                else:
+                    direction = np.random.choice([1, -1])  # Random direction for weak signals
+                    pnl = direction * position_size * abs(price_change) * 0.3  # Low capture
+                
+                position_data = {
+                    'open_time': start_time.isoformat(),
+                    'close_time': end_time.isoformat(),
+                    'size_usd': position_size,
+                    'pnl': pnl,
+                    'direction': direction
+                }
+                
+                positions.append(position_data)
+            
+            return positions
+            
+        except Exception as e:
+            console.print(f"⚠️ Mock position generation failed: {e}")
+            return []
+    
+    def _calculate_traditional_performance(self, positions_data: List[Dict[str, Any]]) -> float:
+        """Calculate traditional performance metrics (Sharpe ratio approximation)."""
+        try:
+            if not positions_data:
+                return 0.0
+                
+            pnls = [pos['pnl'] for pos in positions_data]
+            
+            if not pnls:
+                return 0.0
+                
+            mean_pnl = np.mean(pnls)
+            std_pnl = np.std(pnls) if len(pnls) > 1 else abs(mean_pnl)
+            
+            # Sharpe-like ratio (annualized approximation)
+            sharpe_like = (mean_pnl / (std_pnl + 1e-6)) * np.sqrt(252)  # Annualized
+            
+            return max(0.0, sharpe_like)  # Return non-negative score
+            
+        except Exception as e:
+            return 0.0
+    
+    def optimize_parameters_with_odeb(self, 
+                                    parameter_name: str,
+                                    search_space: List[Any],
+                                    market_data: pd.DataFrame) -> OptimizationResult:
+        """
+        Run parameter optimization using ODEB as the primary evaluation metric.
+        
+        This method uses directional capture efficiency as the optimization objective,
+        providing a more robust evaluation than traditional metrics alone.
+        
+        Args:
+            parameter_name: Name of parameter being optimized
+            search_space: List of parameter values to test
+            market_data: Market data for evaluation
+            
+        Returns:
+            OptimizationResult with ODEB-based optimization
+        """
+        console.print(f"🧙‍♂️ Optimizing {parameter_name} using ODEB methodology...")
+        
+        performance_scores = []
+        odeb_scores = []
+        combined_scores = []
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            console=console
+        ) as progress:
+            task = progress.add_task(f"ODEB optimization of {parameter_name}...", total=len(search_space))
+            
+            for param_value in search_space:
+                # Create parameter configuration
+                parameters = {parameter_name: param_value}
+                
+                # Evaluate across walk-forward windows
+                window_results = []
+                
+                for window in self.walk_forward_windows[:5]:  # Sample windows for speed
+                    result = self.evaluate_window_with_odeb(window, parameters, market_data)
+                    
+                    if 'error' not in result:
+                        window_results.append(result)
+                
+                if window_results:
+                    # Aggregate results
+                    avg_traditional = np.mean([r['traditional_score'] for r in window_results])
+                    avg_odeb = np.mean([r['odeb_directional_capture'] for r in window_results])
+                    avg_efficiency = np.mean([r['odeb_efficiency_ratio'] for r in window_results])
+                    
+                    # Combined score: weight ODEB directional capture more heavily
+                    combined_score = (0.3 * avg_traditional) + (0.7 * avg_odeb / 100.0)
+                    
+                    performance_scores.append(avg_traditional)
+                    odeb_scores.append(avg_odeb)
+                    combined_scores.append(combined_score)
+                else:
+                    # Handle case where no valid results
+                    performance_scores.append(0.0)
+                    odeb_scores.append(0.0)
+                    combined_scores.append(0.0)
+                
+                progress.advance(task)
+        
+        # Find optimal parameter value based on combined score
+        optimal_idx = np.argmax(combined_scores)
+        optimal_value = search_space[optimal_idx]
+        
+        result = OptimizationResult(
+            parameter_name=parameter_name,
+            optimal_value=optimal_value,
+            performance_score=combined_scores[optimal_idx],
+            confidence_interval=self._calculate_confidence_interval(combined_scores, optimal_idx),
+            search_space=search_space,
+            performance_curve=combined_scores,
+            validation_method="walk_forward_odeb"
+        )
+        
+        console.print(f"✅ ODEB-optimized {parameter_name}: {optimal_value}")
+        console.print(f"📊 Combined score: {result.performance_score:.4f}")
+        console.print(f"🎯 Directional capture: {odeb_scores[optimal_idx]:.1f}%")
         
         return result
     
