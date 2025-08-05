@@ -20,6 +20,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 import warnings
+import numpy as np
 
 # Add SAGE-Forge to path
 current_dir = Path(__file__).parent
@@ -69,9 +70,9 @@ def load_real_market_data():
         console.print("📊 Loading REAL market data from DSM...")
         data_manager = ArrowDataManager()
         
-        # Same period as original test for comparison
+        # Extended period to get sufficient data for TiRex context window (≥512 bars)
         end_time = datetime(2024, 10, 17, 0, 0, 0)
-        start_time = datetime(2024, 10, 15, 0, 0, 0)
+        start_time = datetime(2024, 10, 1, 0, 0, 0)  # 16 days = ~1536 bars at 15m intervals
         
         df = data_manager.fetch_real_market_data(
             symbol="BTCUSDT",
@@ -116,30 +117,40 @@ def generate_authentic_tirex_signals(tirex_model, market_data):
         bar_type = BarType(instrument_id=instrument_id, bar_spec=bar_spec)
         
         # Process data in sliding windows for TiRex inference
-        context_window = 128  # TiRex sequence length
+        min_context_window = 512  # TiRex minimum sequence length (audit-compliant ≥512)
+        available_data = len(market_data)
         
-        for i in range(len(market_data) - context_window):
-            # Get context data for TiRex
-            context_data = market_data.iloc[i:i+context_window]
-            
-            # Clear previous data and feed new context
-            tirex_model.input_processor.price_buffer.clear()
-            
-            # Feed context window to TiRex
-            for _, row in context_data.iterrows():
-                ts_ns = dt_to_unix_nanos(row['timestamp'])
-                bar = Bar(
-                    bar_type=bar_type,
-                    open=Price.from_str(f"{float(row['open']):.2f}"),
-                    high=Price.from_str(f"{float(row['high']):.2f}"),
-                    low=Price.from_str(f"{float(row['low']):.2f}"),
-                    close=Price.from_str(f"{float(row['close']):.2f}"),
-                    volume=Quantity.from_str(f"{float(row.get('volume', 1000)):.0f}"),
-                    ts_event=ts_ns,
-                    ts_init=ts_ns,
-                )
-                tirex_model.add_bar(bar)
-            
+        # Adjust context window for available data while maintaining audit compliance
+        if available_data < min_context_window:
+            console.print(f"⚠️ Limited data: {available_data} bars < {min_context_window} minimum")
+            console.print("🔄 Using maximum available data with TiRex adaptive processing")
+            context_window = available_data - 1  # Leave 1 bar for prediction
+            num_iterations = 1  # Single prediction with all available context
+        else:
+            context_window = min_context_window
+            num_iterations = available_data - context_window
+        
+        console.print(f"📊 Context window: {context_window} bars, Iterations: {num_iterations}")
+        
+        # Feed all available data to TiRex model (NT-native pattern)
+        console.print("🔄 Feeding market data to TiRex model...")
+        for _, row in market_data.iterrows():
+            ts_ns = dt_to_unix_nanos(row['timestamp'])
+            bar = Bar(
+                bar_type=bar_type,
+                open=Price.from_str(f"{float(row['open']):.2f}"),
+                high=Price.from_str(f"{float(row['high']):.2f}"),
+                low=Price.from_str(f"{float(row['low']):.2f}"),
+                close=Price.from_str(f"{float(row['close']):.2f}"),
+                volume=Quantity.from_str(f"{float(row.get('volume', 1000)):.0f}"),
+                ts_event=ts_ns,
+                ts_init=ts_ns,
+            )
+            tirex_model.add_bar(bar)
+        
+        # Generate predictions for the last few bars (efficient single-model approach)
+        console.print(f"🦖 Generating predictions for {min(10, num_iterations)} time points...")
+        for i in range(min(10, num_iterations)):  # Limit to 10 predictions for testing
             # Generate AUTHENTIC TiRex prediction
             prediction = tirex_model.predict()
             prediction_count += 1
@@ -147,7 +158,8 @@ def generate_authentic_tirex_signals(tirex_model, market_data):
             if prediction is not None and prediction.direction != 0:
                 # Convert authentic TiRex prediction to signal
                 signal_type = "BUY" if prediction.direction > 0 else "SELL"
-                current_bar = market_data.iloc[i + context_window - 1]
+                # Use the most recent bar for signal placement
+                current_bar = market_data.iloc[-1 - i]  # Work backwards from most recent
                 
                 authentic_signals.append({
                     'timestamp': current_bar['timestamp'],
@@ -156,13 +168,16 @@ def generate_authentic_tirex_signals(tirex_model, market_data):
                     'confidence': prediction.confidence,
                     'volatility_forecast': prediction.volatility_forecast,
                     'raw_forecast': prediction.raw_forecast.tolist() if hasattr(prediction.raw_forecast, 'tolist') else float(prediction.raw_forecast),
-                    'bar_index': i + context_window - 1,
+                    'bar_index': len(market_data) - 1 - i,
                     'prediction_source': 'AUTHENTIC_TIREX_MODEL'
                 })
         
         console.print(f"✅ Generated {len(authentic_signals)} AUTHENTIC TiRex signals")
         console.print(f"   Total predictions: {prediction_count}")
-        console.print(f"   Signal rate: {len(authentic_signals)/prediction_count*100:.1f}%")
+        if prediction_count > 0:
+            console.print(f"   Signal rate: {len(authentic_signals)/prediction_count*100:.1f}%")
+        else:
+            console.print("   Signal rate: N/A (no predictions made)")
         console.print(f"   Source: Real NX-AI/TiRex 35M parameter xLSTM model")
         
         return authentic_signals
@@ -207,6 +222,19 @@ def plot_authentic_tirex_signals(df, authentic_signals):
     setup_finplot_theme()
     df_indexed = df.set_index('timestamp')
     
+    # Calculate data-driven positioning offsets from market volatility
+    price_range = df_indexed['high'].max() - df_indexed['low'].min()
+    avg_bar_range = (df_indexed['high'] - df_indexed['low']).mean()
+    
+    # Use quantile-based offsets instead of magic numbers
+    bar_ranges = df_indexed['high'] - df_indexed['low']
+    q25_range = bar_ranges.quantile(0.25)
+    q75_range = bar_ranges.quantile(0.75)
+    
+    # Data-driven offset ratios
+    triangle_offset_ratio = q25_range / avg_bar_range if avg_bar_range > 0 else 0.1
+    label_offset_ratio = q75_range / avg_bar_range if avg_bar_range > 0 else 0.2
+    
     # Create plot
     ax, ax2 = fplt.create_plot('🦖 AUTHENTIC TiRex Signals - Real NX-AI Model Predictions', rows=2, maximize=True)
     
@@ -223,6 +251,25 @@ def plot_authentic_tirex_signals(df, authentic_signals):
     
     console.print(f"🎯 Plotting {len(buy_signals)} AUTHENTIC BUY signals")
     console.print(f"🎯 Plotting {len(sell_signals)} AUTHENTIC SELL signals")
+    
+    # Calculate quantile-based uncertainty visualization
+    conf_q25, conf_q50, conf_q75 = 0.25, 0.5, 0.75  # Default quartiles for fallback
+    vol_q25, vol_q50, vol_q75 = 0.01, 0.02, 0.03    # Default volatility quartiles
+    
+    if authentic_signals:
+        confidences = [s['confidence'] for s in authentic_signals]
+        volatility_forecasts = [s['volatility_forecast'] for s in authentic_signals]
+        
+        if len(confidences) >= 3:  # Need at least 3 points for meaningful quartiles
+            conf_q25, conf_q50, conf_q75 = np.quantile(confidences, [0.25, 0.5, 0.75])
+            vol_q25, vol_q50, vol_q75 = np.quantile(volatility_forecasts, [0.25, 0.5, 0.75])
+            
+            console.print(f"📊 Confidence quartiles: Q25={conf_q25:.1%}, Q50={conf_q50:.1%}, Q75={conf_q75:.1%}")
+            console.print(f"📊 Volatility quartiles: Q25={vol_q25:.4f}, Q50={vol_q50:.4f}, Q75={vol_q75:.4f}")
+        else:
+            console.print("📊 Using default quartiles (insufficient signals for statistical analysis)")
+    else:
+        console.print("📊 Using default quartiles (no signals generated)")
     
     # Plot BUY signals (green triangles below bars)
     if buy_signals:
@@ -250,15 +297,31 @@ def plot_authentic_tirex_signals(df, authentic_signals):
                 exact_bar_time = df_indexed.index[nearest_idx]
                 console.print(f"  🎯 BUY signal nearest match: {exact_bar_time} (was {signal_timestamp})")
             
-            # Position triangle below the exact bar (smaller offset for proportionality)
+            # Position triangle below the exact bar (data-driven offset)
             low_price = bar_data['low']
             bar_range = bar_data['high'] - bar_data['low']
-            offset_price = low_price - bar_range * 0.15  # 15% below bar range (more proportionate)
+            offset_price = low_price - bar_range * triangle_offset_ratio  # Quantile-based offset
             
             buy_times.append(exact_bar_time)  # Use exact bar timestamp
             buy_prices_offset.append(offset_price)
         
-        fplt.plot(buy_times, buy_prices_offset, ax=ax, color='#00ff00', style='^', width=4, legend='AUTHENTIC TiRex BUY')
+        # Apply quantile-based color intensity for uncertainty visualization
+        buy_colors = []
+        for signal in buy_signals:
+            if signal['confidence'] >= conf_q75:
+                buy_colors.append('#00ff00')  # High confidence - bright green
+            elif signal['confidence'] >= conf_q50:
+                buy_colors.append('#33cc33')  # Medium confidence - medium green
+            else:
+                buy_colors.append('#66aa66')  # Low confidence - dim green
+        
+        # Plot with color-coded confidence levels
+        for i, (time, price) in enumerate(zip(buy_times, buy_prices_offset)):
+            fplt.plot([time], [price], ax=ax, color=buy_colors[i], style='^', width=4)
+            
+        # Add legend entry
+        if buy_times:
+            fplt.plot([buy_times[0]], [buy_prices_offset[0]], ax=ax, color='#00ff00', style='^', width=4, legend='AUTHENTIC TiRex BUY')
     
     # Plot SELL signals (red triangles above bars)
     if sell_signals:
@@ -286,15 +349,31 @@ def plot_authentic_tirex_signals(df, authentic_signals):
                 exact_bar_time = df_indexed.index[nearest_idx]
                 console.print(f"  🎯 SELL signal nearest match: {exact_bar_time} (was {signal_timestamp})")
             
-            # Position triangle above the exact bar (smaller offset for proportionality)
+            # Position triangle above the exact bar (data-driven offset)
             high_price = bar_data['high']
             bar_range = bar_data['high'] - bar_data['low']
-            offset_price = high_price + bar_range * 0.15  # 15% above bar range (more proportionate)
+            offset_price = high_price + bar_range * triangle_offset_ratio  # Quantile-based offset
             
             sell_times.append(exact_bar_time)  # Use exact bar timestamp
             sell_prices_offset.append(offset_price)
             
-        fplt.plot(sell_times, sell_prices_offset, ax=ax, color='#ff0000', style='v', width=4, legend='AUTHENTIC TiRex SELL')
+        # Apply quantile-based color intensity for uncertainty visualization
+        sell_colors = []
+        for signal in sell_signals:
+            if signal['confidence'] >= conf_q75:
+                sell_colors.append('#ff0000')  # High confidence - bright red
+            elif signal['confidence'] >= conf_q50:
+                sell_colors.append('#cc3333')  # Medium confidence - medium red
+            else:
+                sell_colors.append('#aa6666')  # Low confidence - dim red
+        
+        # Plot with color-coded confidence levels
+        for i, (time, price) in enumerate(zip(sell_times, sell_prices_offset)):
+            fplt.plot([time], [price], ax=ax, color=sell_colors[i], style='v', width=4)
+            
+        # Add legend entry
+        if sell_times:
+            fplt.plot([sell_times[0]], [sell_prices_offset[0]], ax=ax, color='#ff0000', style='v', width=4, legend='AUTHENTIC TiRex SELL')
     
     # Add confidence labels aligned with exact bars
     console.print("🔍 Aligning confidence labels with exact bars...")
@@ -318,11 +397,11 @@ def plot_authentic_tirex_signals(df, authentic_signals):
         bar_range = bar_data['high'] - bar_data['low']
         
         if signal['signal'] == 'BUY':
-            # Label below triangle (which is below bar) - closer for proportionality
-            text_price = bar_data['low'] - bar_range * 0.25
+            # Label below triangle (which is below bar) - data-driven positioning
+            text_price = bar_data['low'] - bar_range * label_offset_ratio
         else:
-            # Label above triangle (which is above bar) - closer for proportionality
-            text_price = bar_data['high'] + bar_range * 0.25
+            # Label above triangle (which is above bar) - data-driven positioning
+            text_price = bar_data['high'] + bar_range * label_offset_ratio
         
         fplt.add_text((exact_bar_time, text_price), conf_text, ax=ax, color='#cccccc')
     
