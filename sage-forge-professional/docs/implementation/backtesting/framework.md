@@ -142,6 +142,13 @@ python demos/tirex_backtest_demo.py
 - Model Inference Time, GPU Utilization
 - Memory Efficiency, Prediction Accuracy
 
+### ODEB (Omniscient Directional Efficiency Benchmark) Metrics
+- Directional Capture Percentage vs Oracle Strategy
+- Time-Weighted Average Exposure (TWAE) Analysis
+- Duration-Scaled Quantile Market Noise Floor (DSQMNF)
+- Risk-Adjusted Efficiency Ratios
+- Oracle vs TiRex Performance Comparison
+
 ### Risk Analytics
 - Value at Risk (95%), Expected Shortfall
 - Kelly Criterion, Optimal Position Size

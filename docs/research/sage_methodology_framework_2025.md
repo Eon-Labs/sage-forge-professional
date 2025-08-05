@@ -243,6 +243,146 @@ class SAGEEnhancedNPAF:
 
 ---
 
+## ODEB Integration: Omniscient Directional Efficiency Benchmark
+
+### Theoretical Foundation within SAGE Framework
+
+**ODEB (Omniscient Directional Efficiency Benchmark)** represents the first practical implementation of SAGE principles, providing a parameter-free methodology for evaluating directional trading strategies against theoretical perfect-information baselines.
+
+### Information-Theoretic Basis for ODEB
+
+**Perfect Information Content Analysis**
+```
+I(D; P) = H(P) - H(P|D)
+```
+Where:
+- D = Directional prediction quality space
+- P = Portfolio performance space  
+- H(P|D) = Performance uncertainty given directional information
+
+**ODEB Evolution within SAGE Methodology**:
+1. **Self-Discovery**: Oracle direction emerges from market price evolution (no analyst assumptions)
+2. **Generative Validation**: Time-weighted exposure matching creates counterfactual baseline
+3. **Adaptive Thresholding**: Duration-scaled noise floor adjusts to market regime volatility
+4. **Parameter-Free Operation**: All thresholds derived from statistical market analysis
+
+### Mathematical Framework Integration
+
+**Stage 1: Market Structure-Derived Oracle Construction**
+```python
+class ODEBOracle:
+    """Oracle strategy construction following SAGE self-discovery principles"""
+    
+    def discover_optimal_direction(self, market_evolution):
+        # Direction emerges from market structure, not analyst prediction
+        return sign(final_price - initial_price)  # Market-determined direction
+    
+    def calculate_sage_exposure(self, actual_positions):
+        # Time-weighted exposure matching (SAGE generative validation)
+        return sum(size_i * duration_i) / total_duration
+```
+
+**Stage 2: Regime-Adaptive Risk Adjustment**
+```python  
+class SAGENoiseFloor:
+    """Adaptive risk floor following SAGE information-theoretic principles"""
+    
+    def calculate_information_content_threshold(self, market_data, position_duration):
+        # Noise floor derived from market information content, not fixed thresholds
+        historical_adverse_excursions = self.extract_perfect_strategy_drawdowns(market_data)
+        
+        # Information-theoretic threshold: 15th percentile represents market noise
+        noise_floor = np.percentile(historical_adverse_excursions, 15)
+        
+        # Duration scaling follows Brownian motion information decay
+        duration_scalar = sqrt(position_duration / median_historical_duration)
+        
+        return noise_floor * duration_scalar
+```
+
+**Stage 3: Directional Efficiency Information Quantification**
+```python
+class DirectionalInformationContent:
+    """Quantifies directional prediction information content"""
+    
+    def calculate_information_efficiency(self, tirex_performance, oracle_performance):
+        # Information ratio: actual vs. perfect information utilization
+        efficiency_ratio = tirex_performance.final_pnl / max(tirex_performance.drawdown, noise_floor)
+        oracle_ratio = oracle_performance.final_pnl / max(oracle_performance.drawdown, noise_floor)
+        
+        # Directional capture: percentage of perfect information utilized
+        return (efficiency_ratio / oracle_ratio) * 100
+```
+
+### ODEB as SAGE Implementation Case Study
+
+**Information Content Validation**:
+- **Oracle Direction**: Market-determined (no analyst bias)
+- **Position Sizing**: Time-weighted matching (counterfactual generation)  
+- **Risk Adjustment**: Duration-scaled percentile (adaptive thresholding)
+- **Performance Metric**: Information efficiency ratio (self-discovered criteria)
+
+**SAGE Principles Demonstrated**:
+1. **Self-Discovery**: All parameters emerge from market data analysis
+2. **Generative Modeling**: Oracle strategy as counterfactual baseline  
+3. **Adaptive Evolution**: Noise floor adjusts to market regime volatility
+4. **Parameter-Free**: No manual threshold setting required
+
+### Integration with Broader SAGE Framework
+
+**Phase 1 Implementation Path**:
+```python
+class SAGEODEBIntegration:
+    """ODEB as first SAGE methodology implementation"""
+    
+    def __init__(self):
+        self.odeb_framework = OmniscientDirectionalEfficiencyBenchmark()
+        self.sage_criterion_discovery = CriterionDiscovery()
+        self.information_theoretic_evaluator = InformationTheoreticEvaluator()
+    
+    def evaluate_with_sage_principles(self, strategy_results, market_data):
+        # ODEB provides directional efficiency baseline
+        odeb_results = self.odeb_framework.calculate_odeb_ratio(strategy_results, market_data)
+        
+        # SAGE discovers additional evaluation criteria from market information content
+        additional_criteria = self.sage_criterion_discovery.discover_criteria(
+            market_data, strategy_results, odeb_results
+        )
+        
+        # Information-theoretic evaluation combining ODEB with discovered criteria
+        return self.information_theoretic_evaluator.evaluate_strategy(
+            strategy_results, odeb_results, additional_criteria
+        )
+```
+
+### Research Contribution Pipeline
+
+**ODEB as Foundation for SAGE Development**:
+1. **Proof-of-Concept**: ODEB demonstrates parameter-free evaluation methodology
+2. **Validation Framework**: Establish baseline for self-adaptive evaluation systems
+3. **Extension Platform**: ODEB patterns generalizable to multi-asset, multi-strategy evaluation
+
+**Academic Publication Pathway**:
+- **ODEB Paper**: "Omniscient Directional Efficiency Benchmarking for Trading Strategy Evaluation"
+- **SAGE Framework Paper**: "Self-Adaptive Generative Evaluation: A New Paradigm for Quantitative Finance"
+- **Integration Study**: "From ODEB to SAGE: Evolution of Parameter-Free Strategy Evaluation"
+
+### Success Metrics Integration
+
+**ODEB Validation Targets**:
+- **Information Efficiency**: Directional capture rates across market regimes
+- **Robustness**: Consistent noise floor calculation across volatility conditions  
+- **Generalizability**: Effective operation across multiple trading strategies
+
+**SAGE Framework Validation**:
+- **Criterion Discovery**: Successful identification of regime-appropriate evaluation metrics
+- **Generative Validation**: Robust performance across counterfactual market scenarios
+- **Adaptive Evolution**: Seamless criterion adjustment to market condition changes
+
+---
+
 **Research Classification**: Novel methodology development with significant academic and practical impact potential. SAGE framework represents paradigm shift from static to adaptive evaluation in quantitative finance.
 
-**Next Steps**: Begin Phase 1 implementation with core SAGE framework development and initial validation against traditional evaluation methodologies.
+**ODEB Status**: First practical SAGE implementation, providing foundation for broader framework development.
+
+**Next Steps**: Complete ODEB implementation and validation, then extend methodology to full SAGE framework with generative scenario modeling and meta-learning criterion discovery.
