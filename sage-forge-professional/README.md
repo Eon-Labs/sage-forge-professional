@@ -1,4 +1,4 @@
-# 🔥 SAGE-Forge Professional: Complete TiRex NT-Native Trading System
+# SAGE-Forge Professional
 
 **Self-Adaptive Generative Evaluation Framework with TiRex 35M Parameter xLSTM Integration**
 
@@ -9,16 +9,18 @@
 
 ---
 
-## 🎯 **Current Status: BREAKTHROUGH COMPLETE**
+## Current Status
 
-✅ **TiRex Signal Generation**: Fixed critical threshold issue - now generates actionable BUY/SELL signals  
-✅ **NT Compliance**: Full look-ahead bias prevention with 5/5 validation tests passing  
-✅ **Real DSM Data**: 100% real Binance USDT-margined perpetual futures integration  
-✅ **Production Ready**: 62.5% win rate, +1.35% return, comprehensive testing  
+**TiRex Implementation**: Evolutionary state with native xLSTM architecture compliance  
+**Primary Script**: [`tirex_signal_generator.py`](./tirex_signal_generator.py)  
+**Implementation Guide**: [`TIREX_IMPLEMENTATION_GUIDE.md`](./TIREX_IMPLEMENTATION_GUIDE.md)  
+**Legacy Reference**: [`legacy/tirex-evolution/`](./legacy/tirex-evolution/)
+
+The current implementation incorporates evolutionary improvements from previous iterations while maintaining architectural integrity and computational efficiency.
 
 ---
 
-## 🚀 **Breakthrough Results**
+## Evolutionary Development
 
 ### **TiRex Signal Performance** (August 3, 2025)
 | Metric | Before Fix | After Fix | Improvement |

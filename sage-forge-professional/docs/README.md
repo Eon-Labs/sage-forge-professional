@@ -42,7 +42,7 @@ Quick lookups, examples, and design patterns
 ## 🎯 Quick Start Paths
 
 **New Developer**: Breakthroughs → Implementation → Examples → Tutorials  
-**TiRex Integration**: [Authentic TiRex Script](../visualize_authentic_tirex_signals.py) → [Breakthrough Docs](/docs/breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)  
+**TiRex Integration**: [Current Implementation](../tirex_signal_generator.py) → [Implementation Guide](../TIREX_IMPLEMENTATION_GUIDE.md) → [Legacy Reference](../legacy/tirex-evolution/)  
 **System Operator**: Operations → Troubleshooting → Monitoring  
 **Stakeholder**: Breakthroughs → Milestones → Research → Implementation Overview  
 **Debugging Issue**: Operations/Troubleshooting → Implementation/Component Guide
