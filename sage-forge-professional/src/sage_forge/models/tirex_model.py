@@ -148,8 +148,9 @@ class TiRexModel:
         self.input_processor = TiRexInputProcessor()
         self.is_loaded = False
         
-        # Device configuration
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # CRITICAL FIX: Proper device management for TiRex CUDA compliance
+        self.device = self._setup_device_management()
+        self._validate_device_compatibility()
         
         # Performance tracking
         self.inference_times = deque(maxlen=100)
@@ -162,13 +163,50 @@ class TiRexModel:
         """Public API method to load the TiRex model."""
         return self._load_model()
     
+    def _setup_device_management(self) -> torch.device:
+        """Setup proper device management for TiRex model."""
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+            console.print(f"⚡ CUDA available: {torch.cuda.get_device_name()}")
+            console.print(f"💾 CUDA Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f}GB")
+            return device
+        else:
+            device = torch.device("cpu")
+            console.print("⚠️  CUDA not available - using CPU (slower inference)")
+            return device
+    
+    def _validate_device_compatibility(self):
+        """Validate device compatibility with TiRex requirements."""
+        if self.device.type == "cuda":
+            # Check CUDA compute capability for TiRex
+            gpu_props = torch.cuda.get_device_properties(0)
+            compute_capability = gpu_props.major + gpu_props.minor * 0.1
+            
+            if compute_capability < 7.0:  # TiRex needs modern GPU
+                console.print(f"⚠️  GPU compute capability {compute_capability} may be insufficient for TiRex")
+                console.print("📝 Consider using CPU mode for older GPUs")
+            else:
+                console.print(f"✅ GPU compute capability {compute_capability} compatible with TiRex")
+    
     def _load_model(self) -> bool:
-        """Load the real TiRex model."""
+        """Load the real TiRex model with proper device management."""
         try:
             console.print(f"🔄 Loading TiRex model: {self.model_name}")
+            console.print(f"💻 Target device: {self.device}")
             
             # Load the real TiRex model
             self.model = load_model(self.model_name)
+            
+            # CRITICAL FIX: Ensure model is on correct device
+            if hasattr(self.model, 'to'):
+                self.model = self.model.to(self.device)
+                console.print(f"✅ Model moved to {self.device}")
+            elif hasattr(self.model, 'model') and hasattr(self.model.model, 'to'):
+                # Handle nested model structure
+                self.model.model = self.model.model.to(self.device)
+                console.print(f"✅ Nested model moved to {self.device}")
+            else:
+                console.print("⚠️  Could not move model to device - may cause issues")
             
             console.print("✅ Real TiRex 35M parameter model loaded successfully")
             console.print("🦖 xLSTM architecture with 12 sLSTM blocks")
@@ -204,6 +242,10 @@ class TiRexModel:
             # Debug: Log input shape
             logger.debug(f"TiRex input shape: {model_input.shape}, dtype: {model_input.dtype}")
             logger.debug(f"TiRex input sample: {model_input[:5].tolist()}")  # First 5 values
+            
+            # CRITICAL FIX: Ensure input tensor is on same device as model
+            model_input = model_input.to(self.device)
+            logger.debug(f"Input tensor moved to device: {self.device}")
             
             # Real TiRex inference
             # TiRex returns (quantiles, means) tuple
