@@ -69,15 +69,34 @@ class TiRexInputProcessor:
         """
         self.sequence_length = sequence_length
         self.price_buffer = deque(maxlen=sequence_length)
+        self.timestamp_buffer = deque(maxlen=sequence_length)  # Track timestamps
         
         # Market regime detection
         self._min_samples = 50
+        self.last_timestamp = None  # For temporal ordering validation
     
     def add_bar(self, bar: Bar) -> None:
-        """Add new bar to the input buffer."""
+        """Add new bar to the input buffer with temporal validation."""
+        # CRITICAL: Temporal ordering validation to prevent look-ahead bias
+        bar_timestamp = bar.ts_event
+        
+        if self.last_timestamp is not None:
+            if bar_timestamp < self.last_timestamp:
+                logger.error(f"LOOK-AHEAD BIAS DETECTED: Bar timestamp {bar_timestamp} < last timestamp {self.last_timestamp}")
+                raise ValueError("Temporal ordering violation - bar timestamps must be strictly increasing")
+            elif bar_timestamp == self.last_timestamp:
+                logger.warning(f"Duplicate timestamp detected: {bar_timestamp} - skipping bar")
+                return
+        
         # Extract close price (TiRex uses univariate time series)
         close_price = float(bar.close)
+        
+        # Add to buffers with temporal validation
         self.price_buffer.append(close_price)
+        self.timestamp_buffer.append(bar_timestamp)
+        self.last_timestamp = bar_timestamp
+        
+        logger.debug(f"Added bar: price={close_price}, timestamp={bar_timestamp}, buffer_size={len(self.price_buffer)}")
     
     def get_model_input(self) -> Optional[torch.Tensor]:
         """Generate input tensor for TiRex model."""
