@@ -22,18 +22,18 @@ The following should include minimalistic description and pointers to the paths 
 
 ## FPPA: FinPlot Pattern Alignment
 
-- FinPlot pattern is in the `/Users/terryli/eon/nt/repos/finplot`.
+- FinPlot pattern is in the `~/eon/nt/repos/finplot`.
 - Prefer `/Users/terryli/eon/nt/repos/finplot/finplot/examples/complicated.py` as the default template.
 - Proactively conform to the native paradigm of FinPlot—including its provided classes, idiomatic patterns, and native conventions.
 
 ## NTPA: NautilusTrader Pattern Alignment
 
-- NautilusTrader pattern is in the `/Users/terryli/eon/nt/repos/nautilus_trader`.
+- NautilusTrader pattern is in the `~/eon/nt/repos/nautilus_trader`.
 - Proactively conform to the native paradigm of NautilusTrader—including its provided classes, idiomatic patterns, and native conventions.
 
 ## CFUP: Claude-Flow Usage Pattern
 
-- Claude-Flow officially recommended usage pattern is in the `/Users/terryli/eon/nt/repos/claude-flow`.
+- Claude-Flow officially recommended usage pattern is in the `~/eon/nt/repos/claude-flow`.
 - **Command**: `npx claude-flow@alpha swarm "<objective>" --strategy research` for PPO enhancement
 - **Hive-Mind**: `npx claude-flow@alpha hive-mind spawn "<complex-project>" --claude` for persistent sessions
 - Proactively conform to Claude-Flow's multi-agent orchestration paradigm with specialized worker agents
