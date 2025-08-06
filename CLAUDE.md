@@ -20,6 +20,19 @@ The following should include minimalistic description and pointers to the paths 
   - **Algorithm Taxonomy**: State-of-the-art parameter-free adaptive algorithms categorization (2024-2025)
   - **Implementation Pointers**: Future references for updating `docs/roadmap/` with practical NT-native methods
 
+## Planning Documentation
+
+- **Planning Folder**: `sage-forge-professional/docs/planning/` - Comprehensive implementation plans and architecture documentation
+  - **TiRex-Native ODEB Architecture**: Complete Phase 3B implementation plan with canonicalized concepts
+  - **Phase Implementation Tracking**: Structured development approach across multiple phases
+
+## Project Glossary
+
+- **Glossary Folder**: `sage-forge-professional/docs/glossary/` - Canonicalized concept definitions for precise boundaries
+  - **TiRex-Native ODEB Concepts**: Comprehensive glossary of all "Name-It-To-Tame-It" terms with cross-references
+  - **18 Canonicalized Terms**: Unique, representative, acronymizable concepts across 6 architectural layers
+  - **Usage Guidelines**: Naming conventions, boundary enforcement, implementation standards
+
 ## FPPA: FinPlot Pattern Alignment
 
 - FinPlot pattern is in the `~/eon/nt/repos/finplot`.
