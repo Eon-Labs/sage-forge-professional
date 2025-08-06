@@ -4,6 +4,14 @@
 - Design OHLCV-turning self-adaptive Nonparametric Predictive Alpha Factor ("NPPAF") that's Self-Adaptive Generative Evaluation ("SAGE").
 - SAGE is quantitatively and adaptively assessed through parameter-free, regime-aware evaluation frameworks that discover optimal performance criteria from market structure rather than relying on fixed thresholds, ensuring robust nonparametric out-of-sample viability across market variations.
 
+## File Path Standards
+
+All file paths must be relative to workspace root `~/eon/nt/` (no absolute paths, no `~/eon/nt/` prefixes).
+
+- ✅ `src/sage_forge/models/file.py`
+- ❌ `/home/user/eon/nt/src/sage_forge/models/file.py`
+- ❌ `~/eon/nt/src/sage_forge/models/file.py`
+
 ## Project Resources
 
 The following should include minimalistic description and pointers to the paths that containts the resources only.
@@ -35,18 +43,18 @@ The following should include minimalistic description and pointers to the paths 
 
 ## FPPA: FinPlot Pattern Alignment
 
-- FinPlot pattern is in the `~/eon/nt/repos/finplot`.
-- Prefer `/Users/terryli/eon/nt/repos/finplot/finplot/examples/complicated.py` as the default template.
+- FinPlot pattern is in the `repos/finplot`.
+- Prefer `repos/finplot/finplot/examples/complicated.py` as the default template.
 - Proactively conform to the native paradigm of FinPlot—including its provided classes, idiomatic patterns, and native conventions.
 
 ## NTPA: NautilusTrader Pattern Alignment
 
-- NautilusTrader pattern is in the `~/eon/nt/repos/nautilus_trader`.
+- NautilusTrader pattern is in the `repos/nautilus_trader`.
 - Proactively conform to the native paradigm of NautilusTrader—including its provided classes, idiomatic patterns, and native conventions.
 
 ## CFUP: Claude-Flow Usage Pattern
 
-- Claude-Flow officially recommended usage pattern is in the `~/eon/nt/repos/claude-flow`.
+- Claude-Flow officially recommended usage pattern is in the `repos/claude-flow`.
 - **Command**: `npx claude-flow@alpha swarm "<objective>" --strategy research` for PPO enhancement
 - **Hive-Mind**: `npx claude-flow@alpha hive-mind spawn "<complex-project>" --claude` for persistent sessions
 - Proactively conform to Claude-Flow's multi-agent orchestration paradigm with specialized worker agents

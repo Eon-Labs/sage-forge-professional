@@ -200,7 +200,7 @@ This glossary follows **Layered Architecture Conceptual Hierarchy** with unique,
   - Phase 2 (Enhancement): Multi-Horizon Directional Capture Analysis + Trajectory Fidelity Oracle Modeling
   - Phase 3 (Advanced): Full Walk-Forward Simulation Gap Elimination with multi-horizon trajectory analysis
 - **Strategic Rationale**: Maintains proven patterns while systematically adding missing capabilities
-- **Key Implementation**: `docs/planning/phase_implementation_tracking.md` (implementation coordination)
+- **Key Implementation**: `sage-forge-professional/docs/planning/phase_implementation_tracking.md` (implementation coordination)
 - **Integration Files**: All enhancement files following phased development approach
 - **Discovery Context**: Comprehensive analysis revealing implementation complexity requiring phased approach
 - **Usage**: "PBIS ensures systematic enhancement delivery without disrupting proven TiRex integration patterns."

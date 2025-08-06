@@ -408,9 +408,9 @@ class AuthenticWalkForwardEngine:
 - **CLPR Testing**: `test_confidence_leak_problem_resolution.py` (new)
 
 ### **Planning & Documentation Files**  
-- **This Document**: `docs/planning/tirex_native_odeb_comprehensive_architecture.md`
+- **This Document**: `sage-forge-professional/docs/planning/tirex_native_odeb_comprehensive_architecture.md`
 - **Project Glossary**: `sage-forge-professional/docs/glossary/tirex_native_odeb_concepts_glossary.md`
-- **Phase Implementation Tracking**: `docs/planning/phase_implementation_tracking.md` (new)
+- **Phase Implementation Tracking**: `sage-forge-professional/docs/planning/phase_implementation_tracking.md` (new)
 
 ---
 
