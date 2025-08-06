@@ -12,6 +12,12 @@ Evolutionary improvements:
 - Computational efficiency through proper resource utilization
 - Balanced signal generation across market conditions
 
+═════════════════════════════════════════════════════════════════════════════
+📋 EVOLUTION PLAN: See TIREX_EVOLUTION_MVP_PLAN.md for incremental implementation
+   Status: Phase 0 - Fixing NT→ODEB conversion infrastructure
+   Next: Add --backtest flag for ODEB integration (minimum viable features only)
+═════════════════════════════════════════════════════════════════════════════
+
 Legacy reference: See legacy/tirex-evolution/ for historical implementations
 """
 
@@ -23,6 +29,7 @@ from rich.panel import Panel
 from rich.table import Table
 import warnings
 import numpy as np
+import argparse
 
 # Add SAGE-Forge to path
 current_dir = Path(__file__).parent
@@ -31,6 +38,50 @@ sys.path.append(str(sage_src))
 
 warnings.filterwarnings('ignore')
 console = Console()
+
+def run_minimal_backtest(signals):
+    """Run minimal backtest integration with ODEB analysis."""
+    try:
+        from sage_forge.backtesting.tirex_backtest_engine import TiRexBacktestEngine
+        
+        console.print("\n🎯 Running TiRex backtest integration...")
+        
+        # Create backtest engine instance
+        engine = TiRexBacktestEngine()
+        
+        # Setup backtest with same period as signal generation
+        success = engine.setup_backtest(
+            symbol="BTCUSDT",
+            start_date="2024-10-01",
+            end_date="2024-10-17", 
+            initial_balance=100000.0,
+            timeframe="15m"
+        )
+        
+        if not success:
+            console.print("❌ Backtest setup failed")
+            return None
+            
+        # Run backtest with fixed NT→ODEB conversion
+        results = engine.run_backtest()
+        
+        # Display ODEB results if available
+        if results and 'odeb_analysis' in results:
+            odeb = results['odeb_analysis']
+            if odeb.get('available', False):
+                console.print("\n🧙‍♂️ ODEB Analysis Results:")
+                console.print(f"   Directional Capture: {odeb.get('directional_capture_pct', 0):.1f}%")
+                console.print(f"   Oracle Direction: {odeb.get('oracle_direction', 'Unknown')}")
+                console.print(f"   TiRex P&L: ${odeb.get('tirex_final_pnl', 0):,.2f}")
+                console.print(f"   Oracle P&L: ${odeb.get('oracle_final_pnl', 0):,.2f}")
+            else:
+                console.print(f"\n⚠️ ODEB Analysis: {odeb.get('reason', 'Not available')}")
+        
+        return results
+        
+    except Exception as e:
+        console.print(f"❌ Backtest integration failed: {e}")
+        return None
 
 def load_tirex_model():
     """Load TiRex model with current evolutionary configuration."""
@@ -446,9 +497,21 @@ def visualize_signals(market_data, signals):
 
 def main():
     """Main function for TiRex signal generation."""
-    console.print(Panel("🦖 TiRex Signal Generator - Evolutionary Implementation", style="bold green"))
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="TiRex Signal Generator - Evolutionary Implementation with ODEB integration"
+    )
+    parser.add_argument('--backtest', action='store_true', 
+                       help='Run backtesting after signal generation (adds ODEB analysis)')
+    args = parser.parse_args()
+    
+    # Display header with mode indication
+    mode_desc = "with ODEB Backtesting" if args.backtest else "Signal Analysis Mode"
+    console.print(Panel(f"🦖 TiRex Signal Generator - {mode_desc}", style="bold green"))
     console.print("🔬 Current evolutionary state incorporating architectural compliance and strategic state management")
     console.print("📚 Legacy implementations archived in legacy/tirex-evolution/ for reference")
+    if args.backtest:
+        console.print("🎯 Backtest mode enabled: Will run ODEB analysis after signal generation")
     console.print()
     
     try:
@@ -469,6 +532,10 @@ def main():
         
         # Analyze results
         analyze_signal_results(signals)
+        
+        # Run backtest if requested
+        if args.backtest:
+            backtest_results = run_minimal_backtest(signals)
         
         # Create visualization if signals exist
         if signals:
