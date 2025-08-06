@@ -55,10 +55,22 @@ class TiRexPrediction:
     volatility_forecast: float  # Predicted volatility
     processing_time_ms: float  # Inference time
     market_regime: str  # Detected market regime
+    prediction_phase: str  # CONTEXT_BOUNDARY or STABLE_WINDOW
 
 
 class TiRexInputProcessor:
-    """Preprocesses market data for TiRex model input."""
+    """Preprocesses market data for TiRex model input.
+    
+    🎯 PREDICTION BOUNDARY PHASES:
+    1. WARM_UP_PERIOD: Bars 0 to (sequence_length-1) → No predictions (insufficient context)
+    2. CONTEXT_BOUNDARY: Bar sequence_length → FIRST prediction (minimum context achieved)
+    3. STABLE_WINDOW: Bar (sequence_length+1)+ → Sliding window predictions
+    
+    ⚠️  CRITICAL BOUNDARY CONDITION:
+    - Total predictions from N bars = N - sequence_length + 1 (not N - sequence_length)
+    - First prediction occurs at bar index (sequence_length - 1), NOT sequence_length
+    - This is an OFF-BY-ONE boundary that affects all prediction counting
+    """
     
     def __init__(self, sequence_length: int = 128):
         """
@@ -66,17 +78,32 @@ class TiRexInputProcessor:
         
         Args:
             sequence_length: Context window for TiRex model (default 128)
+            
+        Boundary Behavior:
+            - sequence_length=128 → First prediction at bar 127 (0-indexed)
+            - For 150 bars → 150-128+1 = 23 predictions (bars 127-149)
         """
         self.sequence_length = sequence_length
         self.price_buffer = deque(maxlen=sequence_length)
         self.timestamp_buffer = deque(maxlen=sequence_length)  # Track timestamps
+        
+        # Prediction phase tracking
+        self.bars_processed = 0  # Track total bars for phase detection
+        self.warm_up_complete = False  # Flag when minimum context achieved
         
         # Market regime detection
         self._min_samples = 50
         self.last_timestamp = None  # For temporal ordering validation
     
     def add_bar(self, bar: Bar) -> None:
-        """Add new bar to the input buffer with temporal validation."""
+        """Add new bar to the input buffer with temporal validation.
+        
+        🎯 PREDICTION PHASE TRACKING:
+        Updates internal state to track which prediction phase we're in:
+        - WARM_UP_PERIOD: bars_processed < sequence_length
+        - CONTEXT_BOUNDARY: bars_processed == sequence_length (first prediction)
+        - STABLE_WINDOW: bars_processed > sequence_length (sliding window)
+        """
         # CRITICAL: Temporal ordering validation to prevent look-ahead bias
         bar_timestamp = bar.ts_event
         
@@ -96,10 +123,69 @@ class TiRexInputProcessor:
         self.timestamp_buffer.append(bar_timestamp)
         self.last_timestamp = bar_timestamp
         
-        logger.debug(f"Added bar: price={close_price}, timestamp={bar_timestamp}, buffer_size={len(self.price_buffer)}")
+        # Track prediction phase progression
+        self.bars_processed += 1
+        if not self.warm_up_complete and len(self.price_buffer) >= self.sequence_length:
+            self.warm_up_complete = True
+            logger.info(f"🎯 CONTEXT_BOUNDARY reached at bar {self.bars_processed-1} - first prediction now possible")
+        
+        logger.debug(f"Added bar: price={close_price}, timestamp={bar_timestamp}, buffer_size={len(self.price_buffer)}, phase={self.get_prediction_phase()}")
+    
+    def get_prediction_phase(self) -> str:
+        """Get current prediction phase for boundary condition awareness.
+        
+        Returns:
+            WARM_UP_PERIOD: Insufficient context for predictions
+            CONTEXT_BOUNDARY: First prediction possible (minimum context)
+            STABLE_WINDOW: Sliding window predictions active
+        """
+        if not self.warm_up_complete:
+            return "WARM_UP_PERIOD"
+        elif self.bars_processed == self.sequence_length:
+            return "CONTEXT_BOUNDARY"
+        else:
+            return "STABLE_WINDOW"
+    
+    def calculate_expected_predictions(self, total_bars: int) -> dict:
+        """Calculate expected prediction count for given bar sequence.
+        
+        🎯 BOUNDARY MATH FORMULA:
+        expected_predictions = max(0, total_bars - sequence_length + 1)
+        
+        Args:
+            total_bars: Total number of bars to be processed
+            
+        Returns:
+            Dictionary with prediction boundary analysis
+        """
+        if total_bars < self.sequence_length:
+            return {
+                'expected_predictions': 0,
+                'warm_up_bars': total_bars,
+                'first_prediction_bar': None,
+                'last_prediction_bar': None,
+                'boundary_formula': f'{total_bars} - {self.sequence_length} + 1 = {max(0, total_bars - self.sequence_length + 1)}'
+            }
+        
+        expected_predictions = total_bars - self.sequence_length + 1
+        first_prediction_bar = self.sequence_length - 1  # 0-indexed
+        last_prediction_bar = total_bars - 1
+        
+        return {
+            'expected_predictions': expected_predictions,
+            'warm_up_bars': self.sequence_length - 1,
+            'first_prediction_bar': first_prediction_bar,
+            'last_prediction_bar': last_prediction_bar,
+            'boundary_formula': f'{total_bars} - {self.sequence_length} + 1 = {expected_predictions}'
+        }
     
     def get_model_input(self) -> Optional[torch.Tensor]:
-        """Generate input tensor for TiRex model."""
+        """Generate input tensor for TiRex model.
+        
+        🎯 CONTEXT BOUNDARY CONDITION:
+        Returns tensor only when buffer contains exactly sequence_length items.
+        This creates the CONTEXT_BOUNDARY at bar (sequence_length-1).
+        """
         if len(self.price_buffer) < self.sequence_length:
             return None
         
@@ -285,6 +371,9 @@ class TiRexModel:
             quantile_values = quantiles.squeeze().cpu().numpy()  # [prediction_length, num_quantiles]
             forecast_std = np.std(quantile_values, axis=-1) if len(quantile_values.shape) > 0 else 0.1
             
+            # Determine prediction phase for boundary awareness
+            prediction_phase = self.input_processor.get_prediction_phase()
+            
             # Convert to directional signal
             # Handle scalar and array cases properly
             if isinstance(mean_forecast, np.ndarray) and mean_forecast.shape == ():
@@ -321,7 +410,8 @@ class TiRexModel:
                 raw_forecast=mean_forecast,
                 volatility_forecast=volatility_forecast,
                 processing_time_ms=processing_time,
-                market_regime=market_regime
+                market_regime=market_regime,
+                prediction_phase=prediction_phase
             )
             
             self.prediction_history.append(prediction)
