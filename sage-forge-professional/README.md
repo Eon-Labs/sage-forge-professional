@@ -71,8 +71,10 @@ sage-forge-professional/           # Complete TiRex trading system
 │   ├── data/                      # Real market data integration
 │   │   └── manager.py             # DSM + Arrow optimization ✅
 │   └── risk/                      # Professional risk management
-└── 🎪 demos/                      # Working demonstrations
-    └── ultimate_complete_demo.py   # Proven 214-order demo
+└── 🎪 demos/                      # Working TiRex demonstrations
+    ├── tirex_backtest_demo.py      # TiRex demo with sample results
+    ├── adaptive_tirex_backtest_demo.py  # Real TiRex optimization (Sharpe 1.46, 20.9% return)
+    └── tirex_demo.py               # Simple TiRex signal test
 ```
 
 ---

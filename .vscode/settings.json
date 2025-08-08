@@ -10,7 +10,7 @@
       "source.organizeImports": "explicit"
     }
   },
-  "terminal.integrated.cwd": "${workspaceFolder}/nautilus_test",
+  "terminal.integrated.cwd": "",
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.profiles.linux": {
     "bash": {
@@ -123,7 +123,7 @@
   },
   "git.ignoredRepositories": [
     "repos/nautilus_trader",
-    "repos/finplot", 
+    "repos/finplot",
     "repos/claude-flow"
   ],
   "git.detectSubmodules": false,
