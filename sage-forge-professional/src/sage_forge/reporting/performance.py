@@ -379,12 +379,16 @@ def export_performance_summary(
 
 @dataclass
 class Position:
-    """Position data structure for ODEB analysis."""
+    """Position data structure for ODEB analysis with confidence metadata."""
     open_time: pd.Timestamp
     close_time: pd.Timestamp
     size_usd: float
     pnl: float
     direction: int  # 1 for LONG, -1 for SHORT
+    confidence: float = 0.0  # TiRex confidence at position open [0, 1]
+    market_regime: str = "unknown"  # Market regime classification
+    regime_stability: float = 0.0  # Regime stability score [0, 1] 
+    prediction_phase: str = "unknown"  # WARM_UP_PERIOD | CONTEXT_BOUNDARY | STABLE_WINDOW
     
     @property
     def duration_days(self) -> float:
