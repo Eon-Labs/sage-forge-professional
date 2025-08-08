@@ -9,8 +9,8 @@ Critical system breakthroughs, fraud elimination, and major technical achievemen
 **Impact**: **CRITICAL** - Fraud elimination & real model integration
 
 - **📄 [Full Breakthrough Report](2025-08-04-authentic-tirex-fraud-elimination.md)**
-- **🎖️ [Milestone Record](/docs/milestones/2025-08-04-authentic-tirex-integration-established.md)**
-- **💻 [Authentic Implementation](../../visualize_authentic_tirex_signals.py)**
+- **🎖️ [Milestone Record](../milestones/2025-08-04-authentic-tirex-integration-established.md)**
+- **💻 [Authentic Implementation](../../legacy/tirex-evolution/visualize_authentic_tirex_signals.py)**
 
 #### **Summary**
 Systematic elimination of all fraudulent hardcoded signal visualizations and establishment of the first authentic NX-AI/TiRex 35M parameter model integration. Complete workspace cleanup resulted in single legitimate script with 100% real GPU inference.

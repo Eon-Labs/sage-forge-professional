@@ -4,45 +4,45 @@
 
 ## 🧭 Navigation Hub
 
-### 🔬 [Research](/docs/research/)
+### 🔬 [Research](research/)
 Theoretical foundation and algorithm taxonomy for NPPAF/SAGE framework
 - **SAGE Framework**: Nonparametric Predictive Alpha Factor mathematical foundation
 - **Algorithm Taxonomy**: State-of-the-art parameter-free adaptive algorithms (2024-2025)
 - **Market Analysis**: Financial time series regime detection and forecasting research
 
-### ⚙️ [Implementation](/docs/implementation/)
+### ⚙️ [Implementation](implementation/)
 Technical how-to guides for system components
-- **[TiRex Integration](/docs/implementation/tirex/)**: NX-AI TiRex 35M xLSTM model integration
-- **[DSM Integration](/docs/implementation/dsm/)**: Data Source Manager for real market data
-- **[Backtesting](/docs/implementation/backtesting/)**: NautilusTrader framework patterns
-- **[Infrastructure](/docs/implementation/infrastructure/)**: GPU workstation and system setup
+- **[TiRex Integration](implementation/tirex/)**: NX-AI TiRex 35M xLSTM model integration
+- **[DSM Integration](implementation/dsm/)**: Data Source Manager for real market data
+- **[Backtesting](implementation/backtesting/)**: NautilusTrader framework patterns
+- **[Infrastructure](implementation/infrastructure/)**: GPU workstation and system setup
 
-### 🔥 [Breakthroughs](/docs/breakthroughs/)
+### 🔥 [Breakthroughs](breakthroughs/)
 Critical system breakthroughs and fraud elimination
-- **[🚨 AUTHENTIC TiRex Integration](/docs/breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)**: Systematic fraud elimination & real model integration
+- **[🚨 AUTHENTIC TiRex Integration](breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)**: Systematic fraud elimination & real model integration
 
-### 🎖️ [Milestones](/docs/milestones/)
+### 🎖️ [Milestones](milestones/)
 Achievement records and SR&ED evidence
-- **[🔥 CRITICAL: Authentic TiRex Integration](/docs/milestones/2025-08-04-authentic-tirex-integration-established.md)**: Fraud elimination & real model integration
-- **[Historical Achievements](/docs/milestones/2025-08-03-tirex-signals-working.md)**: Previous TiRex development milestones
-- **[Archive](/docs/milestones/archive/)**: Historical milestone records
+- **[🔥 CRITICAL: Authentic TiRex Integration](milestones/2025-08-04-authentic-tirex-integration-established.md)**: Fraud elimination & real model integration
+- **[Historical Achievements](milestones/archive/2025-08-03-tirex-signals-working.md)**: Previous TiRex development milestones
+- **[Archive](milestones/archive/)**: Historical milestone records
 
-### 🔧 [Operations](/docs/operations/)
+### 🔧 [Operations](operations/)
 Support, troubleshooting, and system monitoring
-- **[Troubleshooting](/docs/operations/troubleshooting/)**: Component-specific diagnostic guides
-- **[Monitoring](/docs/operations/monitoring/)**: Performance and system health monitoring
+- **[Troubleshooting](operations/troubleshooting/)**: Component-specific diagnostic guides
+- **[Monitoring](operations/monitoring/)**: Performance and system health monitoring
 
-### 📚 [Reference](/docs/reference/)
+### 📚 [Reference](reference/)
 Quick lookups, examples, and design patterns
-- **[API Documentation](/docs/reference/api/)**: Code reference and interfaces
-- **[Examples](/docs/reference/examples/)**: Working code samples and demos
-- **[Tutorials](/docs/reference/tutorials/)**: Step-by-step learning guides
-- **[Patterns](/docs/reference/patterns/)**: Best practices and design patterns
+- **[API Documentation](reference/api/)**: Code reference and interfaces
+- **[Examples](reference/examples/)**: Working code samples and demos
+- **[Tutorials](reference/tutorials/)**: Step-by-step learning guides
+- **[Patterns](reference/patterns/)**: Best practices and design patterns
 
 ## 🎯 Quick Start Paths
 
 **New Developer**: Breakthroughs → Implementation → Examples → Tutorials  
-**TiRex Integration**: [Current Implementation](../scripts/tirex_signal_generator.py) → [Implementation Guide](../docs/implementation/tirex/implementation_guide.md) → [Legacy Reference](../legacy/tirex-evolution/)  
+**TiRex Integration**: [Current Implementation](../scripts/tirex_signal_generator.py) → [Implementation Guide](implementation/tirex/implementation_guide.md) → [Legacy Reference](../legacy/tirex-evolution/)  
 **System Operator**: Operations → Troubleshooting → Monitoring  
 **Stakeholder**: Breakthroughs → Milestones → Research → Implementation Overview  
 **Debugging Issue**: Operations/Troubleshooting → Implementation/Component Guide
@@ -54,8 +54,8 @@ Quick lookups, examples, and design patterns
 - 🚨 **Impact**: All fraudulent hardcoded signals eliminated from workspace
 - 📊 **Result**: Single legitimate script with real NX-AI/TiRex 35M parameter model
 - 📄 **Implementation**: `visualize_authentic_tirex_signals.py` 
-- 📖 **Full Details**: [Fraud Elimination Breakthrough](/docs/breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)
-- 🎖️ **Milestone**: [Authentic TiRex Integration Established](/docs/milestones/2025-08-04-authentic-tirex-integration-established.md)
+- 📖 **Full Details**: [Fraud Elimination Breakthrough](breakthroughs/2025-08-04-authentic-tirex-fraud-elimination.md)
+- 🎖️ **Milestone**: [Authentic TiRex Integration Established](milestones/2025-08-04-authentic-tirex-integration-established.md)
 
 ## 🎯 Current Development Status
 
