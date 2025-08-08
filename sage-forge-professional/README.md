@@ -12,8 +12,8 @@
 ## Current Status
 
 **TiRex Implementation**: Evolutionary state with native xLSTM architecture compliance  
-**Primary Script**: [`tirex_signal_generator.py`](./tirex_signal_generator.py)  
-**Implementation Guide**: [`TIREX_IMPLEMENTATION_GUIDE.md`](./TIREX_IMPLEMENTATION_GUIDE.md)  
+**Primary Script**: [`scripts/tirex_signal_generator.py`](./scripts/tirex_signal_generator.py)  
+**Implementation Guide**: [`docs/implementation/tirex/implementation_guide.md`](./docs/implementation/tirex/implementation_guide.md)  
 **Legacy Reference**: [`legacy/tirex-evolution/`](./legacy/tirex-evolution/)
 
 The current implementation incorporates evolutionary improvements from previous iterations while maintaining architectural integrity and computational efficiency.

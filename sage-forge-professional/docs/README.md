@@ -42,7 +42,7 @@ Quick lookups, examples, and design patterns
 ## 🎯 Quick Start Paths
 
 **New Developer**: Breakthroughs → Implementation → Examples → Tutorials  
-**TiRex Integration**: [Current Implementation](../tirex_signal_generator.py) → [Implementation Guide](../TIREX_IMPLEMENTATION_GUIDE.md) → [Legacy Reference](../legacy/tirex-evolution/)  
+**TiRex Integration**: [Current Implementation](../scripts/tirex_signal_generator.py) → [Implementation Guide](../docs/implementation/tirex/implementation_guide.md) → [Legacy Reference](../legacy/tirex-evolution/)  
 **System Operator**: Operations → Troubleshooting → Monitoring  
 **Stakeholder**: Breakthroughs → Milestones → Research → Implementation Overview  
 **Debugging Issue**: Operations/Troubleshooting → Implementation/Component Guide
