@@ -3,6 +3,7 @@
 ## Available Trading Strategies
 
 ### Built-in Strategy Examples
+
 Located in: `/nt_reference/nautilus_trader/examples/strategies/`
 
 1. **blank.py** - Template strategy
@@ -24,31 +25,37 @@ Located in: `/nt_reference/nautilus_trader/examples/strategies/`
 ### Strategy Categories
 
 #### Trend Following
+
 - **EMA Cross Variants**: Multiple implementations for different use cases
 - **Features**: Moving average crossovers, trend detection, momentum
 - **Complexity**: Beginner to intermediate
 
 #### Market Making
+
 - **Market Maker**: Provide liquidity with bid/ask quotes
 - **Volatility Market Maker**: Adjust spreads based on volatility
 - **Features**: Spread management, inventory control, risk limits
 
 #### Mean Reversion
+
 - **Orderbook Imbalance**: Trade based on order flow analysis
 - **Features**: Microstructure analysis, short-term reversals
 
 #### Signal-Based
+
 - **Signal Strategy**: React to external signals/events
 - **Features**: Event-driven trading, flexible signal sources
 
 ## Available Market Adapters
 
 ### Cryptocurrency Exchanges
+
 Located in: `/nt_reference/nautilus_trader/adapters/`
 
 #### Binance (`binance/`)
+
 - **Markets**: Spot, Futures
-- **Features**: 
+- **Features**:
   - REST API and WebSocket support
   - Multiple order types
   - Real-time market data
@@ -56,6 +63,7 @@ Located in: `/nt_reference/nautilus_trader/adapters/`
 - **Files**: Common utilities, HTTP client, WebSocket client
 
 #### Bybit (`bybit/`)
+
 - **Markets**: Derivatives, Spot
 - **Features**:
   - Position management
@@ -64,19 +72,22 @@ Located in: `/nt_reference/nautilus_trader/adapters/`
 - **Structure**: Comprehensive endpoint coverage
 
 #### OKX (`okx/`)
+
 - **Markets**: Spot, Futures, Options
-- **Features**: 
+- **Features**:
   - Multi-asset trading
   - Position tiers
   - Advanced trading features
 
 #### Coinbase Pro/Advanced (`coinbase_intx/`)
+
 - **Markets**: Institutional trading
 - **Features**: Professional trading interface
 
 #### dYdX (`dydx/`)
+
 - **Markets**: Decentralized derivatives
-- **Features**: 
+- **Features**:
   - DeFi integration
   - Perpetual futures
   - GRPC and HTTP APIs
@@ -84,6 +95,7 @@ Located in: `/nt_reference/nautilus_trader/adapters/`
 ### Traditional Markets
 
 #### Interactive Brokers (`interactive_brokers/`)
+
 - **Markets**: Stocks, Options, Futures, Forex
 - **Features**:
   - Global market access
@@ -92,6 +104,7 @@ Located in: `/nt_reference/nautilus_trader/adapters/`
   - Complex order types
 
 #### Databento (`databento/`)
+
 - **Markets**: US equities, options, futures
 - **Features**:
   - High-quality market data
@@ -101,42 +114,47 @@ Located in: `/nt_reference/nautilus_trader/adapters/`
 ### Alternative Markets
 
 #### Betfair (`betfair/`)
+
 - **Markets**: Sports betting exchange
-- **Features**: 
+- **Features**:
   - Betting exchange mechanics
   - Live odds
   - Order book trading
 
 #### Polymarket (`polymarket/`)
+
 - **Markets**: Prediction markets
 - **Features**: Event-based trading
 
 ### Data Providers
 
 #### Tardis (`tardis/`)
+
 - **Purpose**: Historical cryptocurrency data
 - **Features**: High-quality historical market data
 
 ## Example Strategy Patterns
 
 ### Basic Structure (from reference examples)
+
 ```python
 class ExampleStrategy(Strategy):
     def __init__(self, config: StrategyConfig):
         super().__init__(config)
         # Initialize indicators, parameters
-        
+
     def on_start(self):
         # Strategy startup logic
-        
+
     def on_data(self, data):
         # Process incoming market data
-        
+
     def on_event(self, event):
         # Handle trading events
 ```
 
 ### Common Components
+
 1. **Indicators**: Technical analysis tools (EMA, RSI, etc.)
 2. **Risk Management**: Position sizing, stop losses
 3. **Order Management**: Entry/exit logic
@@ -145,6 +163,7 @@ class ExampleStrategy(Strategy):
 ## Integration Capabilities
 
 ### Supported Order Types
+
 - Market orders
 - Limit orders
 - Stop orders
@@ -153,17 +172,18 @@ class ExampleStrategy(Strategy):
 - Time-in-force options
 
 ### Risk Management Features
+
 - Position sizing
 - Maximum position limits
 - Stop losses
 - Portfolio-level risk controls
 
 ### Data Types Supported
+
 - Trade ticks
 - Quote ticks (bid/ask)
 - Bars/Candles (multiple timeframes)
 - Order book data
 - Alternative data feeds
 
-Date: 2025-07-11
-Note: This represents available capabilities in the reference implementation
+Date: 2025-07-11 Note: This represents available capabilities in the reference implementation

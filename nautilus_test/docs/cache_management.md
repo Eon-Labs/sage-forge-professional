@@ -8,11 +8,11 @@ As of 2024-2025, the nautilus-test project has migrated from workspace-based cac
 
 ### Current Cache Directories
 
-| Platform | Cache Location | Data Location |
-|----------|----------------|---------------|
-| **macOS** | `~/Library/Caches/nautilus-test/` | `~/Library/Application Support/nautilus-test/` |
-| **Linux** | `~/.cache/nautilus-test/` | `~/.local/share/nautilus-test/` |
-| **Windows** | `%LOCALAPPDATA%/nautilus-test/Cache/` | `%LOCALAPPDATA%/nautilus-test/Data/` |
+| Platform    | Cache Location                        | Data Location                                  |
+| ----------- | ------------------------------------- | ---------------------------------------------- |
+| **macOS**   | `~/Library/Caches/nautilus-test/`     | `~/Library/Application Support/nautilus-test/` |
+| **Linux**   | `~/.cache/nautilus-test/`             | `~/.local/share/nautilus-test/`                |
+| **Windows** | `%LOCALAPPDATA%/nautilus-test/Cache/` | `%LOCALAPPDATA%/nautilus-test/Data/`           |
 
 ### Specialized Cache Subdirectories
 
@@ -25,21 +25,25 @@ As of 2024-2025, the nautilus-test project has migrated from workspace-based cac
 ## Benefits of Platform-Standard Directories
 
 ### ✅ Clean Workspace
+
 - Cache files no longer clutter the git repository
 - Workspace stays focused on source code and configuration
 - No need for extensive .gitignore rules for cache files
 
 ### ✅ Cross-Platform Compatibility
+
 - Follows platform conventions (XDG Base Directory Specification on Linux)
 - Integrates with system cleanup tools and backup software
 - Respects user preferences for data storage locations
 
 ### ✅ Centralized Management
+
 - Single configuration point for all cache directories
 - Consistent cache size monitoring and cleanup
 - Easy migration between different cache strategies
 
 ### ✅ Professional Standards
+
 - Follows 2024-2025 Python packaging best practices
 - Compatible with modern application packaging standards
 - Proper separation of cache, data, and configuration files
@@ -173,7 +177,7 @@ from nautilus_test.utils.cache_config import cache_manager
 
 # Clear specific cache types
 cache_manager.clear_cache("funding")
-cache_manager.clear_cache("market_data") 
+cache_manager.clear_cache("market_data")
 cache_manager.clear_cache("dsm")
 
 # Clear all cache

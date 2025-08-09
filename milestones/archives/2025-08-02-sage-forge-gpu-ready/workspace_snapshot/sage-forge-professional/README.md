@@ -2,9 +2,7 @@
 
 **Self-Adaptive Generative Evaluation Framework with Professional Architecture**
 
-[![NautilusTrader](https://img.shields.io/badge/NautilusTrader-Native-blue)](https://github.com/nautechsystems/nautilus_trader)
-[![Python](https://img.shields.io/badge/Python-3.10+-green)](https://www.python.org/)
-[![UV](https://img.shields.io/badge/UV-Package%20Manager-orange)](https://github.com/astral-sh/uv)
+[![NautilusTrader](https://img.shields.io/badge/NautilusTrader-Native-blue)](https://github.com/nautechsystems/nautilus_trader) [![Python](https://img.shields.io/badge/Python-3.10+-green)](https://www.python.org/) [![UV](https://img.shields.io/badge/UV-Package%20Manager-orange)](https://github.com/astral-sh/uv)
 
 ---
 
@@ -48,6 +46,7 @@ sage-forge-professional/           # Professional self-contained system
 ## 🚀 **Quick Start (Professional Workflow)**
 
 ### **1. Self-Contained Setup**
+
 ```bash
 # Clone and initialize
 cd sage-forge-professional
@@ -58,18 +57,20 @@ python setup_sage_forge.py
 ```
 
 ### **2. Run Ultimate Demo**
+
 ```bash
 # Execute proven demo (214 orders, real Binance data)
 uv run python demos/ultimate_complete_demo.py
 
 # Expected results:
 # ✅ Real Binance API: Live $113K+ market data
-# ✅ 214 orders executed with professional risk management  
+# ✅ 214 orders executed with professional risk management
 # ✅ Interactive FinPlot charts with all features
 # ✅ 2880 real market bars (100% data quality)
 ```
 
 ### **3. Professional Development Workflow**
+
 ```bash
 # Generate new strategy
 ./cli/sage-create strategy TiRexStrategy
@@ -86,6 +87,7 @@ uv run python tests/test_professional_structure.py
 ## 🏗️ **Professional Development Features**
 
 ### **✅ Complete Self-Contained Architecture**
+
 - **Zero External Dependencies**: All components included
 - **Professional CLI Tools**: Component generation and validation
 - **Comprehensive Testing**: Unit, integration, and functional tests
@@ -93,6 +95,7 @@ uv run python tests/test_professional_structure.py
 - **Complete Documentation**: API reference, tutorials, examples
 
 ### **✅ NautilusTrader Native Compliance**
+
 - **Actor Pattern**: Professional event-driven components
 - **Strategy Pattern**: Full NT trading strategy compliance
 - **Indicator Pattern**: Custom indicator implementations
@@ -100,6 +103,7 @@ uv run python tests/test_professional_structure.py
 - **Order Management**: Complete NT order execution system
 
 ### **✅ Proven Working Functionality**
+
 - **Ultimate Demo**: 33KB file with 214 proven orders
 - **Real Market Data**: Live Binance API integration
 - **Professional Risk Management**: 333x safer than dangerous 1 BTC sizing
@@ -111,11 +115,12 @@ uv run python tests/test_professional_structure.py
 ## 🔧 **Professional CLI Tools**
 
 ### **Component Generator**
+
 ```bash
 # Generate NT-native strategy
 ./cli/sage-create strategy MyStrategy
 
-# Generate NT-native actor  
+# Generate NT-native actor
 ./cli/sage-create actor MyActor
 
 # Templates include:
@@ -126,6 +131,7 @@ uv run python tests/test_professional_structure.py
 ```
 
 ### **Validation Tools**
+
 ```bash
 # Validate specific components
 ./cli/sage-validate --strategy TiRexStrategy
@@ -143,11 +149,12 @@ uv run python tests/test_professional_structure.py
 ## 🧪 **Professional Testing Framework**
 
 ### **Test Categories**
+
 ```bash
 # Unit tests (component isolation)
 uv run python tests/unit/test_risk_management.py
 
-# Integration tests (component interaction)  
+# Integration tests (component interaction)
 uv run python tests/integration/test_data_pipeline.py
 
 # Functional tests (end-to-end workflow)
@@ -158,6 +165,7 @@ uv run python tests/test_professional_structure.py
 ```
 
 ### **Test Coverage**
+
 - ✅ **NT Pattern Compliance**: All components follow NT standards
 - ✅ **Data Quality**: 100% validation of market data pipeline
 - ✅ **Risk Management**: Professional position sizing verification
@@ -169,10 +177,11 @@ uv run python tests/test_professional_structure.py
 ## ⚙️ **Configuration Management**
 
 ### **Development Configuration**
+
 ```yaml
 # configs/default_config.yaml
 risk:
-  max_account_risk: 0.02      # 2% max risk
+  max_account_risk: 0.02 # 2% max risk
   default_position_size: 0.003 # 0.3% position size
 
 models:
@@ -182,10 +191,11 @@ models:
 ```
 
 ### **Production Configuration**
+
 ```yaml
-# configs/production_config.yaml  
+# configs/production_config.yaml
 risk:
-  max_account_risk: 0.01      # 1% max risk (conservative)
+  max_account_risk: 0.01 # 1% max risk (conservative)
   default_position_size: 0.002 # 0.2% position size
 
 performance:
@@ -199,6 +209,7 @@ performance:
 ## 📊 **Model Integration Architecture**
 
 ### **SOTA Model Support**
+
 ```python
 # Professional model integration
 from sage_forge.models import TiRexModel, AlphaForgeModel
@@ -206,16 +217,17 @@ from sage_forge.models import TiRexModel, AlphaForgeModel
 class SAGEStrategy(Strategy):
     def __init__(self, config):
         super().__init__(config)
-        
+
         # Initialize SOTA models
         self.tirex = TiRexModel(forecast_horizons=[1, 4, 24])
         self.alphaforge = AlphaForgeModel()
-        
+
         # Professional risk management
         self.position_sizer = RealisticPositionSizer()
 ```
 
 ### **Ensemble Framework**
+
 - **Dynamic Weighting**: Performance-based model weights
 - **Uncertainty Quantification**: TiRex confidence estimates
 - **Regime Detection**: Market state-aware adaptation
@@ -226,6 +238,7 @@ class SAGEStrategy(Strategy):
 ## 🔍 **Professional Quality Assurance**
 
 ### **Code Quality Standards**
+
 - ✅ **NT Pattern Compliance**: 100% adherence to NautilusTrader standards
 - ✅ **Type Safety**: Full type hints and validation
 - ✅ **Error Handling**: Comprehensive exception management
@@ -233,6 +246,7 @@ class SAGEStrategy(Strategy):
 - ✅ **Documentation**: Complete API reference and examples
 
 ### **Validation Pipeline**
+
 1. **Component Validation**: CLI tools verify NT compliance
 2. **Integration Testing**: Full system workflow validation
 3. **Performance Testing**: Real data execution verification
@@ -243,6 +257,7 @@ class SAGEStrategy(Strategy):
 ## 🚀 **Production Deployment**
 
 ### **Production Readiness**
+
 ```bash
 # Production validation
 ./cli/sage-validate --all
@@ -256,6 +271,7 @@ uv run python demos/ultimate_complete_demo.py
 ```
 
 ### **Monitoring & Alerts**
+
 - **Real-time Performance Tracking**: Live P&L and risk metrics
 - **Alert Thresholds**: Configurable drawdown and loss limits
 - **Comprehensive Reporting**: Automated performance analysis
@@ -266,12 +282,14 @@ uv run python demos/ultimate_complete_demo.py
 ## 📚 **Documentation Suite**
 
 ### **Available Documentation**
+
 - **[NT Patterns Guide](documentation/NT_PATTERNS.md)**: Complete NT compliance reference
 - **API Reference**: Complete component documentation (documentation/api/)
 - **Tutorials**: Step-by-step implementation guides (documentation/tutorials/)
 - **Examples**: Real-world usage patterns (documentation/examples/)
 
 ### **Developer Resources**
+
 - **Architecture Overview**: System design and component interaction
 - **Best Practices**: Professional development guidelines
 - **Troubleshooting**: Common issues and solutions
@@ -282,6 +300,7 @@ uv run python demos/ultimate_complete_demo.py
 ## 🔒 **Safety & Rollback**
 
 ### **Complete Protection**
+
 ```bash
 # If anything breaks, instant restoration:
 cd /Users/terryli/eon/nt
@@ -293,6 +312,7 @@ uv run python sage_forge_ultimate_complete.py
 ```
 
 ### **Version Control**
+
 - **Reference Archive**: Complete working state preserved
 - **Professional Structure**: Organized for team development
 - **Configuration Management**: Environment-specific settings

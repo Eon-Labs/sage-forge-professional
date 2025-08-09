@@ -3,6 +3,7 @@
 ## Make Commands Reference
 
 ### Available Commands (from `make help`)
+
 ```bash
 make help                # Show available commands
 make install             # Install all dependencies with uv
@@ -17,8 +18,9 @@ make clean              # Clean build artifacts and cache
 ## Testing Results
 
 ### Basic Functionality Test
-**Command**: `make test`
-**Result**: ✅ PASSED
+
+**Command**: `make test` **Result**: ✅ PASSED
+
 ```
 ============================= test session starts ==============================
 platform linux -- Python 3.12.11, pytest-8.4.1, pluggy-1.6.0
@@ -35,8 +37,9 @@ tests/test_basic.py .                                                    [100%]
 ### Code Quality Tests
 
 #### Formatting
-**Command**: `make format`
-**Result**: ✅ PASSED
+
+**Command**: `make format` **Result**: ✅ PASSED
+
 ```
 Formatting code...
 uv run black src/ tests/ examples/
@@ -47,8 +50,9 @@ All done! ✨ 🍰 ✨
 ```
 
 #### Linting
-**Command**: `make lint`
-**Result**: ✅ PASSED
+
+**Command**: `make lint` **Result**: ✅ PASSED
+
 ```
 Linting code...
 uv run ruff check src/ tests/ examples/
@@ -56,8 +60,9 @@ All checks passed!
 ```
 
 #### Type Checking
-**Command**: `make typecheck`
-**Result**: ✅ PASSED
+
+**Command**: `make typecheck` **Result**: ✅ PASSED
+
 ```
 Type checking...
 uv run mypy src/
@@ -65,8 +70,9 @@ Success: no issues found in 4 source files
 ```
 
 ### Basic Example Test
-**Command**: `make run-example`
-**Result**: ✅ PASSED
+
+**Command**: `make run-example` **Result**: ✅ PASSED
+
 ```
 Running basic sandbox example...
 uv run python examples/sandbox/basic_test.py
@@ -90,6 +96,7 @@ Testing NautilusTrader functionality...
 ### Reference Examples Testing
 
 #### Attempted Tests
+
 1. **Indicator Example**: `/nt_reference/examples/backtest/example_07_using_indicators/`
    - **Status**: ❌ Failed (module import issues)
    - **Error**: `ModuleNotFoundError: No module named 'examples'`
@@ -103,18 +110,21 @@ Testing NautilusTrader functionality...
 ## What the Tests Tell Us
 
 ### Environment Health
+
 - ✅ Python 3.12.11 working correctly
 - ✅ All development tools properly installed
 - ✅ Code meets quality standards
 - ✅ Basic NautilusTrader functionality working
 
 ### Core NautilusTrader Features Tested
+
 1. **Instrument Creation**: EUR/USD forex pair
 2. **Price Objects**: Decimal precision handling
 3. **Market Data**: Quote tick generation
 4. **Venue Simulation**: SIM (simulated) venue
 
 ### Areas Needing Further Testing
+
 1. **Backtesting Engine**: Need working backtest example
 2. **Strategy Development**: Create custom strategies
 3. **Live Market Data**: Test with real data feeds
@@ -128,5 +138,4 @@ Testing NautilusTrader functionality...
 3. **Check environment first**: Ensure all tools working before development
 4. **Start simple**: Basic functionality before complex features
 
-Date: 2025-07-11
-System: Linux with Python 3.12.11, pytest-8.4.1
+Date: 2025-07-11 System: Linux with Python 3.12.11, pytest-8.4.1

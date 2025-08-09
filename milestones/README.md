@@ -20,7 +20,8 @@ milestones/
 ## 🎯 Purpose
 
 This system provides **reversible development milestones** with:
-- ✅ **Complete workspace snapshots** 
+
+- ✅ **Complete workspace snapshots**
 - ✅ **Git commit coordination**
 - ✅ **Automated restoration scripts**
 - ✅ **Comprehensive documentation**
@@ -29,6 +30,7 @@ This system provides **reversible development milestones** with:
 ## 🚀 Quick Usage
 
 ### Create New Milestone
+
 ```bash
 # Manual method
 python milestones/milestone_manager.py create "description-of-milestone"
@@ -38,6 +40,7 @@ cp milestones/TEMPLATE_MILESTONE.md milestones/archives/$(date +%Y-%m-%d)-your-m
 ```
 
 ### Restore to Milestone
+
 ```bash
 # List available milestones
 python milestones/milestone_manager.py list
@@ -51,6 +54,7 @@ python milestones/milestone_manager.py restore "2025-08-02-sage-forge-gpu-ready"
 **Format**: `YYYY-MM-DD-descriptive-name`
 
 **Examples**:
+
 - `2025-08-02-sage-forge-gpu-ready` - GPU environment complete
 - `2025-08-03-tirex-implementation` - TiRex strategy implemented
 - `2025-08-04-sota-models-integrated` - All SOTA models working
@@ -58,6 +62,7 @@ python milestones/milestone_manager.py restore "2025-08-02-sage-forge-gpu-ready"
 ## 🔄 Integration with Git
 
 Each milestone automatically:
+
 1. **Creates git tag**: `milestone-YYYY-MM-DD-description`
 2. **Commits all changes** with milestone message
 3. **Records commit SHA** in milestone metadata

@@ -23,6 +23,7 @@ nautilus_test/
 ## Setup
 
 Install dependencies using uv (recommended):
+
 ```bash
 make install
 # or
@@ -46,6 +47,7 @@ make run-example   # Run basic example
 ## Examples
 
 Run the basic functionality test:
+
 ```bash
 make run-example
 ```

@@ -13,19 +13,19 @@ from nautilus_trader.common.actor import Actor
 
 class SAGEActor(Actor):
     """NT-native actor following SAGE-Forge patterns."""
-    
+
     def __init__(self, config=None):
         super().__init__()
         self.config = config or {}
-        
+
     def on_start(self):
         """Required: Initialize actor."""
         self.log.info("SAGE Actor started")
-        
+
     def on_stop(self):
         """Required: Cleanup on shutdown."""
         self.log.info("SAGE Actor stopped")
-        
+
     def on_event(self, event):
         """Optional: Handle custom events."""
         pass
@@ -39,19 +39,19 @@ from nautilus_trader.model.data import Bar
 
 class SAGEStrategy(Strategy):
     """NT-native strategy following SAGE-Forge patterns."""
-    
+
     def __init__(self, config):
         super().__init__(config)
-        
+
     def on_start(self):
         """Required: Subscribe to data and initialize."""
         self.subscribe_bars(self.config.bar_type)
-        
+
     def on_bar(self, bar: Bar):
         """Required: Process bar data."""
         # Trading logic here
         pass
-        
+
     def on_stop(self):
         """Required: Cleanup on shutdown."""
         pass
@@ -64,11 +64,11 @@ from nautilus_trader.indicators.base.indicator import Indicator
 
 class SAGEIndicator(Indicator):
     """NT-native indicator following SAGE-Forge patterns."""
-    
+
     def __init__(self, period: int):
         super().__init__(params=[period])
         self.period = period
-        
+
     def _compute(self, value: float) -> None:
         """Required: Compute indicator value."""
         # Indicator logic here
@@ -86,15 +86,15 @@ from sage_forge.models.base import BaseSAGEModel
 
 class TiRexModel(BaseSAGEModel):
     """SAGE-Forge model wrapper for TiRex."""
-    
+
     def __init__(self, config):
         super().__init__()
         self.config = config
-        
+
     def predict(self, data):
         """Generate model prediction."""
         pass
-        
+
     def get_uncertainty(self, data):
         """Get prediction uncertainty."""
         pass
@@ -110,7 +110,7 @@ class SAGEStrategy(Strategy):
         super().__init__(config)
         # Always use professional position sizing
         self.position_sizer = RealisticPositionSizer()
-        
+
     def _calculate_position_size(self, signal_strength: float):
         """Use SAGE-Forge risk management."""
         return self.position_sizer.calculate_size(
@@ -166,12 +166,12 @@ def test_tirex_strategy_compliance():
     """Test NT pattern compliance."""
     config = create_test_config()
     strategy = TiRexStrategy(config)
-    
+
     # Test required methods exist
     assert hasattr(strategy, 'on_start')
     assert hasattr(strategy, 'on_bar')
     assert hasattr(strategy, 'on_stop')
-    
+
     # Test inheritance
     assert isinstance(strategy, Strategy)
 ```
@@ -183,12 +183,12 @@ def test_sage_forge_integration():
     """Test complete SAGE-Forge pipeline."""
     # 1. Create engine
     engine = create_test_engine()
-    
+
     # 2. Add SAGE components
     engine.add_actor(FundingActor())
     engine.add_actor(FinplotActor())
     engine.add_strategy(SAGEStrategy(config))
-    
+
     # 3. Run and validate
     engine.run()
     assert len(engine.cache.orders()) > 0
@@ -199,6 +199,7 @@ def test_sage_forge_integration():
 ## 🔍 **Validation Checklist**
 
 ### **Strategy Validation**
+
 - [ ] Inherits from `nautilus_trader.trading.strategy.Strategy`
 - [ ] Implements `on_start()`, `on_bar()`, `on_stop()`
 - [ ] Uses proper subscription patterns
@@ -206,6 +207,7 @@ def test_sage_forge_integration():
 - [ ] Uses SAGE-Forge risk management
 
 ### **Actor Validation**
+
 - [ ] Inherits from `nautilus_trader.common.actor.Actor`
 - [ ] Implements `on_start()`, `on_stop()`
 - [ ] Handles events properly
@@ -213,6 +215,7 @@ def test_sage_forge_integration():
 - [ ] Integrates with message bus
 
 ### **Integration Validation**
+
 - [ ] All imports work correctly
 - [ ] Components communicate via NT message bus
 - [ ] Data flows through NT cache system
@@ -224,18 +227,21 @@ def test_sage_forge_integration():
 ## 🚀 **Best Practices**
 
 ### **Performance**
+
 - Use NT cache system for data storage
 - Minimize object creation in hot paths
 - Leverage NT's built-in parallel processing
 - Cache expensive calculations
 
 ### **Error Handling**
+
 - Use NT logging system (`self.log`)
 - Handle data quality issues gracefully
 - Implement fallback mechanisms
 - Validate inputs at boundaries
 
 ### **Testing**
+
 - Test components in isolation
 - Use NT test fixtures
 - Validate against live data

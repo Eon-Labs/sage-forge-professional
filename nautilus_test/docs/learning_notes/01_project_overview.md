@@ -5,6 +5,7 @@
 NautilusTrader is a high-performance algorithmic trading platform built in Rust with Python bindings. It provides a comprehensive framework for developing, testing, and deploying trading strategies.
 
 ### Key Features
+
 - **High Performance**: Built in Rust for speed and reliability
 - **Python Interface**: Easy to use Python API for strategy development
 - **Backtesting**: Comprehensive historical testing capabilities
@@ -18,6 +19,7 @@ NautilusTrader is a high-performance algorithmic trading platform built in Rust 
 Our workspace contains two main directories:
 
 ### `/workspaces/nt/nautilus_test/`
+
 - **Purpose**: Our development/learning environment
 - **Structure**:
   ```
@@ -34,23 +36,27 @@ Our workspace contains two main directories:
   ```
 
 ### `/workspaces/nt/nt_reference/`
+
 - **Purpose**: Complete NautilusTrader source code for reference
 - **Contains**: Full implementation, examples, documentation
 
 ## Development Environment
 
 ### Package Management
+
 - **Tool**: `uv` (NautilusTrader's recommended package manager)
 - **Python**: 3.11+ required
 - **Dependencies**: NautilusTrader >= 1.219.0
 
 ### Development Tools
+
 - **Formatter**: black (100-character line length)
 - **Linter**: ruff
 - **Type Checker**: mypy
 - **Testing**: pytest
 
 ### Code Standards
+
 - Line length: 100 characters
 - Type hints required for all functions
 - Follow NautilusTrader's coding conventions
@@ -58,6 +64,7 @@ Our workspace contains two main directories:
 ## Current Environment Status
 
 ✅ **Working Components**:
+
 - uv package management
 - All development tools (black, ruff, mypy, pytest)
 - Basic functionality tests passing
@@ -71,5 +78,4 @@ Our workspace contains two main directories:
 3. **Development Workflow**: Format → Lint → Test → Type Check cycle
 4. **NautilusTrader Basics**: Core concepts and capabilities
 
-Date: 2025-07-11
-Environment: Linux (Docker container with devcontainer setup)
+Date: 2025-07-11 Environment: Linux (Docker container with devcontainer setup)

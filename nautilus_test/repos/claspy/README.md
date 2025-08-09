@@ -1,11 +1,12 @@
 # ClaSPy: A Python package for time series segmentation
+
 [![PyPI version](https://badge.fury.io/py/claspy.svg)](https://pypi.org/project/claspy/) [![Downloads](https://pepy.tech/badge/claspy)](https://pepy.tech/project/claspy)
 
 Time series segmentation (TSS) tries to partition a time series (TS) into semantically meaningful segments. It's an important unsupervised learning task applied to large, real-world sensor signals for human inspection, change point detection or as preprocessing for classification and anomaly detection. This python library is the official implementation of the accurate and domain-agnostic TSS algorithm ClaSP.
 
 ## Installation
-You can install ClaSPy with PyPi: 
-`python -m pip install claspy` 
+
+You can install ClaSPy with PyPi: `python -m pip install claspy`
 
 ## Usage: univariate time series
 
@@ -42,6 +43,7 @@ Now, let's import multivariate TS data from the <a href="https://github.com/patr
 ```python3
 >>> from claspy.data_loader import load_has_dataset
 ```
+
 In this example, we use a motion routine from a student getting on, riding, and getting of a train. The multivariate TS consists of acceleration and magnetometer readings from a smartphone. We pass the time series as a 2-dimensional numpy array to ClaSP.
 
 ```python3
@@ -69,7 +71,7 @@ We also provide a streaming implementation of ClaSP that can segment ongoing tim
 >>> from claspy.streaming.segmentation import StreamingClaSPSegmentation
 ```
 
-In our example, we simulate an ongoing ECG time series stream and use ClaSP to detect the transition between normal heartbeats and a myocardial infarction as soon as possible. We use a sliding window of 1k data points and update ClaSP with every data point. 
+In our example, we simulate an ongoing ECG time series stream and use ClaSP to detect the transition between normal heartbeats and a myocardial infarction as soon as possible. We use a sliding window of 1k data points and update ClaSP with every data point.
 
 ```python3
 >>> dataset, window_size, true_cps, time_series = load_tssb_dataset(names=("ECG200",)).iloc[0, :]
@@ -89,7 +91,7 @@ clasp.plot(heading="Detection of myocardial infarction in ECG stream", stream_na
 
 <img src="https://raw.githubusercontent.com/ermshaua/claspy/main/streaming_segmentation_example.png" />
 
-ClaSP needs circa 300 data points to accurately detect the change in heart beats. After the alert, it can be continued to be updated to detect more changes in the future. ClaSP is designed to automatically expel old data from its sliding window, efficiently use memory and run indefinitely. See this <a href="https://github.com/ermshaua/claspy/blob/main/claspy/notebooks/streaming_time_series.ipynb">tutorial</a> for more information. 
+ClaSP needs circa 300 data points to accurately detect the change in heart beats. After the alert, it can be continued to be updated to detect more changes in the future. ClaSP is designed to automatically expel old data from its sliding window, efficiently use memory and run indefinitely. See this <a href="https://github.com/ermshaua/claspy/blob/main/claspy/notebooks/streaming_time_series.ipynb">tutorial</a> for more information.
 
 ## Examples
 
@@ -120,6 +122,6 @@ Here are some of the things we would like to add to ClaSPy in the future:
 
 - Future research related to ClaSP
 - Example and application Jupyter notebooks
-- More documentation and tests 
+- More documentation and tests
 
 If you want to contribute, report bugs, or need help applying ClaSP for your application, feel free to reach out.

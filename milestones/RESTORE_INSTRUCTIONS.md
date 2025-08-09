@@ -10,7 +10,7 @@ If you need to quickly restore to a working state:
 # 1. Go to workspace root
 cd /Users/terryli/eon/nt
 
-# 2. List available milestones  
+# 2. List available milestones
 python milestones/milestone_manager.py list
 
 # 3. Restore to latest working milestone
@@ -24,6 +24,7 @@ uv run python tests/test_professional_structure.py
 ## 📋 Step-by-Step Restoration Process
 
 ### 1. Preparation
+
 ```bash
 # Save your current work first!
 git add .
@@ -34,6 +35,7 @@ cd /Users/terryli/eon/nt
 ```
 
 ### 2. Choose Milestone
+
 ```bash
 # See all available milestones
 python milestones/milestone_manager.py list
@@ -43,6 +45,7 @@ cat milestones/archives/[milestone-name]/MILESTONE.md
 ```
 
 ### 3. Automated Restoration
+
 ```bash
 # Automated restore (recommended)
 python milestones/milestone_manager.py restore [milestone-name]
@@ -52,6 +55,7 @@ python milestones/milestone_manager.py restore [milestone-name] --yes
 ```
 
 ### 4. Manual Restoration (if automated fails)
+
 ```bash
 # 1. Find the commit SHA
 cat milestones/archives/[milestone-name]/milestone_metadata.json
@@ -71,6 +75,7 @@ git checkout -b restore-[milestone-name]-$(date +%Y%m%d)
 After any restoration, verify the system works:
 
 ### Core System Check
+
 ```bash
 cd sage-forge-professional
 
@@ -78,7 +83,7 @@ cd sage-forge-professional
 uv run python tests/test_professional_structure.py
 # Expected: 6/6 tests passed
 
-# 2. Test ultimate demo  
+# 2. Test ultimate demo
 uv run python demos/ultimate_complete_demo.py
 # Expected: 214 orders executed successfully
 
@@ -87,12 +92,14 @@ uv run python demos/ultimate_complete_demo.py
 ```
 
 ### GPU Environment Check (if applicable)
+
 ```bash
 # On GPU workstation
 ssh zerotier-remote "cd ~/eon/nt/sage-forge-professional && source .venv-gpu/bin/activate && python3 -c 'import torch; print(f\"CUDA: {torch.cuda.is_available()}\")'"
 ```
 
 ### Data Quality Check
+
 ```bash
 # Run data quality diagnostics
 uv run python debug/data_quality_diagnostics.py
@@ -104,6 +111,7 @@ uv run python debug/data_quality_diagnostics.py
 ### Common Issues
 
 **Problem**: Git conflicts during restore
+
 ```bash
 # Solution: Reset to clean state
 git reset --hard HEAD
@@ -112,6 +120,7 @@ git clean -fd
 ```
 
 **Problem**: Missing dependencies after restore
+
 ```bash
 # Solution: Reinstall environment
 cd sage-forge-professional
@@ -119,12 +128,14 @@ uv sync
 ```
 
 **Problem**: GPU environment not working
+
 ```bash
 # Solution: Re-sync to GPU workstation
 sage-sync --push-workspace --sync-sessions
 ```
 
 **Problem**: Data quality validation fails
+
 ```bash
 # Solution: Clear cache and retry
 rm -rf data_cache/*
@@ -134,6 +145,7 @@ uv run python demos/ultimate_complete_demo.py
 ### Recovery Options
 
 **Option 1**: Restore from backup
+
 ```bash
 # List available stash backups
 git stash list
@@ -143,6 +155,7 @@ git stash apply stash@{0}
 ```
 
 **Option 2**: Return to latest commit
+
 ```bash
 # Go back to latest development
 git checkout master
@@ -150,6 +163,7 @@ git pull  # if remote exists
 ```
 
 **Option 3**: Emergency reset to known good state
+
 ```bash
 # Reset to last known working tag
 git tag --list | grep milestone | sort | tail -1
@@ -159,6 +173,7 @@ git checkout [LATEST_MILESTONE_TAG]
 ## 🌍 Remote Environment Restoration
 
 ### GPU Workstation Sync
+
 ```bash
 # 1. Restore locally first
 python milestones/milestone_manager.py restore [milestone-name]
@@ -171,6 +186,7 @@ ssh zerotier-remote "cd ~/eon/nt && git log --oneline -1"
 ```
 
 ### Manual Remote Restoration
+
 ```bash
 # If sage-sync not available
 ssh zerotier-remote "cd ~/eon/nt && git checkout [COMMIT_SHA]"
@@ -184,14 +200,16 @@ ssh zerotier-remote "cd ~/eon/nt/sage-forge-professional && source .venv-gpu/bin
 After restoration, check all these items:
 
 ### ✅ File Structure
+
 - [ ] `sage-forge-professional/` directory exists
-- [ ] `src/sage_forge/` framework is complete  
+- [ ] `src/sage_forge/` framework is complete
 - [ ] `cli/` tools are executable
 - [ ] `configs/` files are present
 - [ ] `tests/` directory is complete
 - [ ] `demos/ultimate_complete_demo.py` exists (33KB+)
 
 ### ✅ Functionality
+
 - [ ] Professional structure tests pass (6/6)
 - [ ] Ultimate demo executes successfully (214 orders)
 - [ ] Data quality validation achieves 100%
@@ -199,6 +217,7 @@ After restoration, check all these items:
 - [ ] GPU environment works (if applicable)
 
 ### ✅ Development Environment
+
 - [ ] All imports work without errors
 - [ ] Configuration files load properly
 - [ ] Documentation is accessible
@@ -216,6 +235,7 @@ After restoration, check all these items:
 ## 📞 Emergency Contacts
 
 **If restoration fails completely**:
+
 1. Check `git reflog` for recent commits
 2. Look for backup stashes: `git stash list`
 3. Check investigation archives: `/Users/terryli/eon/nt/investigation_archive/`
