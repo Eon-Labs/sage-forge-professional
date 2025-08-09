@@ -365,27 +365,23 @@ class TiRexModel:
             # Extract forecast data from TiRex output
             # quantiles: [batch, prediction_length, num_quantiles] = [1, 1, 9]
             # means: [batch, prediction_length] = [1, 1]
-            mean_forecast = means.squeeze().cpu().numpy()  # Remove batch dimensions
-            
+            # IMPORTANT: TiRex 'means' is an alias of q50 (median). Prefer q50 from quantiles.
+            quantile_values = quantiles.squeeze().cpu().numpy()  # shape [9] when pred_len=1
             # Calculate uncertainty from quantiles (use std of quantile predictions)
-            quantile_values = quantiles.squeeze().cpu().numpy()  # [prediction_length, num_quantiles]
-            forecast_std = np.std(quantile_values, axis=-1) if len(quantile_values.shape) > 0 else 0.1
+            forecast_std = np.std(quantile_values, axis=-1) if len(getattr(quantile_values, 'shape', ())) > 0 else 0.1
+            # Central forecast = q50 (median). Fallback to returned means if unexpected shape.
+            try:
+                # quantile order default is [0.1, ..., 0.9]
+                central_forecast = float(quantile_values[4])  # q50
+            except Exception:
+                central_forecast = float(means.squeeze().cpu().numpy())
             
             # Determine prediction phase for boundary awareness
             prediction_phase = self.input_processor.get_prediction_phase()
             
-            # Convert to directional signal
-            # Handle scalar and array cases properly
-            if isinstance(mean_forecast, np.ndarray) and mean_forecast.shape == ():
-                # Scalar case
-                forecast_value = float(mean_forecast)
-            elif hasattr(mean_forecast, '__len__') and len(mean_forecast) > 0:
-                # Array case
-                forecast_value = float(mean_forecast[0])
-            else:
-                # Fallback
-                forecast_value = float(mean_forecast)
-                
+            # Convert to directional signal using central (median) forecast
+            forecast_value = float(central_forecast)
+            
             current_price = list(self.input_processor.price_buffer)[-1]
             
             # Calculate direction and confidence
@@ -407,7 +403,7 @@ class TiRexModel:
             prediction = TiRexPrediction(
                 direction=direction,
                 confidence=confidence,
-                raw_forecast=mean_forecast,
+                raw_forecast=np.array([forecast_value], dtype=float),
                 volatility_forecast=volatility_forecast,
                 processing_time_ms=processing_time,
                 market_regime=market_regime,

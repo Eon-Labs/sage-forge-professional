@@ -396,12 +396,33 @@ def visualize_signals(market_data, signals):
         
         console.print(f"🎯 Plotting {len(buy_signals)} BUY and {len(sell_signals)} SELL signals")
         
-        # Calculate positioning offsets
+        # Calculate positioning offsets for better visual separation
         price_range = df_indexed['high'].max() - df_indexed['low'].min()
         bar_ranges = df_indexed['high'] - df_indexed['low']
         avg_bar_range = bar_ranges.mean()
         
-        triangle_offset_ratio = 0.02  # Reasonable positioning
+        # Calculate adaptive separation using rolling statistics for better positioning
+        # Use rolling window approach for more reasonable, context-aware separation
+        
+        # Calculate rolling statistics (20-period window for local context)
+        rolling_window = 20
+        df_indexed['rolling_close_mean'] = df_indexed['close'].rolling(window=rolling_window, min_periods=5).mean()
+        df_indexed['rolling_close_std'] = df_indexed['close'].rolling(window=rolling_window, min_periods=5).std()
+        df_indexed['rolling_range_mean'] = bar_ranges.rolling(window=rolling_window, min_periods=5).mean()
+        
+        # Use recent rolling stats for adaptive separation
+        recent_std = df_indexed['rolling_close_std'].iloc[-rolling_window:].mean()
+        recent_range_mean = df_indexed['rolling_range_mean'].iloc[-rolling_window:].mean()
+        
+        # Adaptive separation based on recent market behavior
+        volatility_separation = recent_std * 0.8  # More conservative multiplier
+        range_separation = recent_range_mean * 2.0  # 2x recent average range
+        base_separation = avg_bar_range * 1.5  # Conservative base
+        
+        # Use maximum for consistent visibility but not excessive
+        triangle_separation = max(volatility_separation, range_separation, base_separation)
+        
+        console.print(f"🎯 Adaptive triangle separation: ${triangle_separation:.2f} (Vol: ${volatility_separation:.2f}, Range: ${range_separation:.2f}, Base: ${base_separation:.2f})")
         
         # Plot BUY signals (green triangles below bars)
         if buy_signals:
@@ -422,15 +443,15 @@ def visualize_signals(market_data, signals):
                     bar_data = df_indexed.iloc[nearest_idx]
                     exact_bar_time = df_indexed.index[nearest_idx]
                 
-                # Position triangle below bar
+                # Position BUY triangle way below the bar using absolute separation
                 low_price = bar_data['low']
-                bar_range = bar_data['high'] - bar_data['low']
-                offset_price = low_price - bar_range * triangle_offset_ratio
+                # Use the calculated triangle_separation for maximum distance
+                offset_price = low_price - triangle_separation
                 
                 buy_times.append(exact_bar_time)
                 buy_prices_offset.append(offset_price)
             
-            fplt.plot(buy_times, buy_prices_offset, ax=ax, color='#00ff00', style='^', width=4, legend='TiRex BUY')
+            fplt.plot(buy_times, buy_prices_offset, ax=ax, color='#00ff00', style='^', width=3)
         
         # Plot SELL signals (red triangles above bars)
         if sell_signals:
@@ -451,15 +472,15 @@ def visualize_signals(market_data, signals):
                     bar_data = df_indexed.iloc[nearest_idx]
                     exact_bar_time = df_indexed.index[nearest_idx]
                 
-                # Position triangle above bar
+                # Position SELL triangle way above the bar using absolute separation
                 high_price = bar_data['high']
-                bar_range = bar_data['high'] - bar_data['low']
-                offset_price = high_price + bar_range * triangle_offset_ratio
+                # Use the calculated triangle_separation for maximum distance
+                offset_price = high_price + triangle_separation
                 
                 sell_times.append(exact_bar_time)
                 sell_prices_offset.append(offset_price)
             
-            fplt.plot(sell_times, sell_prices_offset, ax=ax, color='#ff0000', style='v', width=4, legend='TiRex SELL')
+            fplt.plot(sell_times, sell_prices_offset, ax=ax, color='#ff0000', style='v', width=3)
         
         # Add confidence labels
         for signal in buy_signals + sell_signals:
@@ -475,14 +496,16 @@ def visualize_signals(market_data, signals):
                 exact_bar_time = df_indexed.index[nearest_idx]
                 bar_data = df_indexed.iloc[nearest_idx]
             
-            # Position confidence label
-            conf_text = f"{signal['confidence']:.0%}"
+            # Position confidence label - show original decimal format (0.XX) not percentage
+            conf_text = f"{signal['confidence']:.3f}"
             bar_range = bar_data['high'] - bar_data['low']
             
             if signal['signal'] == 'BUY':
-                text_price = bar_data['low'] - bar_range * (triangle_offset_ratio + 0.01)
+                # Position confidence label below BUY triangle using absolute separation
+                text_price = bar_data['low'] - triangle_separation - avg_bar_range * 0.2
             else:
-                text_price = bar_data['high'] + bar_range * (triangle_offset_ratio + 0.01)
+                # Position confidence label above SELL triangle using absolute separation
+                text_price = bar_data['high'] + triangle_separation + avg_bar_range * 0.2
             
             fplt.add_text((exact_bar_time, text_price), conf_text, ax=ax, color='#cccccc')
         
