@@ -10,33 +10,44 @@
 - **Security**: NO input validation - requires mandatory validation wrapper (see contract ISV section).
 - Adapters: optional GluonTS/HF dataset adapters if installed; outputs can be torch/numpy/gluonts.
 
-#### Minimal pseudocode (CORRECTED)
+#### Production Usage (GUARDIAN REQUIRED)
+
+```python
+from sage_forge.guardian import TiRexGuardian
+import torch
+
+# PRODUCTION PATTERN: Always use Guardian (protects against all empirically-validated attacks)
+guardian = TiRexGuardian()  # The protective middleware
+
+# Prepare context
+context = torch.tensor([...], dtype=torch.float32).unsqueeze(0)  # [1, T]
+
+# Protected inference - Guardian handles ALL security automatically
+tirex_quantiles, tirex_mean = guardian.safe_forecast(
+    context=context, 
+    prediction_length=k
+)  # Always returns [B, k, 9] with comprehensive protection
+
+# Extract quantiles from FULL tensor (Guardian ensures safe outputs)
+p10, p50, p90 = tirex_quantiles[..., 0], tirex_quantiles[..., 4], tirex_quantiles[..., 8]
+assert torch.allclose(tirex_quantiles[..., 4], tirex_mean)  # Median matches mean
+```
+
+#### Development/Debug Usage (DIRECT - NOT FOR PRODUCTION)
 
 ```python
 from tirex import load_model
 import torch
 
-# Load model
-model = load_model("NX-AI/TiRex", device="cuda:0")  # for CPU: set env TIREX_NO_CUDA=1 and device="cpu"
+# DEVELOPMENT ONLY: Direct model access (bypasses all protection)
+model = load_model("NX-AI/TiRex", device="cuda:0")
+context = torch.tensor([...], dtype=torch.float32).unsqueeze(0)
 
-# Prepare context with MANDATORY validation
-context = torch.tensor([...], dtype=torch.float32).unsqueeze(0)  # [1, T]
+# ⚠️ WARNING: No protection against NaN injection, infinity attacks, extreme values
+q, m = model.forecast(context=context, prediction_length=k)  # Vulnerable to all attacks
+p10, p50, p90 = q[..., 0], q[..., 4], q[..., 8]
 
-# CRITICAL: Input validation (production requirement)
-def validate_tirex_input(context):
-    if torch.isnan(context).float().mean() > 0.2:
-        raise ValueError("Excessive NaN ratio")
-    if torch.isinf(context).any():
-        raise ValueError("Infinite values detected")
-    return context
-
-# Safe inference - quantile_levels parameter ignored
-validated_context = validate_tirex_input(context)
-q, m = model.forecast(context=validated_context, prediction_length=k)  # Always returns [B, k, 9]
-
-# Extract quantiles from FULL tensor (not selective)
-p10, p50, p90 = q[..., 0], q[..., 4], q[..., 8]  # Positions 0, 4, 8 in 9-quantile array
-assert torch.allclose(q[..., 4], m)  # Median (position 4) matches mean
+# Note: quantile_levels parameter is ignored by TiRex - always returns 9 quantiles
 ```
 
 #### Columns commonly added (MODEL_OUT)

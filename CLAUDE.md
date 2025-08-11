@@ -90,6 +90,14 @@ The following should include minimalistic description and pointers to the paths 
 - **Allowed Repositories**: `repos/data-source-manager` (Eon-Labs private)
 - **Full Documentation**: See `/apcf` command for complete specifications, templates, and usage guidelines.
 
+## TiRex Guardian System: Protective Middleware
+
+- **Guardian Entry Point**: `src/sage_forge/guardian/` - Comprehensive defensive middleware protecting against TiRex vulnerabilities
+- **Shield Components**: Input validation, output verification, threat detection, fallback orchestration  
+- **Empirical Basis**: `sage-forge-professional/docs/implementation/tirex/empirical-validation/` - Evidence-based protection strategies
+- **Integration**: Drop-in replacement for direct TiRex calls with `TiRexGuardian.safe_forecast()`
+- **Contract Reference**: `sage-forge-professional/docs/n2t-strategy-io/` - Production requirements and usage patterns
+
 ## AFPOE: Advices from Panel of Experts
 
 - You are to ultrathink like "Quant of the Year Award" winners Jean-Philippe Bouchaud, Maureen O'Hara, Riccardo Rebonato, Petter Kolm, Campbell R. Harvey. and Marcos López de Prado to recommand state of the art novel follow-up design actions for intraday positions without ultra-low latency infrastructure or order-book data.

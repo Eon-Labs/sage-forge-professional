@@ -48,6 +48,37 @@ def validate_tirex_input(context: torch.Tensor) -> torch.Tensor:
     return context
 ```
 
+#### TiRex Guardian Integration (TGI) — PRODUCTION REQUIREMENT
+
+**CRITICAL**: Direct TiRex calls are PROHIBITED in production. All inference must use protective middleware.
+
+| Guardian Component | Purpose | Implementation | Status |
+|-------------------|---------|----------------|--------|
+| **Guardian Entry** | Main protective interface | `from sage_forge.guardian import TiRexGuardian` | MANDATORY |
+| **Input Shield** | Empirically-validated input protection | `guardian.safe_forecast()` method | MANDATORY |
+| **Circuit Shield** | Failure handling & fallbacks | Automatic within guardian | MANDATORY |
+| **Output Shield** | Business logic validation | Validates forecast reasonableness | RECOMMENDED |
+| **Threat Detection** | Attack pattern recognition | Monitors suspicious inputs | RECOMMENDED |
+| **Audit Trail** | Forensic security logging | Complete inference audit | RECOMMENDED |
+
+**Guardian Integration Pattern**:
+```python
+from sage_forge.guardian import TiRexGuardian
+
+# PRODUCTION PATTERN (Required)
+guardian = TiRexGuardian()  # The protective middleware
+tirex_quantiles, tirex_mean = guardian.safe_forecast(
+    context=validated_context, 
+    prediction_length=k
+)
+
+# PROHIBITED PATTERN (Security Risk)
+# quantiles, mean = model.forecast(context, prediction_length=k)  # Direct calls banned
+```
+
+**Guardian System Location**: `src/sage_forge/guardian/` - Complete defensive architecture  
+**Empirical Evidence**: `docs/implementation/tirex/empirical-validation/` - Vulnerability analysis and mitigation strategies
+
 #### Data Dictionary & Feature Registry (SCU, DPF, CLC, FTR, NRM)
 
 Note: Column nomenclature follows DSM as the source of truth. Timestamps are UTC and represent the BEGINNING of each candle period. Precision: milliseconds.
