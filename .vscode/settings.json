@@ -1,134 +1,29 @@
 {
-  "python.defaultInterpreterPath": "./nautilus_test/.venv/bin/python",
-  "python.terminal.executeInFileDir": false,
-  "python.terminal.activateEnvironment": true,
-  "editor.formatOnSave": true,
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.codeActionsOnSave": {
-      "source.fixAll": "explicit",
-      "source.organizeImports": "explicit"
-    }
-  },
-  "terminal.integrated.cwd": "",
-  "terminal.integrated.defaultProfile.linux": "bash",
-  "terminal.integrated.profiles.linux": {
-    "bash": {
-      "path": "bash",
-      "args": ["-c", "cd ${workspaceFolder}/nautilus_test && exec bash"]
+    "python.terminal.activateEnvironment": false,
+    "python.terminal.activateEnvInCurrentTerminal": false,
+    "python.defaultInterpreterPath": "/home/tca/.local/bin/uv",
+    "python.terminal.executeInFileDir": false,
+    "terminal.integrated.env.linux": {
+        "UV_PROJECT_ENVIRONMENT": ".venv"
     },
-    "uv-python": {
-      "path": "${workspaceFolder}/nautilus_test/scripts/uv_python.sh"
-    }
-  },
-  "python.analysis.extraPaths": [
-    "./nautilus_test/src",
-    "./nautilus_test/.venv/lib/python3.12/site-packages"
-  ],
-  "python.analysis.autoSearchPaths": true,
-  "python.analysis.autoImportCompletions": true,
-  "python.analysis.packageIndexDepths": [
-    {
-      "name": "nautilus_trader",
-      "depth": 10
-    }
-  ],
-  "python.testing.pytestEnabled": true,
-  "python.testing.pytestPath": "cd nautilus_test && uv run pytest",
-  "python.testing.cwd": "${workspaceFolder}/nautilus_test",
-  "python.testing.unittestEnabled": false,
-  "python.linting.enabled": false,
-  "python.formatting.provider": "none",
-  "pylint.enabled": false,
-  "pylint.args": ["--disable=all"],
-  "ruff.enable": true,
-  "ruff.lint.enable": true,
-  "ruff.interpreter": ["./nautilus_test/.venv/bin/python"],
-  "ruff.configuration": "./nautilus_test/pyproject.toml",
-  "ruff.configurationPreference": "filesystemFirst",
-  "ruff.lint.args": ["--config", "./nautilus_test/pyproject.toml"],
-  "ruff.format.args": ["--config", "./nautilus_test/pyproject.toml"],
-  "files.exclude": {
-    "**/__pycache__": true,
-    "**/.pytest_cache": true,
-    "**/node_modules": true,
-    "nt_reference/**": true,
-    "**/.venv": false,
-    "repos/nautilus_trader/.git": true,
-    "repos/finplot/.git": true,
-    "repos/claude-flow/.git": true
-  },
-  "files.watcherExclude": {
-    "**/.venv/**": true,
-    "nt_reference/**": true
-  },
-  "files.associations": {
-    "*.toml": "toml"
-  },
-  "workbench.colorCustomizations": {
-    "statusBar.background": "#1e3a8a",
-    "statusBar.foreground": "#ffffff"
-  },
-  "cursorpyright.analysis.autoImportCompletions": true,
-  "cursorpyright.analysis.autoSearchPaths": true,
-  "cursorpyright.analysis.extraPaths": [
-    "./nautilus_test/src",
-    "./nautilus_test/.venv/lib/python3.12/site-packages"
-  ],
-  "python.analysis.diagnosticSeverityOverrides": {
-    "reportUnusedVariable": "none",
-    "reportUnusedImport": "none",
-    "reportUnknownVariableType": "none",
-    "reportUnknownMemberType": "none",
-    "reportUnknownArgumentType": "none",
-    "reportUnknownParameterType": "none",
-    "reportMissingParameterType": "none",
-    "reportUntypedBaseClass": "none",
-    "reportMissingTypeStubs": "none",
-    "reportAttributeAccessIssue": "none",
-    "reportGeneralTypeIssues": "none",
-    "reportCallIssue": "none",
-    "reportArgumentType": "none",
-    "reportUnboundVariable": "none",
-    "reportPossiblyUnboundVariable": "none",
-    "reportOptionalSubscript": "none",
-    "reportOptionalMemberAccess": "none",
-    "reportOptionalCall": "none",
-    "reportOptionalIterable": "none",
-    "reportOptionalContextManager": "none",
-    "reportOptionalOperand": "none"
-  },
-  "basedpyright.analysis.diagnosticSeverityOverrides": {
-    "reportUnusedVariable": "none",
-    "reportUnusedImport": "none",
-    "reportUnknownVariableType": "none",
-    "reportUnknownMemberType": "none",
-    "reportUnknownArgumentType": "none",
-    "reportUnknownParameterType": "none",
-    "reportMissingParameterType": "none",
-    "reportUntypedBaseClass": "none",
-    "reportMissingTypeStubs": "none",
-    "reportAttributeAccessIssue": "none",
-    "reportGeneralTypeIssues": "none",
-    "reportCallIssue": "none",
-    "reportArgumentType": "none",
-    "reportUnboundVariable": "none",
-    "reportPossiblyUnboundVariable": "none",
-    "reportOptionalSubscript": "none",
-    "reportOptionalMemberAccess": "none",
-    "reportOptionalCall": "none",
-    "reportOptionalIterable": "none",
-    "reportOptionalContextManager": "none",
-    "reportOptionalOperand": "none"
-  },
-  "git.ignoredRepositories": [
-    "repos/nautilus_trader",
-    "repos/finplot",
-    "repos/claude-flow"
-  ],
-  "git.detectSubmodules": false,
-  "git.repositoryScanMaxDepth": 1,
-  "git.openRepositoryInParentFolders": "never",
-  "scm.repositories.visible": 1,
-  "git.alwaysShowStagedChangesResourceGroup": false
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#2f7c47",
+        "activityBar.background": "#2f7c47",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#422c74",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#2f7c47",
+        "statusBar.background": "#215732",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#2f7c47",
+        "statusBarItem.remoteBackground": "#215732",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#215732",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#21573299",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.remoteColor": "#215732"
 }
