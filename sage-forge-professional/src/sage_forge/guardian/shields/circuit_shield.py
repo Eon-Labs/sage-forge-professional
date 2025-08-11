@@ -350,14 +350,19 @@ class CircuitShield:
         batch_size, pred_length = mean_forecast.shape
         
         # TiRex quantile levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-        # Generate symmetric spread around mean
+        # Generate symmetric spread around mean with proper ordering
         quantile_offsets = torch.tensor([
             -4*spread, -3*spread, -2*spread, -1*spread, 0.0,  # 0.1, 0.2, 0.3, 0.4, 0.5
             1*spread, 2*spread, 3*spread, 4*spread            # 0.6, 0.7, 0.8, 0.9
         ], dtype=mean_forecast.dtype, device=mean_forecast.device)
         
         # Apply offsets: [B, k] + [9] -> [B, k, 9]
-        quantiles = mean_forecast.unsqueeze(-1) + quantile_offsets * mean_forecast.abs().unsqueeze(-1)
+        # Use absolute spread to ensure reasonable bounds
+        spread_amount = torch.clamp(mean_forecast.abs() * spread, min=0.01)  # Minimum spread
+        quantiles = mean_forecast.unsqueeze(-1) + quantile_offsets * spread_amount.unsqueeze(-1)
+        
+        # Ensure quantiles are properly ordered by sorting along the quantile dimension
+        quantiles = torch.sort(quantiles, dim=-1)[0]
         
         return quantiles
     
