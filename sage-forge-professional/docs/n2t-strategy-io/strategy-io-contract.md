@@ -146,37 +146,44 @@ guardian_dev = TiRexGuardian(
 | Development | low          | moderate      | strict            | Research and debugging    |
 | Testing     | high         | strict        | graceful          | Security validation       |
 
-#### Data Dictionary & Feature Registry (SCU, DPF, CLC, FTR, NRM)
+#### Data Dictionary & Feature Registry — TiRex Native Pipeline
 
-Note: Column nomenclature follows DSM as the source of truth. Timestamps are UTC and represent the BEGINNING of each candle period. Precision: milliseconds.
+**Architecture**: Native TiRex data processing pipeline with architecture-aligned terminology from comprehensive source code analysis.
 
-| Column                    | Layer     | Type     | Definition                    | Formula / Pseudocode                                                 | Tools        | Lineage          | LeakageGuard |
-| ------------------------- | --------- | -------- | ----------------------------- | -------------------------------------------------------------------- | ------------ | ---------------- | ------------ |
-| open_time                 | RAW       | datetime | Bar open (UTC, ms precision)  | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| open                      | RAW       | float    | —                             | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| high                      | RAW       | float    | —                             | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| low                       | RAW       | float    | —                             | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| close                     | RAW       | float    | —                             | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| volume                    | RAW       | float    | base qty                      | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| close_time                | RAW       | datetime | Bar close (UTC, ms precision) | close_time = open_time + interval - 1ms                              | DSM (FCP)    | exchange via DSM | —            |
-| quote_asset_volume        | RAW       | float    | quote volume                  | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| count                     | RAW       | int      | number of trades              | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| taker_buy_volume          | RAW       | float    | taker buy base asset volume   | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| taker_buy_quote_volume    | RAW       | float    | taker buy quote asset volume  | —                                                                    | DSM (FCP)    | exchange via DSM | —            |
-| ctx_close                 | MODEL_IN  | float    | raw close (model context)     | close                                                                | —            | from close       | roll ≤ t     |
-| ctx_norm_close            | MODEL_IN  | float    | normalized close              | zscore(close, win=T)                                                 | numpy/polars | from close       | roll ≤ t     |
-| tirex_quantiles[t+1..t+k] | MODEL_OUT | tensor   | full quantile tensor [B,k,9]  | (Q, M) = guardian.safe_forecast(context, prediction_length=k); use Q | guardian     | from ctx\_\*     | uses ≤ t     |
-| tirex_mean_p50[t+1..t+k]  | MODEL_OUT | vector   | median forecast path          | M from guardian.safe_forecast() — same as tirex_quantiles[..., 4]    | guardian     | from ctx\_\*     | uses ≤ t     |
-| tirex_q_p10[t+1..t+k]     | MODEL_OUT | vector   | lower band (p10)              | tirex_quantiles[..., 0] # Extract 0.1 quantile                       | tirex        | from ctx\_\*     | uses ≤ t     |
-| tirex_q_p90[t+1..t+k]     | MODEL_OUT | vector   | upper band (p90)              | tirex_quantiles[..., 8] # Extract 0.9 quantile                       | tirex        | from ctx\_\*     | uses ≤ t     |
-| edge_1                    | DERIVED   | float    | 1-step edge                   | tirex_mean_p50[t+1] - close[t]                                       | —            | from close/model | roll ≤ t     |
-| atr_14                    | DERIVED   | float    | vol proxy                     | ATR(14)                                                              | ta-lib       | OHLC             | roll ≤ t     |
-| ma_20                     | DERIVED   | float    | moving average                | SMA(close, 20)                                                       | pandas_ta    | from close       | roll ≤ t     |
-| rsi_14                    | DERIVED   | float    | momentum oscillator           | RSI(close, 14)                                                       | pandas_ta    | from close       | roll ≤ t     |
-| pos_size                  | DERIVED   | float    | risk scaling                  | risk_budget/(atr_14\*tick_value)                                     | —            | from atr_14      | roll ≤ t     |
-| sig_long                  | SIGNAL    | bool     | entry                         | edge_1>λ·atr_14 && close>MA20                                        | —            | from derived     | roll ≤ t     |
-| tp_lvl                    | SIGNAL    | float    | take-profit                   | tirex_q_p90[t+H]                                                     | —            | from model       | set at t     |
-| sl_lvl                    | SIGNAL    | float    | stop-loss                     | close-μ·atr_14                                                       | —            | from ATR         | set at t     |
+**DSM Source of Truth**: Column nomenclature follows DSM. Timestamps are UTC (millisecond precision), `open_time` = beginning of candle period.
+
+##### TiRex Native Data Flow
+
+```
+CONTEXT → TOKENIZED → [sLSTM Processing] → PREDICTIONS → FEATURES → SIGNALS
+   ↓           ↓                              ↓            ↓          ↓
+Exchange → Patch/Scale → xLSTM Embeddings → Quantiles → Indicators → Trading
+(11 cols)   (2→8 cols)                      (4 cols)    (5 cols)   (3 cols)
+```
+
+##### Layer Navigation (TiRex Native)
+
+| Layer                                            | Columns | Status            | File                       | TiRex Component         | Focus                  |
+| ------------------------------------------------ | ------- | ----------------- | -------------------------- | ----------------------- | ---------------------- |
+| 📊 [CONTEXT](./layers/context-layer.md)          | 11      | ✅ Complete       | `context-layer.md`         | `context: torch.Tensor` | Exchange data          |
+| 🔧 [TOKENIZED](./layers/tokenized-layer.md)      | 2→8     | 🔄 **OPTIMIZING** | `tokenized-layer.md`       | `PatchedUniTokenizer`   | **Input architecture** |
+| 🎯 [PREDICTIONS](./layers/predictions-layer.md)  | 4       | ✅ Stable         | `predictions-layer.md`     | `quantile_preds`        | TiRex outputs          |
+| ⚙️ [FEATURES](./layers/features-layer.md)        | 5       | ✅ Stable         | `features-layer.md`        | Post-processing         | Technical indicators   |
+| 🚨 [SIGNALS](./layers/signals-layer.md)          | 3       | ✅ Stable         | `signals-layer.md`         | Trading logic           | Decision layer         |
+| 🔗 [PIPELINE](./layers/pipeline-dependencies.md) | —       | ✅ Mapped         | `pipeline-dependencies.md` | Data lineage            | Dependency flow        |
+
+##### Architecture Summary
+
+- **Total Columns**: 25 (current) → 31 (proposed) = **+24% feature expansion**
+- **Optimization Target**: TOKENIZED layer (25% → 100% TiRex utilization)
+- **Expected Performance**: **2-4x improvement** from architecture alignment
+- **Critical Path**: TOKENIZED optimization impacts entire downstream pipeline
+
+##### Quick Reference
+
+- **Current TOKENIZED**: 2 features (severe under-utilization) — [Analysis →](./layers/tokenized-layer.md#current-tokenized-architecture-legacy---under-optimized)
+- **Proposed TOKENIZED**: 8 features (100% TiRex capacity) — [Proposal →](./layers/tokenized-layer.md#enhanced-tokenized-architecture-proposed---architecture-optimized)
+- **Implementation Questions**: 9 critical evaluation points — [Questions →](./layers/tokenized-layer.md#critical-evaluation-questions)
 
 #### Signals & Risk (SDL, RBR, UQC)
 

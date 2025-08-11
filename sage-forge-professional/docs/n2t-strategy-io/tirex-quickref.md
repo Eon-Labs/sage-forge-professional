@@ -7,8 +7,15 @@
 - Normalization (NRM): z-score or robust; window = T; clip as documented.
 - Alignment (FOC): forecasts at decision time t; horizons labeled t+Δ (Δ=1..k).
 - Input types: torch.Tensor, numpy.ndarray, List[Tensor], List[ndarray] (variable lengths padded per batch).
-- **Security**: **CRITICAL VULNERABILITY ANALYSIS**: 52.8% overall safety with 6 major vulnerability categories requiring Guardian protection.
+- **Security**: **CRITICAL VULNERABILITY ANALYSIS**: 52.8% overall safety with 6 major vulnerability categories requiring Guardian protection for TOKENIZED layer processing.
 - Adapters: optional GluonTS/HF dataset adapters if installed; outputs can be torch/numpy/gluonts.
+
+**TiRex Native Data Pipeline**:
+```
+CONTEXT → TOKENIZED → [sLSTM Processing] → PREDICTIONS → FEATURES → SIGNALS
+   ↓           ↓                              ↓            ↓          ↓
+Exchange → PatchedUniTokenizer → xLSTM Blocks → quantile_preds → TechIndicators → Trading
+```
 
 **Vulnerability Summary** (Comprehensive source code analysis):
 | Category | Safety | Critical Issues |
@@ -124,12 +131,14 @@ guardian_safe_dev = TiRexGuardian(
 q, m = guardian_safe_dev.safe_forecast(context, prediction_length=k)
 ```
 
-#### Columns commonly added (MODEL_OUT)
+#### Columns commonly added (PREDICTIONS Layer)
 
-- `tirex_quantiles[t+1..t+k]` - Full tensor [B, k, 9] with all quantiles
-- `tirex_q_p10[t+1..t+k]` - Extracted via `tirex_quantiles[..., 0]`
-- `tirex_mean_p50[t+1..t+k]` - From model.forecast() mean output  
+- `tirex_quantiles[t+1..t+k]` - Full tensor [B, k, 9] with all quantiles (from `quantile_preds`)
+- `tirex_q_p10[t+1..t+k]` - Extracted via `tirex_quantiles[..., 0]` 
+- `tirex_mean_p50[t+1..t+k]` - From `guardian.safe_forecast()` mean output
 - `tirex_q_p90[t+1..t+k]` - Extracted via `tirex_quantiles[..., 8]`
+
+**TiRex Native Component**: `quantile_preds` tensor → `_forecast_quantiles()` → Guardian-protected output
 
 #### Quantile Index Mapping
 

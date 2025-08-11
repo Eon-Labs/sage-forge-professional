@@ -15,7 +15,7 @@
 - **Silent data corruption** possible through multiple attack vectors
 - **System instability** from edge case handling failures
 
-**Required Mitigation**: Enhanced Guardian System with DataPipelineShield (achieves 100% vulnerability coverage)
+**Required Mitigation**: Enhanced Guardian System with DataPipelineShield protecting TOKENIZED layer processing (achieves 100% vulnerability coverage)
 
 ---
 
@@ -70,13 +70,13 @@ guardian_development = TiRexGuardian(
 
 **Mandatory Protection Matrix** (All categories must achieve 100% coverage):
 
-| Category            | Risk Level | Guardian Shield               | Protection Method                     | Production Status |
-| ------------------- | ---------- | ----------------------------- | ------------------------------------- | ----------------- |
-| NaN Handling        | CRITICAL   | Input + DataPipeline + Output | Multi-layer validation                | **REQUIRED**      |
-| Quantile Processing | CRITICAL   | DataPipeline + Output         | Auto-correction + validation          | **REQUIRED**      |
-| Context Length      | HIGH       | DataPipeline                  | Bounds checking + overflow prevention | **REQUIRED**      |
-| Tensor Operations   | HIGH       | DataPipeline                  | Batch validation + consistency        | **REQUIRED**      |
-| Device/Precision    | MEDIUM     | DataPipeline                  | Conversion monitoring                 | **REQUIRED**      |
+| Category            | Risk Level | Guardian Shield               | Protection Method                     | TiRex Layer Protected | Production Status |
+| ------------------- | ---------- | ----------------------------- | ------------------------------------- | -------------------- | ----------------- |
+| NaN Handling        | CRITICAL   | Input + DataPipeline + Output | Multi-layer validation                | TOKENIZED processing | **REQUIRED**      |
+| Quantile Processing | CRITICAL   | DataPipeline + Output         | Auto-correction + validation          | PREDICTIONS output   | **REQUIRED**      |
+| Context Length      | HIGH       | DataPipeline                  | Bounds checking + overflow prevention | TOKENIZED input      | **REQUIRED**      |
+| Tensor Operations   | HIGH       | DataPipeline                  | Batch validation + consistency        | TOKENIZED processing | **REQUIRED**      |
+| Device/Precision    | MEDIUM     | DataPipeline                  | Conversion monitoring                 | TOKENIZED/PREDICTIONS | **REQUIRED**      |
 | Model Loading       | MEDIUM     | Circuit                       | Registry protection + validation      | **REQUIRED**      |
 
 ---
@@ -92,11 +92,11 @@ guardian_development = TiRexGuardian(
 
 **Layer 2: Data Pipeline Shield (MANDATORY - NEW)**
 
-- Context quality validation (min 3 timesteps, max 100K bounds)
-- Scaling safety checks (prevent NaN scale state corruption)
-- Quantile ordering auto-correction (reversed quantile detection)
-- Batch consistency validation (size >0, dtype compatibility)
-- Precision monitoring (configurable conversion accuracy tracking)
+- **TOKENIZED Layer Protection**: Context quality validation (min 3 timesteps, max 100K bounds)
+- **PatchedUniTokenizer Safety**: Scaling safety checks (prevent NaN scale state corruption)  
+- **PREDICTIONS Layer Validation**: Quantile ordering auto-correction (reversed quantile detection)
+- **TOKENIZED Processing**: Batch consistency validation (size >0, dtype compatibility)
+- **Multi-Layer Monitoring**: Precision monitoring (configurable conversion accuracy tracking)
 
 **Layer 3: Circuit Shield (MANDATORY)**
 
