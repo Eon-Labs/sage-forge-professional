@@ -12,6 +12,7 @@ These docs standardize a portable, tabular Markdown I/O contract for zero-/few-s
 - `taxonomies-optional.md` — Optional tagging/classification taxonomies
 - `strategy-io-contract.md` — Tabular I/O Contract template to copy
 - `tirex-quickref.md` — TiRex-specific facts to embed when applicable
+- `tirex-vulnerability-analysis.md` — **NEW**: Comprehensive security analysis (52.8% TiRex safety assessment)
 
 #### Source of Truth for Column Names
 
