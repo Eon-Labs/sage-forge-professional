@@ -1,8 +1,11 @@
 ### TiRex Quick Reference — For Strategy I/O
 
+**📋 EMPIRICALLY VALIDATED**: All architectural claims below are backed by [comprehensive validation testing](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md).
+
 - Model: `NX-AI/TiRex` (xLSTM ~35M; decoder-only; sLSTM recurrence; CPM masking).
 - API: `model.forecast(context, prediction_length=k, output_type="torch", quantile_levels=IGNORED, batch_size=512, yield_per_batch=False) -> (quantiles[B,k,9], mean_p50[B,k])`.
 - Quantiles: **ALWAYS returns 9 quantiles** `[0.1, 0.2, ..., 0.9]` - `quantile_levels` parameter completely ignored.
+- **Input Architecture**: **UNIVARIATE ONLY** - `assert data.ndim == 2` enforces `[batch_size, sequence_length]` shape requirement
 - Runtime: Linux + NVIDIA GPU (compute capability ≥ 8.0) recommended. CPU/MPS experimental. `TIREX_NO_CUDA=1` to disable CUDA kernels.
 - Normalization (NRM): z-score or robust; window = T; clip as documented.
 - Alignment (FOC): forecasts at decision time t; horizons labeled t+Δ (Δ=1..k).

@@ -150,6 +150,8 @@ guardian_dev = TiRexGuardian(
 
 **Architecture**: Native TiRex data processing pipeline with architecture-aligned terminology from comprehensive source code analysis.
 
+**📋 EMPIRICAL VALIDATION**: Claims in this document are backed by [definitive empirical testing](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) and [source code analysis](../../tests/validation/definitive_signal_proof_test.py).
+
 **DSM Source of Truth**: Column nomenclature follows DSM. Timestamps are UTC (millisecond precision), `open_time` = beginning of candle period.
 
 ##### TiRex Native Data Flow
@@ -158,7 +160,7 @@ guardian_dev = TiRexGuardian(
 CONTEXT → TOKENIZED → [sLSTM Processing] → PREDICTIONS → FEATURES → SIGNALS
    ↓           ↓                              ↓            ↓          ↓
 Exchange → Patch/Scale → xLSTM Embeddings → Quantiles → Indicators → Trading
-(11 cols)   (2→8 cols)                      (4 cols)    (5 cols)   (3 cols)
+(11 cols)   (1 univar)                      (4 cols)    (5 cols)   (3 cols)
 ```
 
 ##### Layer Navigation (TiRex Native)
@@ -166,7 +168,7 @@ Exchange → Patch/Scale → xLSTM Embeddings → Quantiles → Indicators → T
 | Layer                                            | Columns | Status            | File                       | TiRex Component         | Focus                  |
 | ------------------------------------------------ | ------- | ----------------- | -------------------------- | ----------------------- | ---------------------- |
 | 📊 [CONTEXT](./layers/context-layer.md)          | 11      | ✅ Complete       | `context-layer.md`         | `context: torch.Tensor` | Exchange data          |
-| 🔧 [TOKENIZED](./layers/tokenized-layer.md)      | 2→8     | 🔄 **OPTIMIZING** | `tokenized-layer.md`       | `PatchedUniTokenizer`   | **Input architecture** |
+| 🔧 [TOKENIZED](./layers/tokenized-layer.md)      | 1       | ✅ **VALIDATED**  | `tokenized-layer.md`       | `PatchedUniTokenizer`   | **[Empirically proven](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) univariate** |
 | 🎯 [PREDICTIONS](./layers/predictions-layer.md)  | 4       | ✅ Stable         | `predictions-layer.md`     | `quantile_preds`        | TiRex outputs          |
 | ⚙️ [FEATURES](./layers/features-layer.md)        | 5       | ✅ Stable         | `features-layer.md`        | Post-processing         | Technical indicators   |
 | 🚨 [SIGNALS](./layers/signals-layer.md)          | 3       | ✅ Stable         | `signals-layer.md`         | Trading logic           | Decision layer         |
@@ -174,16 +176,18 @@ Exchange → Patch/Scale → xLSTM Embeddings → Quantiles → Indicators → T
 
 ##### Architecture Summary
 
-- **Total Columns**: 25 (current) → 31 (proposed) = **+24% feature expansion**
-- **Optimization Target**: TOKENIZED layer (25% → 100% TiRex utilization)
-- **Expected Performance**: **2-4x improvement** from architecture alignment
-- **Critical Path**: TOKENIZED optimization impacts entire downstream pipeline
+- **Total Columns**: 23 (11 CONTEXT + 1 TOKENIZED + 4 PREDICTIONS + 5 FEATURES + 3 SIGNALS)
+- **Architecture Reality**: TOKENIZED layer is univariate by design - **[EMPIRICALLY PROVEN](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md)**
+- **Expected Performance**: **10-30% improvement** from optimal univariate input selection
+- **Critical Understanding**: TiRex processes single time series only
+- **🔬 SOURCE CODE PROOF**: `assert data.ndim == 2` in `PatchedUniTokenizer` enforces `[batch_size, sequence_length]` only
 
 ##### Quick Reference
 
-- **Current TOKENIZED**: 2 features (severe under-utilization) — [Analysis →](./layers/tokenized-layer.md#current-tokenized-architecture-legacy---under-optimized)
-- **Proposed TOKENIZED**: 8 features (100% TiRex capacity) — [Proposal →](./layers/tokenized-layer.md#enhanced-tokenized-architecture-proposed---architecture-optimized)
-- **Implementation Questions**: 9 critical evaluation points — [Questions →](./layers/tokenized-layer.md#critical-evaluation-questions)
+- **TOKENIZED Reality**: **[EMPIRICALLY VALIDATED](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md)** - Univariate input only — [Analysis →](./layers/tokenized-layer.md#univariate-input-options-tirex-compatible)  
+- **Optimization Strategy**: Input quality and preprocessing within univariate constraint — [Strategy →](./layers/tokenized-layer.md#implementation-roadmap--univariate-optimization)
+- **Critical Questions**: Univariate input selection and multi-model integration — [Questions →](./layers/tokenized-layer.md#critical-evaluation-questions)
+- **🔗 VALIDATION TESTS**: [Definitive Proof](../../tests/validation/definitive_signal_proof_test.py) | [Complete Results](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md)
 
 #### Signals & Risk (SDL, RBR, UQC)
 

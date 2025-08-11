@@ -2,6 +2,8 @@
 
 These docs standardize a portable, tabular Markdown I/O contract for zero-/few-shot time-series forecasters (e.g., `NX-AI/TiRex`) and downstream signal/risk design using **TiRex native terminology** aligned with actual architecture components.
 
+**📋 EMPIRICALLY VALIDATED**: All architectural claims are backed by [comprehensive testing](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) and [source code analysis](../../tests/validation/definitive_signal_proof_test.py).
+
 - **Scope**: research & design (R&D) specifications only; no code.
 - **Design tenets**: DRY, causality-first, audit-ready, TiRex-architecture-aligned.
 - **How to use**: pick acronyms from the taxonomies, then fill the Strategy I/O Contract template.
@@ -18,7 +20,7 @@ These docs standardize a portable, tabular Markdown I/O contract for zero-/few-s
 
 **TiRex Native Layer Architecture** (`layers/` subfolder):
 - `context-layer.md` — Exchange data foundation (11 columns) - `context: torch.Tensor`
-- `tokenized-layer.md` — **🎯 OPTIMIZATION FOCUS**: Input architecture analysis (2→8 features) - `PatchedUniTokenizer`
+- `tokenized-layer.md` — **⚠️ UNIVARIATE REALITY**: [Empirically proven](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) single time series input - `PatchedUniTokenizer`
 - `predictions-layer.md` — TiRex quantile outputs (4 columns) - `quantile_preds`  
 - `features-layer.md` — Technical indicators (5 columns) - Post-processing
 - `signals-layer.md` — Trading decisions (3 columns) - Trading logic
@@ -32,7 +34,12 @@ DSM (`data-source-manager`) is the authoritative source for **CONTEXT layer** co
 
 **Data Pipeline**: `CONTEXT → TOKENIZED → [sLSTM Processing] → PREDICTIONS → FEATURES → SIGNALS`
 
-**Key Optimization**: TOKENIZED layer currently uses only 25% of TiRex's native `PatchedUniTokenizer` capacity (2/8 features). Full utilization provides **2-4x performance improvement**.
+**Critical Understanding**: TiRex is a univariate model - processes single time series only. Optimization focuses on input quality and preprocessing within this architectural constraint.
+
+**🔬 EMPIRICAL PROOF**: 
+- **Source Code Evidence**: `assert data.ndim == 2` in `PatchedUniTokenizer` enforces `[batch_size, sequence_length]` only
+- **Test Results**: All multi-dimensional inputs rejected with AssertionError  
+- **Validation Report**: [Complete empirical testing results](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md)
 
 #### Prompt (paste into any LLM)
 

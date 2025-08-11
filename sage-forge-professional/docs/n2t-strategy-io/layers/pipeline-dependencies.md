@@ -22,7 +22,7 @@
 CONTEXT → TOKENIZED → [TiRex xLSTM] → PREDICTIONS → FEATURES → SIGNALS
    ↓           ↓                          ↓           ↓          ↓
 Exchange → Preprocessing → Model Processing → Forecasts → Indicators → Trading
-(11 cols)    (2→8 cols)     [sLSTM Core]     (4 cols)    (5 cols)   (3 cols)
+(11 cols)    (1 univar)     [sLSTM Core]     (4 cols)    (5 cols)   (3 cols)
 ```
 
 ### **Native TiRex Component Mapping**
@@ -578,7 +578,7 @@ The TiRex native pipeline reveals **clear performance optimization path**:
 ### **Optimization Priority**
 
 ```
-HIGHEST IMPACT: TOKENIZED layer optimization (2→8 features)
+HIGHEST IMPACT: TOKENIZED layer input quality ([empirically validated](../../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) univariate optimization)
     ↓
 MEDIUM IMPACT: FEATURES layer TiRex enhancement
     ↓
