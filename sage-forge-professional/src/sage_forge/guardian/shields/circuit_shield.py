@@ -119,6 +119,7 @@ class CircuitShield:
     def protected_inference(self, 
                           context: torch.Tensor,
                           prediction_length: int,
+                          model=None,
                           **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         🛡️ PROTECTED TIREX INFERENCE: Circuit-protected model inference with fallbacks.
@@ -143,11 +144,11 @@ class CircuitShield:
         with self._circuit_management():
             if self.state == CircuitState.CLOSED:
                 # TiRex is healthy - attempt normal inference
-                return self._attempt_tirex_inference(context, prediction_length, **kwargs)
+                return self._attempt_tirex_inference(context, prediction_length, model=model, **kwargs)
                 
             elif self.state == CircuitState.HALF_OPEN:
                 # Testing recovery - single TiRex attempt
-                return self._test_recovery_inference(context, prediction_length, **kwargs)
+                return self._test_recovery_inference(context, prediction_length, model=model, **kwargs)
                 
             elif self.state == CircuitState.OPEN:
                 # Circuit open - use fallback strategies
@@ -166,15 +167,20 @@ class CircuitShield:
     def _attempt_tirex_inference(self, 
                                context: torch.Tensor,
                                prediction_length: int,
+                               model=None,
                                **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
         """Attempt TiRex inference with failure detection"""
         try:
-            # Import TiRex here to avoid circular dependencies
-            from repos.tirex import TiRex
+            # Use provided model or load TiRex
+            if model is None:
+                # Import TiRex here to avoid circular dependencies
+                from tirex import load_model
+                
+                device = "cuda:0" if torch.cuda.is_available() else "cpu"
+                model = load_model("NX-AI/TiRex", device=device)
             
-            model = TiRex()
             quantiles, mean = model.forecast(
-                context=context,
+                context,
                 prediction_length=prediction_length,
                 **kwargs
             )
@@ -199,11 +205,12 @@ class CircuitShield:
     def _test_recovery_inference(self,
                                context: torch.Tensor, 
                                prediction_length: int,
+                               model=None,
                                **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
         """Test TiRex recovery with single attempt"""
         try:
             # Single recovery test
-            quantiles, mean = self._attempt_tirex_inference(context, prediction_length, **kwargs)
+            quantiles, mean = self._attempt_tirex_inference(context, prediction_length, model=model, **kwargs)
             
             # Success - close circuit
             self._close_circuit()

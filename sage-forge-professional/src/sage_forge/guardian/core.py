@@ -7,6 +7,7 @@ entry point for any LLM agent needing protection against TiRex vulnerabilities.
 
 import torch
 import logging
+import time
 from typing import Tuple, Optional, Any
 from contextlib import contextmanager
 
@@ -14,6 +15,7 @@ from .shields.input_shield import InputShield
 from .shields.circuit_shield import CircuitShield
 from .shields.data_pipeline_shield import DataPipelineShield
 from .exceptions import GuardianError, ShieldViolation, ThreatDetected
+from .result import GuardianResult
 
 # Configure guardian-specific logging
 guardian_logger = logging.getLogger('sage_forge.guardian')
@@ -91,8 +93,9 @@ class TiRexGuardian:
     def safe_forecast(self, 
                       context: torch.Tensor, 
                       prediction_length: int,
+                      model=None,
                       user_id: Optional[str] = None,
-                      **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
+                      **kwargs) -> GuardianResult:
         """
         🛡️ PROTECTED INFERENCE: Safe TiRex forecasting with comprehensive protection.
         
@@ -129,6 +132,7 @@ class TiRexGuardian:
             - Complete audit trail maintained for forensic analysis
         """
         self.total_inferences += 1
+        start_time = time.perf_counter()
         
         try:
             with self._protection_context(user_id) as protection:
@@ -146,7 +150,8 @@ class TiRexGuardian:
                 guardian_logger.debug("🛡️ Activating Circuit Shield for protected inference")
                 quantiles, mean = self.circuit_shield.protected_inference(
                     pipeline_validated_context, 
-                    prediction_length, 
+                    prediction_length,
+                    model=model, 
                     **kwargs
                 )
                 
@@ -173,7 +178,20 @@ class TiRexGuardian:
                     f"Output: {final_quantiles.shape}, User: {user_id}"
                 )
                 
-                return final_quantiles, final_mean
+                end_time = time.perf_counter()
+                processing_time_ms = (end_time - start_time) * 1000
+                
+                return GuardianResult.success(
+                    quantiles=final_quantiles,
+                    mean=final_mean,
+                    processing_time_ms=processing_time_ms,
+                    shield_activations={
+                        'input_shield': True,
+                        'circuit_shield': True,
+                        'data_pipeline_shield': True,
+                        'output_shield': True
+                    }
+                )
                 
         except (ShieldViolation, ThreatDetected) as security_error:
             self.blocked_threats += 1
@@ -181,12 +199,36 @@ class TiRexGuardian:
                 f"🚨 THREAT BLOCKED: {type(security_error).__name__} - {security_error}"
             )
             self._audit_blocked_threat(context, security_error, user_id)
-            raise
+            
+            end_time = time.perf_counter()
+            processing_time_ms = (end_time - start_time) * 1000
+            
+            return GuardianResult.blocked(
+                reason=f"{type(security_error).__name__}: {security_error}",
+                threat_level="high",
+                processing_time_ms=processing_time_ms,
+                shield_activations={
+                    'input_shield': True,
+                    'circuit_shield': False,
+                    'threat_detected': True
+                }
+            )
             
         except Exception as system_error:
             guardian_logger.error(f"🛡️ Guardian system error: {system_error}")
             self._audit_system_error(context, system_error, user_id)
-            raise GuardianError(f"Guardian protection failed: {system_error}") from system_error
+            
+            end_time = time.perf_counter()
+            processing_time_ms = (end_time - start_time) * 1000
+            
+            return GuardianResult.blocked(
+                reason=f"System Error: {system_error}",
+                threat_level="medium",
+                processing_time_ms=processing_time_ms,
+                shield_activations={
+                    'system_error': True
+                }
+            )
     
     @contextmanager
     def _protection_context(self, user_id: Optional[str]):
