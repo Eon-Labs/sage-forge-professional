@@ -165,14 +165,14 @@ Exchange → Patch/Scale → xLSTM Embeddings → Quantiles → Indicators → T
 
 ##### Layer Navigation (TiRex Native)
 
-| Layer                                            | Columns | Status            | File                       | TiRex Component         | Focus                  |
-| ------------------------------------------------ | ------- | ----------------- | -------------------------- | ----------------------- | ---------------------- |
-| 📊 [CONTEXT](./layers/context-layer.md)          | 11      | ✅ Complete       | `context-layer.md`         | `context: torch.Tensor` | Exchange data          |
-| 🔧 [TOKENIZED](./layers/tokenized-layer.md)      | 1       | ✅ **VALIDATED**  | `tokenized-layer.md`       | `PatchedUniTokenizer`   | **[Empirically proven](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) univariate** |
-| 🎯 [PREDICTIONS](./layers/predictions-layer.md)  | 4       | ✅ Stable         | `predictions-layer.md`     | `quantile_preds`        | TiRex outputs          |
-| ⚙️ [FEATURES](./layers/features-layer.md)        | 5       | ✅ Stable         | `features-layer.md`        | Post-processing         | Technical indicators   |
-| 🚨 [SIGNALS](./layers/signals-layer.md)          | 3       | ✅ Stable         | `signals-layer.md`         | Trading logic           | Decision layer         |
-| 🔗 [PIPELINE](./layers/pipeline-dependencies.md) | —       | ✅ Mapped         | `pipeline-dependencies.md` | Data lineage            | Dependency flow        |
+| Layer                                            | Columns | Status           | File                       | TiRex Component         | Focus                                                                                                                       |
+| ------------------------------------------------ | ------- | ---------------- | -------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 📊 [CONTEXT](./layers/context-layer.md)          | 11      | ✅ Complete      | `context-layer.md`         | `context: torch.Tensor` | Exchange data                                                                                                               |
+| 🔧 [TOKENIZED](./layers/tokenized-layer.md)      | 1       | ✅ **VALIDATED** | `tokenized-layer.md`       | `PatchedUniTokenizer`   | **[Empirically proven](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) univariate** |
+| 🎯 [PREDICTIONS](./layers/predictions-layer.md)  | 4       | ✅ Stable        | `predictions-layer.md`     | `quantile_preds`        | TiRex outputs                                                                                                               |
+| ⚙️ [FEATURES](./layers/features-layer.md)        | 5       | ✅ Stable        | `features-layer.md`        | Post-processing         | Technical indicators                                                                                                        |
+| 🚨 [SIGNALS](./layers/signals-layer.md)          | 3       | ✅ Stable        | `signals-layer.md`         | Trading logic           | Decision layer                                                                                                              |
+| 🔗 [PIPELINE](./layers/pipeline-dependencies.md) | —       | ✅ Mapped        | `pipeline-dependencies.md` | Data lineage            | Dependency flow                                                                                                             |
 
 ##### Architecture Summary
 
@@ -184,7 +184,7 @@ Exchange → Patch/Scale → xLSTM Embeddings → Quantiles → Indicators → T
 
 ##### Quick Reference
 
-- **TOKENIZED Reality**: **[EMPIRICALLY VALIDATED](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md)** - Univariate input only — [Analysis →](./layers/tokenized-layer.md#univariate-input-options-tirex-compatible)  
+- **TOKENIZED Reality**: **[EMPIRICALLY VALIDATED](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md)** - Univariate input only — [Analysis →](./layers/tokenized-layer.md#univariate-input-options-tirex-compatible)
 - **Optimization Strategy**: Input quality and preprocessing within univariate constraint — [Strategy →](./layers/tokenized-layer.md#implementation-roadmap--univariate-optimization)
 - **Critical Questions**: Univariate input selection and multi-model integration — [Questions →](./layers/tokenized-layer.md#critical-evaluation-questions)
 - **🔗 VALIDATION TESTS**: [Definitive Proof](../../tests/validation/definitive_signal_proof_test.py) | [Complete Results](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md)
