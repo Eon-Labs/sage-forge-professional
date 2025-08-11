@@ -42,6 +42,7 @@ dependencies = [
     "finplot>=1.9.7",
     "pyqtgraph>=0.13.7",
     "python-binance>=1.0.29",
+    "openpyxl>=3.1.5",
 ]
 
 [project.optional-dependencies]
