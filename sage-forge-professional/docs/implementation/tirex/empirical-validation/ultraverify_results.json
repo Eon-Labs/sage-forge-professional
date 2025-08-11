@@ -1,0 +1,520 @@
+{
+  "quantile_parameter_bug": {
+    "confirmed": true,
+    "evidence": [
+      {
+        "test": "single_median",
+        "requested_levels": [
+          0.5
+        ],
+        "expected_shape": "[2, 10, 1]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": false,
+        "is_baseline": true,
+        "shape_mismatch": true,
+        "got_quantiles": 9,
+        "expected_quantiles": 1
+      },
+      {
+        "test": "two_extremes",
+        "requested_levels": [
+          0.1,
+          0.9
+        ],
+        "expected_shape": "[2, 10, 2]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": true,
+        "identical_hash": true,
+        "shape_mismatch": true,
+        "got_quantiles": 9,
+        "expected_quantiles": 2
+      },
+      {
+        "test": "four_middle",
+        "requested_levels": [
+          0.2,
+          0.4,
+          0.6,
+          0.8
+        ],
+        "expected_shape": "[2, 10, 4]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": true,
+        "identical_hash": true,
+        "shape_mismatch": true,
+        "got_quantiles": 9,
+        "expected_quantiles": 4
+      },
+      {
+        "test": "outside_training",
+        "requested_levels": [
+          0.05,
+          0.95
+        ],
+        "expected_shape": "[2, 10, 2]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": true,
+        "identical_hash": true,
+        "shape_mismatch": true,
+        "got_quantiles": 9,
+        "expected_quantiles": 2
+      },
+      {
+        "test": "extreme_tails",
+        "requested_levels": [
+          0.001,
+          0.999
+        ],
+        "expected_shape": "[2, 10, 2]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": true,
+        "identical_hash": true,
+        "shape_mismatch": true,
+        "got_quantiles": 9,
+        "expected_quantiles": 2
+      },
+      {
+        "test": "empty_list",
+        "requested_levels": [],
+        "expected_shape": "[2, 10, 9]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": true,
+        "identical_hash": true
+      },
+      {
+        "test": "duplicates",
+        "requested_levels": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "expected_shape": "[2, 10, 3]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": true,
+        "identical_hash": true,
+        "shape_mismatch": true,
+        "got_quantiles": 9,
+        "expected_quantiles": 3
+      },
+      {
+        "test": "fifty_quantiles",
+        "requested_levels": [
+          0.01,
+          0.03,
+          0.05,
+          0.06999999999999999,
+          0.09,
+          0.11,
+          0.13,
+          0.15000000000000002,
+          0.17,
+          0.19,
+          0.21000000000000002,
+          0.23,
+          0.25,
+          0.27,
+          0.29000000000000004,
+          0.31,
+          0.33,
+          0.35000000000000003,
+          0.37,
+          0.39,
+          0.41000000000000003,
+          0.43,
+          0.45,
+          0.47000000000000003,
+          0.49,
+          0.51,
+          0.53,
+          0.55,
+          0.5700000000000001,
+          0.59,
+          0.61,
+          0.63,
+          0.65,
+          0.67,
+          0.6900000000000001,
+          0.7100000000000001,
+          0.73,
+          0.75,
+          0.77,
+          0.79,
+          0.81,
+          0.8300000000000001,
+          0.85,
+          0.87,
+          0.89,
+          0.91,
+          0.93,
+          0.9500000000000001,
+          0.97,
+          0.99
+        ],
+        "expected_shape": "[2, 10, 50]",
+        "actual_shape": "[2, 10, 9]",
+        "output_hash": "543e74fd4a3667e3763e4684352988df",
+        "identical_to_baseline": true,
+        "identical_hash": true,
+        "shape_mismatch": true,
+        "got_quantiles": 9,
+        "expected_quantiles": 50
+      }
+    ],
+    "counter_evidence": []
+  },
+  "nan_injection_vulnerability": {
+    "confirmed": true,
+    "attack_vectors": [
+      {
+        "pattern": "scattered_nan",
+        "input_stats": {
+          "nan_ratio": 0.11999999731779099,
+          "inf_ratio": 0.0,
+          "finite_ratio": 0.8799999952316284
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": false,
+          "has_inf": false,
+          "range": [
+            -0.06624321639537811,
+            0.2216823697090149
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      },
+      {
+        "pattern": "block_nan",
+        "input_stats": {
+          "nan_ratio": 0.20000000298023224,
+          "inf_ratio": 0.0,
+          "finite_ratio": 0.800000011920929
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": false,
+          "has_inf": false,
+          "range": [
+            -0.06295159459114075,
+            0.27612781524658203
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      },
+      {
+        "pattern": "alternating_nan",
+        "input_stats": {
+          "nan_ratio": 0.5,
+          "inf_ratio": 0.0,
+          "finite_ratio": 0.5
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": false,
+          "has_inf": false,
+          "range": [
+            0.08271349966526031,
+            0.1782379150390625
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      },
+      {
+        "pattern": "leading_nan",
+        "input_stats": {
+          "nan_ratio": 0.30000001192092896,
+          "inf_ratio": 0.0,
+          "finite_ratio": 0.699999988079071
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": false,
+          "has_inf": false,
+          "range": [
+            -0.017239093780517578,
+            0.0997517853975296
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      },
+      {
+        "pattern": "trailing_nan",
+        "input_stats": {
+          "nan_ratio": 0.30000001192092896,
+          "inf_ratio": 0.0,
+          "finite_ratio": 0.699999988079071
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": false,
+          "has_inf": false,
+          "range": [
+            0.1730440855026245,
+            0.2681466341018677
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      },
+      {
+        "pattern": "all_nan",
+        "input_stats": {
+          "nan_ratio": 1.0,
+          "inf_ratio": 0.0,
+          "finite_ratio": 0.0
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": false,
+          "has_inf": false,
+          "range": [
+            -0.09282024204730988,
+            -0.07640984654426575
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      },
+      {
+        "pattern": "inf_injection",
+        "input_stats": {
+          "nan_ratio": 0.0,
+          "inf_ratio": 0.029999999329447746,
+          "finite_ratio": 0.9700000286102295
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": true,
+          "has_inf": false,
+          "range": [
+            NaN,
+            NaN
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      },
+      {
+        "pattern": "extreme_values",
+        "input_stats": {
+          "nan_ratio": 0.0,
+          "inf_ratio": 0.0,
+          "finite_ratio": 1.0
+        },
+        "attack_succeeded": true,
+        "output_stats": {
+          "has_nan": false,
+          "has_inf": false,
+          "range": [
+            -18990720.0,
+            -15808064.0
+          ],
+          "shape": [
+            1,
+            5,
+            9
+          ]
+        }
+      }
+    ],
+    "defenses_found": []
+  },
+  "output_format_correctness": {
+    "confirmed": true,
+    "format_tests": [
+      {
+        "config": "minimal",
+        "batch_size": 1,
+        "prediction_length": 1,
+        "expected_quantiles_shape": [
+          1,
+          1,
+          9
+        ],
+        "actual_quantiles_shape": [
+          1,
+          1,
+          9
+        ],
+        "expected_mean_shape": [
+          1,
+          1
+        ],
+        "actual_mean_shape": [
+          1,
+          1
+        ],
+        "quantiles_correct": true,
+        "mean_correct": true,
+        "mean_is_vector": true
+      },
+      {
+        "config": "single_batch_standard",
+        "batch_size": 1,
+        "prediction_length": 24,
+        "expected_quantiles_shape": [
+          1,
+          24,
+          9
+        ],
+        "actual_quantiles_shape": [
+          1,
+          24,
+          9
+        ],
+        "expected_mean_shape": [
+          1,
+          24
+        ],
+        "actual_mean_shape": [
+          1,
+          24
+        ],
+        "quantiles_correct": true,
+        "mean_correct": true,
+        "mean_is_vector": true
+      },
+      {
+        "config": "multi_batch_standard",
+        "batch_size": 8,
+        "prediction_length": 12,
+        "expected_quantiles_shape": [
+          8,
+          12,
+          9
+        ],
+        "actual_quantiles_shape": [
+          8,
+          12,
+          9
+        ],
+        "expected_mean_shape": [
+          8,
+          12
+        ],
+        "actual_mean_shape": [
+          8,
+          12
+        ],
+        "quantiles_correct": true,
+        "mean_correct": true,
+        "mean_is_vector": true
+      },
+      {
+        "config": "large_batch_long",
+        "batch_size": 32,
+        "prediction_length": 48,
+        "expected_quantiles_shape": [
+          32,
+          48,
+          9
+        ],
+        "actual_quantiles_shape": [
+          32,
+          48,
+          9
+        ],
+        "expected_mean_shape": [
+          32,
+          48
+        ],
+        "actual_mean_shape": [
+          32,
+          48
+        ],
+        "quantiles_correct": true,
+        "mean_correct": true,
+        "mean_is_vector": true
+      },
+      {
+        "config": "single_week",
+        "batch_size": 1,
+        "prediction_length": 168,
+        "expected_quantiles_shape": [
+          1,
+          168,
+          9
+        ],
+        "actual_quantiles_shape": [
+          1,
+          168,
+          9
+        ],
+        "expected_mean_shape": [
+          1,
+          168
+        ],
+        "actual_mean_shape": [
+          1,
+          168
+        ],
+        "quantiles_correct": true,
+        "mean_correct": true,
+        "mean_is_vector": true
+      },
+      {
+        "config": "large_batch_single",
+        "batch_size": 100,
+        "prediction_length": 1,
+        "expected_quantiles_shape": [
+          100,
+          1,
+          9
+        ],
+        "actual_quantiles_shape": [
+          100,
+          1,
+          9
+        ],
+        "expected_mean_shape": [
+          100,
+          1
+        ],
+        "actual_mean_shape": [
+          100,
+          1
+        ],
+        "quantiles_correct": true,
+        "mean_correct": true,
+        "mean_is_vector": true
+      }
+    ]
+  },
+  "source_code_analysis": {
+    "quantile_parameter_analysis": {},
+    "nan_handling_analysis": {},
+    "output_format_analysis": {}
+  }
+}
