@@ -34,6 +34,7 @@ Empirical Basis:
 from .core import TiRexGuardian
 from .shields.input_shield import InputShield
 from .shields.circuit_shield import CircuitShield
+from .shields.data_pipeline_shield import DataPipelineShield
 from .exceptions import (
     GuardianError,
     ShieldViolation, 
@@ -43,12 +44,13 @@ from .exceptions import (
 
 # Main entry point for LLM agents - immediately recognizable as protective interface
 __all__ = [
-    'TiRexGuardian',     # 🛡️ Main protective interface
-    'InputShield',       # 🛡️ Input validation protection  
-    'CircuitShield',     # 🛡️ Failure handling protection
-    'GuardianError',     # ⚠️ Guardian system errors
-    'ShieldViolation',   # ⚠️ Protection boundary violations
-    'ThreatDetected',    # 🚨 Security threat detection
+    'TiRexGuardian',         # 🛡️ Main protective interface
+    'InputShield',           # 🛡️ Input validation protection  
+    'CircuitShield',         # 🛡️ Failure handling protection
+    'DataPipelineShield',    # 🛡️ Data pipeline safety protection
+    'GuardianError',         # ⚠️ Guardian system errors
+    'ShieldViolation',       # ⚠️ Protection boundary violations
+    'ThreatDetected',        # 🚨 Security threat detection
     'TiRexServiceUnavailableError'  # 🚨 Service failure conditions
 ]
 

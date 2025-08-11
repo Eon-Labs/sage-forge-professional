@@ -12,6 +12,7 @@ from contextlib import contextmanager
 
 from .shields.input_shield import InputShield
 from .shields.circuit_shield import CircuitShield
+from .shields.data_pipeline_shield import DataPipelineShield
 from .exceptions import GuardianError, ShieldViolation, ThreatDetected
 
 # Configure guardian-specific logging
@@ -50,7 +51,8 @@ class TiRexGuardian:
     def __init__(self, 
                  enable_audit_logging: bool = True,
                  threat_detection_level: str = "medium",
-                 fallback_strategy: str = "graceful"):
+                 fallback_strategy: str = "graceful",
+                 data_pipeline_protection: str = "strict"):
         """
         Initialize TiRex Guardian with comprehensive protection layers.
         
@@ -58,16 +60,19 @@ class TiRexGuardian:
             enable_audit_logging: Enable complete forensic audit trail
             threat_detection_level: "low", "medium", "high" - threat sensitivity  
             fallback_strategy: "graceful", "strict", "minimal" - failure handling
+            data_pipeline_protection: "strict", "moderate", "permissive" - data pipeline protection level
         """
         # Initialize protection shields
         self.input_shield = InputShield(threat_level=threat_detection_level)
         self.circuit_shield = CircuitShield(fallback_strategy=fallback_strategy)
+        self.data_pipeline_shield = DataPipelineShield(protection_level=data_pipeline_protection)
         
         # Guardian state tracking
         self.protection_active = True
         self.shield_status = {
             'input_shield': True,
             'circuit_shield': True,
+            'data_pipeline_shield': True,
             'output_shield': True,
             'audit_shield': enable_audit_logging
         }
@@ -96,9 +101,10 @@ class TiRexGuardian:
         
         PROTECTION LAYERS APPLIED:
         1. Input Shield - Validates against NaN/inf/extreme value attacks
-        2. Circuit Shield - Handles model failures with graceful fallbacks
-        3. Output Shield - Validates business logic and forecast reasonableness  
-        4. Audit Shield - Complete forensic logging for security analysis
+        2. Data Pipeline Shield - Validates context quality, scaling, and tensor operations
+        3. Circuit Shield - Handles model failures with graceful fallbacks
+        4. Output Shield - Validates business logic and forecast reasonableness  
+        5. Audit Shield - Complete forensic logging for security analysis
         
         Args:
             context: Historical time series data [batch_size, context_length]
@@ -130,32 +136,44 @@ class TiRexGuardian:
                 guardian_logger.debug(f"🛡️ Activating Input Shield for inference #{self.total_inferences}")
                 protected_context = self.input_shield.guard_against_attacks(context, user_id)
                 
-                # Layer 2: Circuit Shield Protection  
+                # Layer 2: Data Pipeline Shield Protection
+                guardian_logger.debug("🛡️ Activating Data Pipeline Shield for context validation")
+                pipeline_validated_context = self.data_pipeline_shield.validate_data_pipeline_safety(
+                    protected_context, prediction_length, user_id
+                )
+                
+                # Layer 3: Circuit Shield Protection  
                 guardian_logger.debug("🛡️ Activating Circuit Shield for protected inference")
                 quantiles, mean = self.circuit_shield.protected_inference(
-                    protected_context, 
+                    pipeline_validated_context, 
                     prediction_length, 
                     **kwargs
                 )
                 
-                # Layer 3: Output Shield Protection
+                # Layer 4: Output Shield Protection (includes data pipeline quantile validation)
                 guardian_logger.debug("🛡️ Activating Output Shield for forecast validation")
                 validated_quantiles, validated_mean = self._shield_output_validation(
-                    quantiles, mean, protected_context
+                    quantiles, mean, pipeline_validated_context
                 )
                 
-                # Layer 4: Success Audit Logging
+                # Layer 4b: Data Pipeline Quantile Validation 
+                guardian_logger.debug("🛡️ Validating quantile processing safety")
+                final_quantiles, final_mean = self.data_pipeline_shield.validate_quantile_output_safety(
+                    validated_quantiles, validated_mean, user_id
+                )
+                
+                # Layer 5: Success Audit Logging
                 if self.shield_status['audit_shield']:
                     self._audit_successful_inference(
-                        protected_context, validated_quantiles, validated_mean, user_id
+                        pipeline_validated_context, final_quantiles, final_mean, user_id
                     )
                 
                 guardian_logger.info(
                     f"🛡️ Protected inference successful - "
-                    f"Output: {validated_quantiles.shape}, User: {user_id}"
+                    f"Output: {final_quantiles.shape}, User: {user_id}"
                 )
                 
-                return validated_quantiles, validated_mean
+                return final_quantiles, final_mean
                 
         except (ShieldViolation, ThreatDetected) as security_error:
             self.blocked_threats += 1
