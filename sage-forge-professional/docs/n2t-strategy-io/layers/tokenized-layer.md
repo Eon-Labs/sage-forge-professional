@@ -4,6 +4,8 @@
 
 **📋 EMPIRICAL PROOF**: [Validation Results](../../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) | [Source Code Evidence](../../../tests/validation/definitive_signal_proof_test.py)
 
+**🛡️ MANDATORY GUARDIAN PROTECTION**: All TiRex processing requires Guardian system due to 6 critical vulnerability categories. Direct calls PROHIBITED.
+
 **Native TiRex Component**: `PatchedUniTokenizer.context_input_transform()`  
 **Processing Flow**: `CONTEXT[single_series]` → `StandardScaler.scale()` → `_Patcher.patcher()` → `tokenized_tensor` + `input_mask`  
 **Architecture Reality**: **UNIVARIATE ONLY** - cannot process multiple features simultaneously

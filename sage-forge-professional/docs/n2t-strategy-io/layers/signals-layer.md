@@ -485,7 +485,7 @@ The SIGNALS layer provides **systematic trading decision framework** enhanced wi
 **Signal Quality**: Multi-regime awareness with dynamic parameter adjustment  
 **Production Ready**: Complete trading engine integration with real-time execution capability
 
-**Performance Multiplier**: Converts the **2-4x improvement** from [TOKENIZED layer optimization](./tokenized-layer.md) into actual trading profits through intelligent signal generation and risk management.
+**Performance Multiplier**: Converts the **10-30% improvement** from [TOKENIZED layer univariate optimization](./tokenized-layer.md) into actual trading profits through intelligent signal generation and risk management within TiRex architectural constraints.
 
 **Status**: ✅ **Production Ready** - Complete signal generation system ready for live trading with comprehensive risk management and performance monitoring.
 

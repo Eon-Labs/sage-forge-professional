@@ -46,26 +46,38 @@
 
 ##### CONTEXT → TiRex Processing Flow
 
+**⚠️ CRITICAL**: TiRex is univariate-only - must select ONE time series from context data
+
 ```python
-# Native TiRex input preparation
-context_data = torch.tensor([
+# CONTEXT provides raw material for univariate selection
+context_dataframe = pd.DataFrame({
     # Core OHLCV (5 columns)
-    market_data['open'].values,
-    market_data['high'].values,
-    market_data['low'].values,
-    market_data['close'].values,
-    market_data['volume'].values,
-
+    'open': market_data['open'].values,
+    'high': market_data['high'].values,
+    'low': market_data['low'].values,
+    'close': market_data['close'].values,
+    'volume': market_data['volume'].values,
+    
     # Extended microstructure data (6 columns)
-    market_data['quote_asset_volume'].values,
-    market_data['count'].values,
-    market_data['taker_buy_volume'].values,
-    market_data['taker_buy_quote_volume'].values,
-    # Note: timestamps handled separately in metadata
-], dtype=torch.float32)
+    'quote_asset_volume': market_data['quote_asset_volume'].values,
+    'count': market_data['count'].values,
+    'taker_buy_volume': market_data['taker_buy_volume'].values,
+    'taker_buy_quote_volume': market_data['taker_buy_quote_volume'].values
+})
 
-# Direct input to TiRex processing
-# context_data → TOKENIZED layer → PatchedUniTokenizer.context_input_transform()
+# TiRex univariate input selection (choose ONE)
+univariates_options = {
+    'raw_close': torch.tensor(context_dataframe['close'].values, dtype=torch.float32),
+    'log_returns': torch.tensor(np.log(context_dataframe['close'].pct_change().dropna() + 1), dtype=torch.float32),
+    'typical_price': torch.tensor(((context_dataframe['high'] + context_dataframe['low'] + context_dataframe['close']) / 3).values, dtype=torch.float32),
+    'volume_weighted': torch.tensor((context_dataframe['close'] * context_dataframe['volume']).values, dtype=torch.float32)
+}
+
+# Select optimal univariate series for TiRex
+selected_series = univariates_options['raw_close']  # Example selection
+context_tensor = selected_series.unsqueeze(0)  # Shape: [1, sequence_length]
+
+# Valid TiRex processing: context_tensor → TOKENIZED layer → PatchedUniTokenizer
 ```
 
 ##### Data Quality Characteristics
@@ -100,26 +112,27 @@ context_data = torch.tensor([
 
 ---
 
-#### CONTEXT → TOKENIZED Optimization Pipeline
+#### CONTEXT → TOKENIZED Univariate Selection Pipeline
 
-The CONTEXT layer provides **rich raw material** for the [TOKENIZED layer optimization](./tokenized-layer.md):
+The CONTEXT layer provides **univariate selection options** for [TOKENIZED layer optimization](./tokenized-layer.md):
 
-##### Phase 1 Features (HIGH Priority)
+**🔬 EMPIRICAL REALITY**: TiRex processes single time series only - optimization focuses on selecting optimal univariate input
 
-- **OHLC Processing**: Multi-dimensional `ctx_ohlc_patches` from open/high/low/close
-- **Returns Calculation**: `ctx_returns_scaled` from close price series
-- **Volatility Detection**: `ctx_volatility_patches` from high-low spread
+##### Univariate Input Options (TiRex Compatible)
 
-##### Phase 2 Features (MEDIUM Priority)
+**Primary Options (Direct Price Series)**:
+- **Raw Close Prices**: `context_data['close']` - Direct price forecasting
+- **Log Returns**: `np.log(close[t]/close[t-1])` - Return-based forecasting  
+- **Typical Price**: `(high + low + close) / 3` - Representative price
 
-- **Volume Regimes**: `ctx_volume_scaled` from volume normalization
-- **Order Flow**: `ctx_orderflow_patches` from taker_buy ratios
-- **Activity Levels**: `ctx_activity_scaled` from trade count patterns
+**Secondary Options (Derived Series)**:
+- **Volume-Weighted Price**: `(close * volume).rolling(window).mean()` - Volume-adjusted
+- **High-Low Midpoint**: `(high + low) / 2` - Volatility-aware price
+- **Normalized Prices**: Z-score transformed close prices for stationarity
 
-##### Phase 3 Features (LOW Priority)
+**Selection Strategy**: A/B test different univariate series to determine optimal TiRex input for specific market conditions
 
-- **Advanced Regimes**: Multi-timeframe analysis combining all CONTEXT data
-- **Session Effects**: Time-based pattern recognition from timestamp analysis
+**Optimization Focus**: Input quality, preprocessing, and temporal feature engineering within single time series constraint
 
 ---
 
@@ -154,7 +167,7 @@ Exchange (Binance) → FCP Protocol → DSM (data-source-manager) → CONTEXT La
 ```python
 from repos.data_source_manager import ArrowDataManager
 
-# Native CONTEXT data access
+# CONTEXT data access for univariate selection
 context_manager = ArrowDataManager()
 context_data = context_manager.get_ohlcv_data(
     symbol="BTCUSDT",
@@ -163,8 +176,18 @@ context_data = context_manager.get_ohlcv_data(
     end_time=datetime.now()
 )
 
-# Direct conversion to TiRex context format
-context_tensor = torch.from_numpy(context_data.to_numpy()).float()
+# CONTEXT provides options, select ONE for TiRex
+univariates_available = {
+    'close_prices': context_data['close'].values,
+    'typical_prices': ((context_data['high'] + context_data['low'] + context_data['close']) / 3).values,
+    'log_returns': np.log(context_data['close'].pct_change().dropna() + 1).values,
+    'volume_weighted': (context_data['close'] * context_data['volume']).values
+}
+
+# Select optimal univariate for TiRex processing
+selected_univariate = univariates_available['close_prices']  # Choose ONE
+context_tensor = torch.tensor(selected_univariate, dtype=torch.float32).unsqueeze(0)
+# Shape: [1, sequence_length] - TiRex compatible
 ```
 
 ##### Memory Optimization
@@ -228,7 +251,7 @@ The CONTEXT layer provides **comprehensive market intelligence foundation** with
 - Order flow and microstructure intelligence
 - Trade activity and intensity measures
 
-This rich CONTEXT data enables the **critical optimization** happening in the [TOKENIZED layer](./tokenized-layer.md), where proper feature engineering can achieve **2-4x TiRex performance improvement** through full architecture utilization.
+This rich CONTEXT data enables **optimal univariate selection** for the [TOKENIZED layer](./tokenized-layer.md), where proper input choice and preprocessing can achieve **10-30% TiRex performance improvement** through input quality optimization within architectural constraints.
 
 **Status**: ✅ **Production Ready** - Stable, reliable, and comprehensive exchange data foundation for TiRex optimization pipeline.
 

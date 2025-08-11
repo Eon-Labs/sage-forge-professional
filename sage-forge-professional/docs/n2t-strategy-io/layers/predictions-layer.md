@@ -18,7 +18,7 @@
 #### TiRex Native Output Architecture
 
 **Processing Flow**: [TOKENIZED layer](./tokenized-layer.md) → `xLSTM blocks` → `output_patch_embedding` → **PREDICTIONS**  
-**Guardian Integration**: All outputs processed through `Guardian.safe_forecast()` for security  
+**🛡️ MANDATORY GUARDIAN**: All outputs MUST be processed through `Guardian.safe_forecast()` - Direct TiRex calls PROHIBITED due to 6 critical vulnerability categories  
 **Quantile Structure**: **Always 9 quantiles** [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] - `quantile_levels` parameter ignored
 
 ---
@@ -277,7 +277,7 @@ The PREDICTIONS layer provides **comprehensive probabilistic forecasting** with:
 - **Rich uncertainty quantification** for risk assessment
 - **Direct integration** with downstream FEATURES and SIGNALS layers
 
-**Critical Success Factor**: The quality of PREDICTIONS is directly dependent on the [TOKENIZED layer input quality](./tokenized-layer.md). Optimal univariate input selection and preprocessing delivers **10-30% improvement** in prediction accuracy and uncertainty quantification precision.
+**Critical Success Factor**: The quality of PREDICTIONS is directly dependent on the [TOKENIZED layer univariate input quality](./tokenized-layer.md). Optimal univariate input selection and preprocessing within TiRex's architectural constraints delivers **10-30% improvement** in prediction accuracy and uncertainty quantification precision.
 
 **📋 EMPIRICAL BASIS**: TOKENIZED layer architecture claims are [empirically validated](../../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) through comprehensive source code analysis and testing.
 

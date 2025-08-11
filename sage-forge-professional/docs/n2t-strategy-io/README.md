@@ -4,6 +4,8 @@ These docs standardize a portable, tabular Markdown I/O contract for zero-/few-s
 
 **📋 EMPIRICALLY VALIDATED**: All architectural claims are backed by [comprehensive testing](../implementation/tirex/empirical-validation/TIREX_EMPIRICAL_FINDINGS_COMPREHENSIVE.md) and [source code analysis](../../tests/validation/definitive_signal_proof_test.py).
 
+**🛡️ GUARDIAN SYSTEM MANDATORY**: TiRex requires Guardian protection for production deployment due to 52.8% overall safety assessment with 6 critical vulnerability categories. Direct TiRex calls are PROHIBITED.
+
 - **Scope**: research & design (R&D) specifications only; no code.
 - **Design tenets**: DRY, causality-first, audit-ready, TiRex-architecture-aligned.
 - **How to use**: pick acronyms from the taxonomies, then fill the Strategy I/O Contract template.

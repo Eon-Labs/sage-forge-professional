@@ -43,12 +43,15 @@ def calculate_tirex_edge(tirex_mean_p50, current_close):
     """
     edge_1 = tirex_mean_p50[..., 0] - current_close  # Next period prediction - current
 
-    # Enhanced edge features (optional)
+    # Enhanced edge features (within univariate constraint)
     edge_normalized = edge_1 / current_close          # Percentage terms
-    edge_volatility_adjusted = edge_1 / atr_14        # Risk-adjusted edge
+    edge_volatility_adjusted = edge_1 / atr_14        # Risk-adjusted edge  
     edge_confidence = calculate_prediction_confidence(tirex_quantiles)
+    
+    # Univariate-compatible enhancements
+    edge_persistence = edge_1 / tirex_mean_p50[..., 1] if len(tirex_mean_p50) > 1 else 1.0
 
-    return edge_1, edge_normalized, edge_volatility_adjusted, edge_confidence
+    return edge_1, edge_normalized, edge_volatility_adjusted, edge_confidence, edge_persistence
 
 # Usage in strategy logic
 if edge_1 > lambda_threshold * atr_14:
@@ -69,9 +72,9 @@ def calculate_enhanced_atr(context_data, period=14):
     traditional_atr = talib.ATR(context_data['high'], context_data['low'],
                                context_data['close'], timeperiod=period)
 
-    # TiRex-enhanced: Forward-looking volatility estimate
-    predicted_volatility = (tirex_q_p90 - tirex_q_p10) / 1.645  # Implied volatility
-    hybrid_atr = 0.7 * traditional_atr + 0.3 * predicted_volatility
+    # TiRex-enhanced: Forward-looking volatility from univariate predictions
+    predicted_volatility = (tirex_q_p90 - tirex_q_p10) / 1.645  # Implied vol from quantiles
+    hybrid_atr = 0.7 * traditional_atr + 0.3 * predicted_volatility  # Blend traditional + TiRex
 
     return hybrid_atr
 
@@ -80,10 +83,13 @@ def calculate_trend_ma(close_prices, predictions, period=20):
     """MA enhanced with TiRex directional bias"""
     traditional_ma = close_prices.rolling(window=period).mean()
 
-    # TiRex trend confirmation
-    prediction_trend = (tirex_mean_p50[..., -1] - tirex_mean_p50[..., 0]) / len(tirex_mean_p50)
-    trend_adjustment = 0.05 * prediction_trend  # Small adjustment based on predicted direction
-
+    # TiRex univariate trend confirmation (1-step prediction only)
+    next_step_prediction = tirex_mean_p50[..., 0]  # Next time step prediction
+    current_close = close_prices.iloc[-1] if hasattr(close_prices, 'iloc') else close_prices[-1]
+    trend_signal = 1.0 if next_step_prediction > current_close else -1.0
+    
+    # Conservative MA adjustment based on TiRex directional signal
+    trend_adjustment = 0.02 * trend_signal * traditional_atr  # Small ATR-scaled adjustment
     enhanced_ma = traditional_ma + trend_adjustment
     return enhanced_ma
 
@@ -92,9 +98,10 @@ def calculate_enhanced_rsi(close_prices, predictions, period=14):
     """RSI with TiRex momentum confirmation"""
     traditional_rsi = talib.RSI(close_prices, timeperiod=period)
 
-    # TiRex momentum validation
-    predicted_momentum = tirex_mean_p50[..., 2] - tirex_mean_p50[..., 0]  # 2-step momentum
-    momentum_signal = np.sign(predicted_momentum)
+    # TiRex univariate momentum validation (next-step only)
+    current_price = close_prices.iloc[-1] if hasattr(close_prices, 'iloc') else close_prices[-1]
+    predicted_next = tirex_mean_p50[..., 0]  # Next step prediction
+    momentum_signal = np.sign(predicted_next - current_price)  # Directional momentum
 
     # RSI adjustment for TiRex momentum agreement/disagreement
     rsi_adjustment = momentum_signal * 2.0  # Small RSI bias
@@ -337,7 +344,7 @@ The FEATURES layer provides **intelligent bridge** between TiRex predictions and
 **Advanced Capabilities**: Uncertainty quantification, multi-timeframe analysis, dynamic position sizing  
 **Integration Ready**: Optimized for [SIGNALS layer](./signals-layer.md) consumption
 
-**Performance Impact**: Proper FEATURES engineering can amplify the **2-4x improvement** from [TOKENIZED layer optimization](./tokenized-layer.md) by extracting maximum intelligence from enhanced TiRex predictions.
+**Performance Impact**: Proper FEATURES engineering can amplify the **10-30% improvement** from [TOKENIZED layer univariate optimization](./tokenized-layer.md) by extracting maximum intelligence from optimized TiRex predictions within architectural constraints.
 
 **Status**: ✅ **Production Ready** - Comprehensive feature engineering combining traditional technical analysis with TiRex probabilistic forecasting intelligence.
 
